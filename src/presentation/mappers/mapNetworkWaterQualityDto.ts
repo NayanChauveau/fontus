@@ -9,6 +9,8 @@ import type {
   NetworkAnalysesViewModel,
   NetworkMeasurementViewModel,
 } from "../view-models/NetworkAnalysesViewModel";
+import { buildPriorityCards } from "./buildPriorityCards";
+import { resolveBannerTone } from "./resolveBannerTone";
 
 export function mapNetworkWaterQualityDto(
   dto: NetworkWaterQualityDto,
@@ -29,17 +31,28 @@ export function mapNetworkWaterQualityDto(
     ),
   );
 
+  const priorityMeasurements = measurements.filter((row) => row.priority);
+
   return {
     networkCode: dto.networkCode,
     sampledAtLabel,
     conclusion: sample?.conclusion ?? null,
+    bannerTone: resolveBannerTone({
+      conclusion: sample?.conclusion ?? null,
+      conformiteLimitesBact: sample?.conformiteLimitesBact ?? null,
+      conformiteLimitesPc: sample?.conformiteLimitesPc ?? null,
+    }),
+    limitesBactLabel: limiteLabel(sample?.conformiteLimitesBact ?? null),
+    limitesPcLabel: limiteLabel(sample?.conformiteLimitesPc ?? null),
     officialNote: fr.analyses.officialNote,
     perParameterDateNote: fr.analyses.perParameterDateNote,
+    disclaimer: fr.analyses.disclaimer,
     sourceLabel:
       dto.source === "cache"
         ? fr.analyses.sourceCache
         : fr.analyses.sourceRemote,
-    priorityMeasurements: measurements.filter((row) => row.priority),
+    priorityCards: buildPriorityCards(priorityMeasurements),
+    priorityMeasurements,
     otherMeasurements: measurements.filter((row) => !row.priority),
     reconstructedSumNote: measurements.some((row) => row.reconstructed)
       ? fr.analyses.reconstructedSumNote
@@ -62,6 +75,7 @@ function toMeasurementViewModel(
     parameterLabel: canonicalName ?? measurement.parameterLabel,
     canonicalName,
     canonicalId: resolution?.canonicalId ?? null,
+    category: resolution?.category ?? null,
     originalLabel: showOriginal ? measurement.parameterLabel : null,
     valueLabel: measurement.unit
       ? `${measurement.rawText} ${measurement.unit}`
@@ -96,6 +110,16 @@ function toComparisonViewModel(
     binding: comparison.binding,
     siteMetric: comparison.kind === "site_metric",
   };
+}
+
+function limiteLabel(code: string | null): string | null {
+  if (code === "C") {
+    return fr.analyses.conformeCode;
+  }
+  if (code === "N") {
+    return fr.analyses.nonConformeCode;
+  }
+  return null;
 }
 
 function statusLabel(status: ComparisonDto["status"]): string {

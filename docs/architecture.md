@@ -103,4 +103,13 @@ Juridictions CH (OPBD / OSAV) et US (EPA NPDWR) + référence stricte du site.
 - Ce n’est pas une norme officielle : pas de score, reco EPA (action level, MCLG) ≠ interdiction
 - Use case : `CompareMeasurements` enrichit chaque mesure avec `fr` / `eu` / `ch` / `us` / `strict`
 
-Modules suivants : I7 (cartes).
+## I7
+
+Page résultat à deux niveaux, sans score.
+
+- Bandeau A : conclusion ARS + codes limites bact / PC ; le ton suit les codes (`C` / `N`), pas un recalcul
+- Cartes : PFAS, nitrates, pesticides, plomb, arsenic, microbio, calcaire (`pas d’analyse récente` si absent)
+- Tableau B : comparaison par substance (FR / UE / CH / US / stricte)
+- Disclaimer : on ne dit pas si l’eau est « bonne »
+
+Modules suivants : I8 (historique).

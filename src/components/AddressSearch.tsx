@@ -263,14 +263,16 @@ export function AddressSearch() {
           <dl className="grid gap-3 text-sm">
             <Field label={fr.address.fieldLabel} value={selected.label} />
             <Field label={fr.address.fieldCity} value={selected.city} />
-            <Field
-              label={fr.address.fieldCitycode}
-              value={selected.citycode}
-            />
-            <Field
-              label={fr.address.fieldCoordinates}
-              value={selected.coordinates}
-            />
+            <div className="hidden md:contents">
+              <Field
+                label={fr.address.fieldCitycode}
+                value={selected.citycode}
+              />
+              <Field
+                label={fr.address.fieldCoordinates}
+                value={selected.coordinates}
+              />
+            </div>
           </dl>
         </section>
       )}

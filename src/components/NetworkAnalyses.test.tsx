@@ -317,10 +317,16 @@ describe("NetworkAnalyses", () => {
     await waitFor(() => {
       expect(screen.getByText("Eau conforme")).toBeTruthy();
     });
-    expect(screen.getByText("Somme PFAS-20")).toBeTruthy();
-    expect(screen.getByText("PFOA")).toBeTruthy();
-    expect(screen.getByText("<0,034 µg/L")).toBeTruthy();
-    expect(screen.getByText("reconstruit")).toBeTruthy();
+    expect(screen.getByText("Points de vigilance")).toBeTruthy();
+    expect(screen.getByText("Comparaison par substance")).toBeTruthy();
+    expect(screen.getByText("Limites bactériologiques : conformes")).toBeTruthy();
+    expect(screen.getByText("PFAS")).toBeTruthy();
+    expect(screen.getAllByText("Pas d’analyse récente").length).toBeGreaterThan(0);
+    expect(screen.getByText(/On ne dit pas si l’eau/)).toBeTruthy();
+    expect(screen.getAllByText("Somme PFAS-20").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("PFOA").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("<0,034 µg/L").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("reconstruit").length).toBeGreaterThan(0);
     expect(screen.getAllByText("< 0,034 / 0,1 µg/L").length).toBeGreaterThan(0);
     expect(screen.getByText("0,001 / 0,5 µg/L")).toBeTruthy();
     expect(screen.getAllByText("0,001 / 0,004 µg/L").length).toBeGreaterThan(0);
@@ -374,10 +380,38 @@ describe("NetworkAnalyses", () => {
         }),
       ),
     );
-    render(<NetworkAnalyses networkCode="033001216" />);
+    const empty = render(<NetworkAnalyses networkCode="033001216" />);
     await waitFor(() => {
       expect(screen.getByText(/Aucune analyse/)).toBeTruthy();
     });
+    empty.unmount();
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          networkCode: "033001214",
+          windowFrom: "2025-09-02",
+          source: "cache",
+          latestSample: {
+            code: "s1",
+            sampledAt: "2026-06-18T11:40:00.000Z",
+            conclusion: "Eau non conforme aux limites",
+            conformiteLimitesBact: "N",
+            conformiteLimitesPc: "C",
+            source: "hubeau",
+            measurements: [],
+          },
+          latestMeasurements: [],
+        }),
+      ),
+    );
+    render(<NetworkAnalyses networkCode="033001217" />);
+    await waitFor(() => {
+      expect(screen.getByText("Eau non conforme aux limites")).toBeTruthy();
+    });
+    expect(screen.getByText("Limites bactériologiques : non conformes")).toBeTruthy();
+    expect(screen.getByText(/Aucune analyse/)).toBeTruthy();
   });
 
   it("ignores abort errors", async () => {

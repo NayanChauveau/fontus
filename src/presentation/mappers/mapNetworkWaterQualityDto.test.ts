@@ -71,6 +71,14 @@ describe("mapNetworkWaterQualityDto", () => {
     expect(nitrites?.canonicalValueLabel).toBe("< 0,01 mg/L");
     expect(aluminium?.reconstructed).toBe(false);
     expect(viewModel.reconstructedSumNote).toBeNull();
+    expect(viewModel.bannerTone).toBe("ok");
+    expect(viewModel.limitesBactLabel).toBe("conformes");
+    expect(viewModel.limitesPcLabel).toBe("conformes");
+    expect(viewModel.priorityCards).toHaveLength(7);
+    expect(
+      viewModel.priorityCards.find((card) => card.id === "nitrates")?.empty,
+    ).toBe(false);
+    expect(viewModel.disclaimer).toMatch(/verdict légal/);
   });
 
   it("marks a reconstructed PFAS-20 sum", () => {
@@ -190,6 +198,29 @@ describe("mapNetworkWaterQualityDto", () => {
     expect(viewModel.sampledAtLabel).toBeNull();
     expect(viewModel.otherMeasurements[0]?.sampledAtLabel).toBe("");
     expect(viewModel.otherMeasurements[0]?.canonicalValueLabel).toBeNull();
+    expect(viewModel.bannerTone).toBe("neutral");
+  });
+
+  it("marks the ARS banner as an alert when a limit code is N", () => {
+    const viewModel = mapNetworkWaterQualityDto({
+      networkCode: "033001214",
+      windowFrom: "2025-09-02",
+      source: "cache",
+      latestMeasurements: [],
+      latestSample: {
+        code: "s",
+        sampledAt: "2026-06-18T11:40:00.000Z",
+        conclusion: "Eau d'alimentation conforme.",
+        conformiteLimitesBact: "N",
+        conformiteLimitesPc: "C",
+        source: "hubeau",
+        measurements: [],
+      },
+    });
+
+    expect(viewModel.bannerTone).toBe("alert");
+    expect(viewModel.limitesBactLabel).toBe("non conformes");
+    expect(viewModel.limitesPcLabel).toBe("conformes");
   });
 
   it("maps FR/UE comparison statuses and kinds", () => {
@@ -390,6 +421,11 @@ describe("mapNetworkWaterQualityDto", () => {
     expect(pfoa?.us?.thresholdLabel).toBe("< 0,002 / 0,004 µg/L");
     expect(aluminium?.fr?.statusLabel).toBe("dépassement");
     expect(aluminium?.eu).toBeNull();
+    expect(viewModel.bannerTone).toBe("neutral");
+    expect(
+      viewModel.priorityCards.find((card) => card.id === "pfas")?.measurements[0]
+        ?.canonicalId,
+    ).toBe("pfoa");
   });
 });
 

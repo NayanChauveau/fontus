@@ -14,6 +14,7 @@ export type NetworkMeasurementViewModel = {
   parameterLabel: string;
   canonicalName: string | null;
   canonicalId: string | null;
+  category: string | null;
   originalLabel: string | null;
   valueLabel: string;
   canonicalValueLabel: string | null;
@@ -29,14 +30,35 @@ export type NetworkMeasurementViewModel = {
   strict: ComparisonViewModel | null;
 };
 
+export type PriorityCardId =
+  | "pfas"
+  | "nitrates"
+  | "pesticides"
+  | "lead"
+  | "arsenic"
+  | "microbio"
+  | "hardness";
+
+export type PriorityCardViewModel = {
+  id: PriorityCardId;
+  title: string;
+  empty: boolean;
+  measurements: NetworkMeasurementViewModel[];
+};
+
 export type NetworkAnalysesViewModel = {
   networkCode: string;
   sampledAtLabel: string | null;
   conclusion: string | null;
+  bannerTone: "ok" | "alert" | "neutral";
+  limitesBactLabel: string | null;
+  limitesPcLabel: string | null;
   officialNote: string;
   perParameterDateNote: string;
   reconstructedSumNote: string | null;
+  disclaimer: string;
   sourceLabel: string;
+  priorityCards: PriorityCardViewModel[];
   priorityMeasurements: NetworkMeasurementViewModel[];
   otherMeasurements: NetworkMeasurementViewModel[];
 };

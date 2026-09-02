@@ -8,6 +8,7 @@ import type {
   ComparisonViewModel,
   NetworkAnalysesViewModel,
   NetworkMeasurementViewModel,
+  PriorityCardViewModel,
 } from "@/presentation/view-models/NetworkAnalysesViewModel";
 
 type LoadStatus = "loading" | "ready" | "unavailable";
@@ -88,44 +89,41 @@ function AnalysesResults({
 
   return (
     <div className="mt-3 flex flex-col gap-4">
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900 dark:bg-emerald-950/40">
-        <p className="text-xs font-medium uppercase tracking-wide text-emerald-800 dark:text-emerald-300">
-          {fr.analyses.conclusionTitle}
-        </p>
-        <p className="mt-1 text-sm font-medium text-zinc-950 dark:text-zinc-50">
-          {viewModel.conclusion ?? fr.analyses.noConclusion}
-        </p>
-        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-          {viewModel.officialNote}
-        </p>
-        {viewModel.sampledAtLabel && (
-          <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
-            {fr.analyses.sampledAt} {viewModel.sampledAtLabel}
-          </p>
-        )}
-        <p className="mt-1 text-xs text-zinc-500">
-          {fr.analyses.source} : {viewModel.sourceLabel}
-        </p>
-        <p className="mt-2 text-xs text-zinc-500">
-          {viewModel.perParameterDateNote}
-        </p>
-      </div>
+      <OfficialBanner viewModel={viewModel} />
 
       {isEmpty ? (
         <p className="text-sm text-zinc-500">{fr.analyses.empty}</p>
       ) : (
         <>
+          <section>
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              {fr.analyses.cardsTitle}
+            </h4>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {viewModel.priorityCards.map((card) => (
+                <PriorityCard key={card.id} card={card} />
+              ))}
+            </div>
+          </section>
+
           {viewModel.priorityMeasurements.length > 0 && (
             <MeasurementTable
-              title={fr.analyses.priorityTitle}
+              title={fr.analyses.comparisonTitle}
               measurements={viewModel.priorityMeasurements}
             />
           )}
           {viewModel.otherMeasurements.length > 0 && (
-            <MeasurementTable
-              title={fr.analyses.otherTitle}
-              measurements={viewModel.otherMeasurements}
-            />
+            <details className="rounded-lg border border-zinc-200 px-4 py-3 dark:border-zinc-800">
+              <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                {fr.analyses.otherToggle}
+              </summary>
+              <div className="mt-3">
+                <MeasurementTable
+                  title={fr.analyses.otherTitle}
+                  measurements={viewModel.otherMeasurements}
+                />
+              </div>
+            </details>
           )}
           {viewModel.reconstructedSumNote && (
             <p className="text-xs text-zinc-500">
@@ -134,9 +132,110 @@ function AnalysesResults({
           )}
           <p className="text-xs text-zinc-500">{fr.analyses.noThresholdNote}</p>
           <p className="text-xs text-zinc-500">{fr.analyses.strictNote}</p>
+          <p className="text-xs text-zinc-500">{viewModel.disclaimer}</p>
         </>
       )}
     </div>
+  );
+}
+
+function OfficialBanner({
+  viewModel,
+}: {
+  viewModel: NetworkAnalysesViewModel;
+}) {
+  const tone =
+    viewModel.bannerTone === "alert"
+      ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40"
+      : viewModel.bannerTone === "ok"
+        ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/40"
+        : "border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950/40";
+  const kicker =
+    viewModel.bannerTone === "alert"
+      ? "text-red-800 dark:text-red-300"
+      : viewModel.bannerTone === "ok"
+        ? "text-emerald-800 dark:text-emerald-300"
+        : "text-zinc-600 dark:text-zinc-400";
+
+  return (
+    <div className={`rounded-lg border px-4 py-3 ${tone}`}>
+      <p className={`text-xs font-medium uppercase tracking-wide ${kicker}`}>
+        {fr.analyses.conclusionTitle}
+      </p>
+      <p className="mt-1 text-sm font-medium text-zinc-950 dark:text-zinc-50">
+        {viewModel.conclusion ?? fr.analyses.noConclusion}
+      </p>
+      {viewModel.limitesBactLabel && (
+        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+          {fr.analyses.limitesBact} : {viewModel.limitesBactLabel}
+        </p>
+      )}
+      {viewModel.limitesPcLabel && (
+        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+          {fr.analyses.limitesPc} : {viewModel.limitesPcLabel}
+        </p>
+      )}
+      <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+        {viewModel.officialNote}
+      </p>
+      {viewModel.sampledAtLabel && (
+        <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+          {fr.analyses.sampledAt} {viewModel.sampledAtLabel}
+        </p>
+      )}
+      <p className="mt-1 text-xs text-zinc-500">
+        {fr.analyses.source} : {viewModel.sourceLabel}
+      </p>
+      <p className="mt-2 text-xs text-zinc-500">
+        {viewModel.perParameterDateNote}
+      </p>
+    </div>
+  );
+}
+
+function PriorityCard({ card }: { card: PriorityCardViewModel }) {
+  const hero = card.measurements[0];
+  const rest = card.measurements.slice(1);
+
+  return (
+    <article className="rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
+      <h5 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        {card.title}
+      </h5>
+      {!hero ? (
+        <p className="mt-2 text-sm text-zinc-500">{fr.analyses.cardEmpty}</p>
+      ) : (
+        <>
+          <p className="mt-2 text-sm font-medium text-zinc-950 dark:text-zinc-50">
+            {hero.parameterLabel}
+          </p>
+          <p className="mt-1 font-mono text-sm text-zinc-800 dark:text-zinc-200">
+            {hero.valueLabel}
+          </p>
+          {hero.reconstructed && (
+            <p className="text-[11px] text-zinc-500">{fr.analyses.reconstructed}</p>
+          )}
+          <div className="mt-2 text-xs">
+            <ComparisonCell comparison={hero.fr} />
+          </div>
+          {hero.sampledAtLabel && (
+            <p className="mt-2 text-[11px] text-zinc-500">
+              {fr.analyses.sampledAt} {hero.sampledAtLabel}
+            </p>
+          )}
+          {rest.map((measurement) => (
+            <p
+              key={measurement.parameterCode}
+              className="mt-2 text-xs text-zinc-600 dark:text-zinc-400"
+            >
+              {measurement.parameterLabel}
+              {" · "}
+              <span className="font-mono">{measurement.valueLabel}</span>
+            </p>
+          ))}
+        </>
+      )}
+    </article>
   );
 }
 
