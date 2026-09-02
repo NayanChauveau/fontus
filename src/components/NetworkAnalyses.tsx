@@ -10,6 +10,7 @@ import type {
   NetworkMeasurementViewModel,
   ParameterHistoryViewModel,
   PriorityCardViewModel,
+  SourceRefViewModel,
 } from "@/presentation/view-models/NetworkAnalysesViewModel";
 
 type LoadStatus = "loading" | "ready" | "unavailable";
@@ -92,57 +93,50 @@ function AnalysesResults({
     <div className="mt-3 flex flex-col gap-4">
       <OfficialBanner viewModel={viewModel} />
 
-      {isEmpty ? (
+      {isEmpty && (
         <p className="text-sm text-zinc-500">{fr.analyses.empty}</p>
-      ) : (
-        <>
-          <section>
-            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              {fr.analyses.cardsTitle}
-            </h4>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {viewModel.priorityCards.map((card) => (
-                <PriorityCard key={card.id} card={card} />
-              ))}
-            </div>
-          </section>
-
-          {viewModel.parameterHistories.length > 0 && (
-            <HistorySection
-              histories={viewModel.parameterHistories}
-              windowFromLabel={viewModel.windowFromLabel}
-            />
-          )}
-
-          {viewModel.priorityMeasurements.length > 0 && (
-            <MeasurementTable
-              title={fr.analyses.comparisonTitle}
-              measurements={viewModel.priorityMeasurements}
-            />
-          )}
-          {viewModel.otherMeasurements.length > 0 && (
-            <details className="rounded-lg border border-zinc-200 px-4 py-3 dark:border-zinc-800">
-              <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                {fr.analyses.otherToggle}
-              </summary>
-              <div className="mt-3">
-                <MeasurementTable
-                  title={fr.analyses.otherTitle}
-                  measurements={viewModel.otherMeasurements}
-                />
-              </div>
-            </details>
-          )}
-          {viewModel.reconstructedSumNote && (
-            <p className="text-xs text-zinc-500">
-              {viewModel.reconstructedSumNote}
-            </p>
-          )}
-          <p className="text-xs text-zinc-500">{fr.analyses.noThresholdNote}</p>
-          <p className="text-xs text-zinc-500">{fr.analyses.strictNote}</p>
-          <p className="text-xs text-zinc-500">{viewModel.disclaimer}</p>
-        </>
       )}
+
+      <section>
+        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          {fr.analyses.cardsTitle}
+        </h4>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {viewModel.priorityCards.map((card) => (
+            <PriorityCard key={card.id} card={card} />
+          ))}
+        </div>
+      </section>
+
+      {viewModel.parameterHistories.length > 0 && (
+        <HistorySection
+          histories={viewModel.parameterHistories}
+          windowFromLabel={viewModel.windowFromLabel}
+        />
+      )}
+
+      {viewModel.priorityMeasurements.length > 0 && (
+        <MeasurementTable
+          title={fr.analyses.comparisonTitle}
+          measurements={viewModel.priorityMeasurements}
+        />
+      )}
+
+      <MeasurementTable
+        title={fr.analyses.allAnalysesTitle}
+        measurements={viewModel.exhaustiveMeasurements}
+        provenance
+      />
+
+      {viewModel.reconstructedSumNote && (
+        <p className="text-xs text-zinc-500">
+          {viewModel.reconstructedSumNote}
+        </p>
+      )}
+      <p className="text-xs text-zinc-500">{fr.analyses.noThresholdNote}</p>
+      <p className="text-xs text-zinc-500">{fr.analyses.strictNote}</p>
+      <p className="text-xs text-zinc-500">{viewModel.disclaimer}</p>
+      <SourcesList sources={viewModel.sources} />
     </div>
   );
 }
@@ -346,9 +340,11 @@ function HistorySparkline({
 function MeasurementTable({
   title,
   measurements,
+  provenance = false,
 }: {
   title: string;
   measurements: NetworkMeasurementViewModel[];
+  provenance?: boolean;
 }) {
   return (
     <div>
@@ -361,6 +357,9 @@ function MeasurementTable({
             <tr className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800">
               <th className="py-2 pr-3 font-medium">{fr.analyses.parameter}</th>
               <th className="py-2 pr-3 font-medium">{fr.analyses.value}</th>
+              {provenance && (
+                <th className="py-2 pr-3 font-medium">{fr.analyses.unit}</th>
+              )}
               <th className="py-2 pr-3 font-medium">{fr.analyses.compareFr}</th>
               <th className="py-2 pr-3 font-medium">{fr.analyses.compareEu}</th>
               <th className="py-2 pr-3 font-medium">{fr.analyses.compareCh}</th>
@@ -372,6 +371,9 @@ function MeasurementTable({
                 {fr.analyses.compareStrict}
               </th>
               <th className="py-2 pr-3 font-medium">{fr.analyses.date}</th>
+              {provenance && (
+                <th className="py-2 pr-3 font-medium">{fr.analyses.udi}</th>
+              )}
               <th className="py-2 font-medium">{fr.analyses.source}</th>
             </tr>
           </thead>
@@ -395,7 +397,15 @@ function MeasurementTable({
                   )}
                 </td>
                 <td className="py-2 pr-3 font-mono text-zinc-800 dark:text-zinc-200">
-                  <p>{measurement.valueLabel}</p>
+                  <p
+                    className={
+                      measurement.emptyKind
+                        ? "font-sans text-zinc-500"
+                        : undefined
+                    }
+                  >
+                    {measurement.valueLabel}
+                  </p>
                   {measurement.reconstructed && (
                     <p
                       className="font-sans text-[11px] text-zinc-500"
@@ -405,6 +415,11 @@ function MeasurementTable({
                     </p>
                   )}
                 </td>
+                {provenance && (
+                  <td className="py-2 pr-3 font-mono text-xs text-zinc-500">
+                    {measurement.unitLabel ?? "—"}
+                  </td>
+                )}
                 <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
                   <ComparisonCell comparison={measurement.fr} />
                 </td>
@@ -421,10 +436,15 @@ function MeasurementTable({
                   <ComparisonCell comparison={measurement.strict} />
                 </td>
                 <td className="py-2 pr-3 text-xs text-zinc-500">
-                  {measurement.sampledAtLabel}
+                  {measurement.sampledAtLabel || "—"}
                 </td>
+                {provenance && (
+                  <td className="py-2 pr-3 font-mono text-xs text-zinc-500">
+                    {measurement.udiLabel}
+                  </td>
+                )}
                 <td className="py-2 text-xs text-zinc-500">
-                  {measurement.sourceLabel}
+                  {measurement.sourceLabel || "—"}
                 </td>
               </tr>
             ))}
@@ -472,5 +492,35 @@ function ComparisonCell({
         <p className="text-[11px] text-zinc-500">{comparison.kindLabel}</p>
       )}
     </div>
+  );
+}
+
+function SourcesList({ sources }: { sources: SourceRefViewModel[] }) {
+  return (
+    <section>
+      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        {fr.analyses.sourcesTitle}
+      </h4>
+      <ul className="space-y-1 text-xs text-zinc-600 dark:text-zinc-400">
+        {sources.map((source) => (
+          <li key={source.id}>
+            <span className="text-zinc-500">{source.kindLabel}</span>
+            {" · "}
+            {source.href ? (
+              <a
+                href={source.href}
+                target="_blank"
+                rel="noreferrer"
+                className="text-emerald-800 underline decoration-emerald-800/40 underline-offset-2 dark:text-emerald-300"
+              >
+                {source.label}
+              </a>
+            ) : (
+              source.label
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

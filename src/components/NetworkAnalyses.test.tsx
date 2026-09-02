@@ -78,6 +78,55 @@ describe("NetworkAnalyses", () => {
               ],
             },
             {
+              canonicalId: "pfas20",
+              canonicalName: "Somme PFAS-20",
+              unit: "µg/L",
+              min: 0.01,
+              max: 0.01,
+              median: 0.01,
+              count: 2,
+              trend: "insufficient",
+              warnings: [],
+              points: [
+                {
+                  parameterCode: "8847",
+                  parameterLabel: "Somme PFAS-20",
+                  rawText: "0,01",
+                  numericValue: 0.01,
+                  qualifier: "eq",
+                  unit: "µg/L",
+                  sampledAt: "2026-01-01T00:00:00.000Z",
+                  resolution: {
+                    canonicalId: "pfas20",
+                    canonicalName: "Somme PFAS-20",
+                    category: "pfas",
+                    displayPriority: 12,
+                    canonicalUnit: "µg/L",
+                    canonicalNumericValue: 0.01,
+                    conversion: "identity",
+                  },
+                },
+                {
+                  parameterCode: "8847",
+                  parameterLabel: "Somme PFAS-20",
+                  rawText: "0,01",
+                  numericValue: 0.01,
+                  qualifier: "eq",
+                  unit: "µg/L",
+                  sampledAt: "2026-06-01T00:00:00.000Z",
+                  resolution: {
+                    canonicalId: "pfas20",
+                    canonicalName: "Somme PFAS-20",
+                    category: "pfas",
+                    displayPriority: 12,
+                    canonicalUnit: "µg/L",
+                    canonicalNumericValue: 0.01,
+                    conversion: "identity",
+                  },
+                },
+              ],
+            },
+            {
               canonicalId: "lead",
               canonicalName: "Plomb",
               unit: "µg/L",
@@ -361,7 +410,7 @@ describe("NetworkAnalyses", () => {
                   binding: true,
                   thresholdLabel: null,
                   citation: null,
-                  sourceUrl: null,
+                  sourceUrl: "https://example.test/seuil",
                 },
                 ch: {
                   status: "no_threshold",
@@ -405,6 +454,14 @@ describe("NetworkAnalyses", () => {
     expect(screen.getByLabelText(/Évolution Nitrates/)).toBeTruthy();
     expect(screen.getByText("Points de vigilance")).toBeTruthy();
     expect(screen.getByText("Comparaison par substance")).toBeTruthy();
+    expect(screen.getByText("Toutes les analyses")).toBeTruthy();
+    expect(screen.getByText("Sources")).toBeTruthy();
+    expect(screen.getByText("Mesures")).toBeTruthy();
+    expect(screen.getAllByText("non analysé").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("033001214").length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "Arrêté du 30 décembre 2022" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Source du seuil" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "OPBD" })).toBeTruthy();
     expect(screen.getByText("Limites bactériologiques : conformes")).toBeTruthy();
     expect(screen.getByText("PFAS")).toBeTruthy();
     expect(screen.getAllByText("Pas d’analyse récente").length).toBeGreaterThan(0);
@@ -414,12 +471,12 @@ describe("NetworkAnalyses", () => {
     expect(screen.getAllByText("<0,034 µg/L").length).toBeGreaterThan(0);
     expect(screen.getAllByText("reconstruit").length).toBeGreaterThan(0);
     expect(screen.getAllByText("< 0,034 / 0,1 µg/L").length).toBeGreaterThan(0);
-    expect(screen.getByText("0,001 / 0,5 µg/L")).toBeTruthy();
+    expect(screen.getAllByText("0,001 / 0,5 µg/L").length).toBeGreaterThan(0);
     expect(screen.getAllByText("0,001 / 0,004 µg/L").length).toBeGreaterThan(0);
     expect(screen.getAllByText("conforme").length).toBeGreaterThan(0);
     expect(screen.getAllByText("dépassement").length).toBeGreaterThan(0);
-    expect(screen.getByText("non comparable")).toBeTruthy();
-    expect(screen.getByText("LQ > seuil")).toBeTruthy();
+    expect(screen.getAllByText("non comparable").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("LQ > seuil").length).toBeGreaterThan(0);
     expect(screen.getAllByText("FR").length).toBeGreaterThan(0);
     expect(screen.getAllByText("UE").length).toBeGreaterThan(0);
     expect(screen.getAllByText("CH").length).toBeGreaterThan(0);
@@ -429,9 +486,9 @@ describe("NetworkAnalyses", () => {
     expect(screen.getAllByText("référence stricte (site)").length).toBeGreaterThan(
       0,
     );
-    expect(screen.getByText("Aluminium")).toBeTruthy();
-    expect(screen.getByText("Inconnu")).toBeTruthy();
-    expect(screen.getByText("Aspect")).toBeTruthy();
+    expect(screen.getAllByText("Aluminium").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Inconnu").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Aspect").length).toBeGreaterThan(0);
     expect(screen.getAllByText("—").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/somme PFAS-20/).length).toBeGreaterThan(1);
     vi.unstubAllGlobals();
@@ -470,6 +527,9 @@ describe("NetworkAnalyses", () => {
     await waitFor(() => {
       expect(screen.getByText(/Aucune analyse/)).toBeTruthy();
     });
+    expect(screen.getByText("Toutes les analyses")).toBeTruthy();
+    expect(screen.getByText("Sources")).toBeTruthy();
+    expect(screen.getAllByText("pas d’analyse récente").length).toBeGreaterThan(0);
     empty.unmount();
 
     vi.stubGlobal(

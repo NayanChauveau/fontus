@@ -81,6 +81,18 @@ describe("mapNetworkWaterQualityDto", () => {
     expect(viewModel.disclaimer).toMatch(/verdict légal/);
     expect(viewModel.parameterHistories).toEqual([]);
     expect(viewModel.windowFromLabel).toMatch(/2025/);
+    expect(aluminium?.udiLabel).toBe("033001214");
+    expect(aluminium?.unitLabel).toBe("µg/L");
+    expect(viewModel.sources[0]?.kindLabel).toBe("Mesures");
+    expect(viewModel.sources[0]?.href).toBe("https://hubeau.eaufrance.fr/");
+    expect(
+      viewModel.exhaustiveMeasurements.find((row) => row.canonicalId === "lead")
+        ?.emptyKind,
+    ).toBe("not_analysed");
+    expect(
+      viewModel.exhaustiveMeasurements.find((row) => row.canonicalId === "lead")
+        ?.valueLabel,
+    ).toBe("non analysé");
   });
 
   it("maps a nitrates history with stats and an LQ warning", () => {
@@ -424,6 +436,8 @@ describe("mapNetworkWaterQualityDto", () => {
     expect(viewModel.otherMeasurements[0]?.sampledAtLabel).toBe("");
     expect(viewModel.otherMeasurements[0]?.canonicalValueLabel).toBeNull();
     expect(viewModel.bannerTone).toBe("neutral");
+    expect(viewModel.otherMeasurements[0]?.udiLabel).toBe("033001214");
+    expect(viewModel.otherMeasurements[0]?.unitLabel).toBeNull();
   });
 
   it("marks the ARS banner as an alert when a limit code is N", () => {
@@ -446,6 +460,25 @@ describe("mapNetworkWaterQualityDto", () => {
     expect(viewModel.bannerTone).toBe("alert");
     expect(viewModel.limitesBactLabel).toBe("non conformes");
     expect(viewModel.limitesPcLabel).toBe("conformes");
+    expect(viewModel.exhaustiveMeasurements[0]?.emptyKind).toBe("not_analysed");
+  });
+
+  it("marks the watch list as not recent when the window is empty", () => {
+    const viewModel = mapNetworkWaterQualityDto({
+      networkCode: "033001214",
+      windowFrom: "2025-09-02",
+      source: "remote",
+      latestMeasurements: [],
+      latestSample: null,
+    });
+
+    expect(viewModel.exhaustiveMeasurements).toHaveLength(12);
+    expect(
+      viewModel.exhaustiveMeasurements.every((row) => row.emptyKind === "no_recent"),
+    ).toBe(true);
+    expect(viewModel.exhaustiveMeasurements[0]?.valueLabel).toBe(
+      "pas d’analyse récente",
+    );
   });
 
   it("maps FR/UE comparison statuses and kinds", () => {
@@ -636,6 +669,9 @@ describe("mapNetworkWaterQualityDto", () => {
 
     expect(nitrates?.fr?.statusLabel).toBe("conforme");
     expect(nitrates?.fr?.kindLabel).toBe("limite légale");
+    expect(nitrates?.fr?.sourceUrl).toBe("https://example.test");
+    expect(nitrates?.fr?.citation).toBe("arrêté");
+    expect(nitrates?.strict?.sourceUrl).toBeNull();
     expect(nitrates?.eu?.statusLabel).toBe("LQ > seuil");
     expect(nitrates?.eu?.kindLabel).toBe("référence de qualité");
     expect(nitrates?.ch?.statusLabel).toBe("conforme");

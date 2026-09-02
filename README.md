@@ -18,7 +18,7 @@ pnpm dev
 
 App sur **http://localhost:3100** (pas 3000).
 
-- `/` : adresse → commune / INSEE → réseaux UDI → bandeau ARS, cartes, historique, comparaison FR/UE/CH/US
+- `/` : adresse → commune / INSEE → réseaux UDI → bandeau ARS, cartes, historique, comparaison FR/UE/CH/US, toutes les analyses + provenance
 - `/api/addresses/suggest?q=` : suggestions
 - `/api/addresses/resolve` : confirmation d’une suggestion
 - `/api/networks?citycode=` : UDI de la commune (cache 7 jours)

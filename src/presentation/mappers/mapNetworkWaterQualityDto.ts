@@ -11,7 +11,9 @@ import type {
   NetworkMeasurementViewModel,
   ParameterHistoryViewModel,
 } from "../view-models/NetworkAnalysesViewModel";
+import { buildExhaustiveRows } from "./buildExhaustiveRows";
 import { buildPriorityCards } from "./buildPriorityCards";
+import { collectSources } from "./collectSources";
 import { resolveBannerTone } from "./resolveBannerTone";
 
 export function mapNetworkWaterQualityDto(
@@ -30,10 +32,15 @@ export function mapNetworkWaterQualityDto(
         ? formatSampledAt(measurement.sampledAt)
         : (sampledAtLabel ?? ""),
       sourceLabel,
+      dto.networkCode,
     ),
   );
 
   const priorityMeasurements = measurements.filter((row) => row.priority);
+  const pageSourceLabel =
+    dto.source === "cache"
+      ? fr.analyses.sourceCache
+      : fr.analyses.sourceRemote;
 
   return {
     networkCode: dto.networkCode,
@@ -49,18 +56,20 @@ export function mapNetworkWaterQualityDto(
     officialNote: fr.analyses.officialNote,
     perParameterDateNote: fr.analyses.perParameterDateNote,
     disclaimer: fr.analyses.disclaimer,
-    sourceLabel:
-      dto.source === "cache"
-        ? fr.analyses.sourceCache
-        : fr.analyses.sourceRemote,
+    sourceLabel: pageSourceLabel,
     windowFromLabel: dto.windowFrom ? formatDateOnly(dto.windowFrom) : null,
     parameterHistories: (dto.parameterHistories ?? []).map(toHistoryViewModel),
     priorityCards: buildPriorityCards(priorityMeasurements),
     priorityMeasurements,
     otherMeasurements: measurements.filter((row) => !row.priority),
+    exhaustiveMeasurements: buildExhaustiveRows(measurements, {
+      networkCode: dto.networkCode,
+      hasRecentSample: sample !== null || measurements.length > 0,
+    }),
     reconstructedSumNote: measurements.some((row) => row.reconstructed)
       ? fr.analyses.reconstructedSumNote
       : null,
+    sources: collectSources(measurements, pageSourceLabel),
   };
 }
 
@@ -68,6 +77,7 @@ function toMeasurementViewModel(
   measurement: MeasurementDto,
   sampledAtLabel: string,
   sourceLabel: string,
+  udiLabel: string,
 ): NetworkMeasurementViewModel {
   const resolution = measurement.resolution;
   const canonicalName = resolution?.canonicalName ?? null;
@@ -89,6 +99,9 @@ function toMeasurementViewModel(
     reconstructed: resolution?.derived === "reconstructed_sum",
     sampledAtLabel,
     sourceLabel,
+    udiLabel,
+    unitLabel: resolution?.canonicalUnit ?? measurement.unit,
+    emptyKind: null,
     priority: (resolution?.displayPriority ?? 9999) < 1000,
     fr: toComparisonViewModel(measurement.comparisons?.fr ?? null),
     eu: toComparisonViewModel(measurement.comparisons?.eu ?? null),

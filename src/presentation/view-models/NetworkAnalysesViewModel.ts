@@ -1,3 +1,10 @@
+export type SourceRefViewModel = {
+  id: string;
+  label: string;
+  href: string | null;
+  kindLabel: string;
+};
+
 export type ComparisonViewModel = {
   status: string;
   statusLabel: string;
@@ -22,6 +29,9 @@ export type NetworkMeasurementViewModel = {
   reconstructed: boolean;
   sampledAtLabel: string;
   sourceLabel: string;
+  udiLabel: string;
+  unitLabel: string | null;
+  emptyKind: "not_analysed" | "no_recent" | null;
   priority: boolean;
   fr: ComparisonViewModel | null;
   eu: ComparisonViewModel | null;
@@ -78,4 +88,6 @@ export type NetworkAnalysesViewModel = {
   priorityCards: PriorityCardViewModel[];
   priorityMeasurements: NetworkMeasurementViewModel[];
   otherMeasurements: NetworkMeasurementViewModel[];
+  exhaustiveMeasurements: NetworkMeasurementViewModel[];
+  sources: SourceRefViewModel[];
 };

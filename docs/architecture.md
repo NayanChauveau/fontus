@@ -122,4 +122,13 @@ Historique nitrates / PFAS-20 / plomb sur la fenêtre déjà cachée (6–36 moi
 - On ne détecte pas encore un changement de méthode (champ absent de `resultats_dis`)
 - Graphique SVG local, pas de bibliothèque de charts
 
-Modules suivants : I9 (tableau exhaustif).
+## I9
+
+Tableau « Toutes les analyses » : chaque ligne porte sa provenance.
+
+- Valeur, unité, date, UDI, source de la mesure
+- Seuil + juridiction ; les sources (mesures + textes officiels) sont listées une fois en bas, dédoublonnées par citation
+- Watchlist prioritaire toujours présente : `non analysé` si un prélèvement existe sans cette substance, `pas d’analyse récente` si la fenêtre est vide
+- Les cartes gardent `Pas d’analyse récente` au niveau famille
+
+Modules suivants : I10 (import data.gouv).
