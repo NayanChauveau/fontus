@@ -18,9 +18,10 @@ pnpm dev
 
 App sur **http://localhost:3100** (pas 3000).
 
-- `/` : autocomplete d’adresse (Géoplateforme) → commune + code INSEE
+- `/` : adresse → commune / INSEE → réseaux UDI + certitude
 - `/api/addresses/suggest?q=` : suggestions
 - `/api/addresses/resolve` : confirmation d’une suggestion
+- `/api/networks?citycode=` : UDI de la commune (cache 7 jours)
 - `/api/health` : `{ status, postgres, checkedAt }`
 
 ## Quality gate

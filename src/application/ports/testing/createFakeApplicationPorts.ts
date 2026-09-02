@@ -19,6 +19,19 @@ export function createFakeApplicationPorts(
         return { ok: true, at: FIXED_PING_AT };
       },
     },
+    network: {
+      async listByCitycode() {
+        return {
+          citycode: "",
+          city: "",
+          year: 0,
+          confidence: "none",
+          networks: [],
+          hiddenNonResidentialCount: 0,
+          selectedNetworkCode: null,
+        };
+      },
+    },
     ...overrides,
   };
 

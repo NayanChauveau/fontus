@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { AddressSuggestionDto } from "@/application/dtos/AddressDto";
 import { MIN_ADDRESS_QUERY_LENGTH } from "@/application/addressQuery";
+import { DistributionNetworkList } from "@/components/DistributionNetworkList";
 import { mapAddressDtoToViewModel } from "@/presentation/mappers/mapAddressDto";
 import { fr } from "@/presentation/i18n/fr";
 import type { AddressSuggestionViewModel } from "@/presentation/view-models/AddressViewModel";
@@ -271,10 +272,14 @@ export function AddressSearch() {
               value={selected.coordinates}
             />
           </dl>
-          <p className="mt-4 text-xs text-zinc-500">
-            {resolving ? fr.address.searching : fr.address.udiPending}
-          </p>
         </section>
+      )}
+
+      {selected && !resolving && (
+        <DistributionNetworkList
+          key={selected.citycode}
+          citycode={selected.citycode}
+        />
       )}
     </div>
   );

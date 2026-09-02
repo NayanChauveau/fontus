@@ -1,0 +1,60 @@
+import type { RawUdiLink } from "../../domain/DistributionNetwork";
+import type { CommunesUdiGatewayPort } from "../../application/ports/CommunesUdiGatewayPort";
+import { parseCommunesUdiResponse } from "./parseCommunesUdiResponse";
+
+export const HUBEAU_COMMUNES_UDI_URL =
+  "https://hubeau.eaufrance.fr/api/v1/qualite_eau_potable/communes_udi";
+
+const REQUEST_TIMEOUT_MS = 8_000;
+const MAX_PAGES = 5;
+
+export type HttpGet = (url: URL, init: RequestInit) => Promise<Response>;
+
+export function createHubeauCommunesUdiGateway(
+  httpGet: HttpGet = fetch,
+): CommunesUdiGatewayPort {
+  return {
+    async listByCommune(citycode, year) {
+      const links: RawUdiLink[] = [];
+      let pageUrl = new URL(HUBEAU_COMMUNES_UDI_URL);
+      pageUrl.searchParams.set("code_commune", citycode);
+      pageUrl.searchParams.set("annee", String(year));
+      pageUrl.searchParams.set("size", "100");
+
+      for (let page = 0; page < MAX_PAGES; page += 1) {
+        const payload = await getJson(httpGet, pageUrl);
+        const parsed = parseCommunesUdiResponse(payload);
+        links.push(...parsed.links);
+
+        if (!parsed.next) {
+          break;
+        }
+        pageUrl = new URL(parsed.next);
+      }
+
+      return links;
+    },
+  };
+}
+
+async function getJson(httpGet: HttpGet, url: URL): Promise<unknown> {
+  let response: Response;
+  try {
+    response = await httpGet(url, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "eau-robinet/0.1 (tap-water-quality)",
+      },
+    });
+  } catch (error) {
+    throw new Error("HUBEAU_REQUEST_FAILED", { cause: error });
+  }
+
+  if (!response.ok) {
+    throw new Error(`HUBEAU_HTTP_${response.status}`);
+  }
+
+  return response.json();
+}

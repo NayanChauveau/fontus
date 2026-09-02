@@ -45,4 +45,16 @@ Module `geocoding` : Géoplateforme `/search` (pas `/completion`, qui n’expose
 - HTTP : `GET /api/addresses/suggest?q=`, `POST /api/addresses/resolve`
 - L’UI n’appelle jamais GeoPF ; le navigateur passe par les route handlers
 
-Modules suivants : `network`, `analyses`, `parameters`, `norms`, `comparison`.
+## I2
+
+Module `network` : Hub’Eau `communes_udi` + cache Postgres 7 jours + confidence.
+
+- `exact` seulement si 1 UDI pour la commune ; sinon `ambiguous` (jamais `probable`)
+- Arrondissements BAN (Paris / Lyon / Marseille) → code commune Hub’Eau (75056 / 69123 / 13055)
+- Les UDI portuaires / industrielles sont masquées pour une adresse d’habitation ; on ne choisit toujours pas un réseau unique si plusieurs UDI urbaines restent
+- On ne montre jamais une liste vide : échec technique plutôt que « aucun réseau »
+- Aucun réseau n’est sélectionné par défaut
+- Use case : `ListDistributionNetworksUseCase`
+- HTTP : `GET /api/networks?citycode=`
+
+Modules suivants : `analyses`, `parameters`, `norms`, `comparison`.
