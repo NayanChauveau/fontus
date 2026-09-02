@@ -40,7 +40,9 @@ export function mapNetworkWaterQualityDto(
   const pageSourceLabel =
     dto.source === "cache"
       ? fr.analyses.sourceCache
-      : fr.analyses.sourceRemote;
+      : dto.source === "import"
+        ? fr.analyses.sourceImport
+        : fr.analyses.sourceRemote;
 
   return {
     networkCode: dto.networkCode,

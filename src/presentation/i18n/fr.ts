@@ -93,6 +93,7 @@ export const fr = {
     source: "Source",
     sourceRemote: "Hub’Eau (SISE-Eaux)",
     sourceCache: "Hub’Eau (SISE-Eaux), cache local",
+    sourceImport: "data.gouv (SISE-Eaux DIS)",
     sourceHubEau: "Hub’Eau",
     parameter: "Paramètre",
     value: "Résultat",

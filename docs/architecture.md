@@ -131,4 +131,11 @@ Tableau « Toutes les analyses » : chaque ligne porte sa provenance.
 - Watchlist prioritaire toujours présente : `non analysé` si un prélèvement existe sans cette substance, `pas d’analyse récente` si la fenêtre est vide
 - Les cartes gardent `Pas d’analyse récente` au niveau famille
 
-Modules suivants : I10 (import data.gouv).
+## I10
+
+Import fichiers DIS data.gouv (`UDI_COM`, `PLV`, `RESULT`) quand Hub’Eau dépasse 20k lignes.
+
+- Même schéma que le cache analyses ; servi ensuite depuis Postgres
+- Déclenché seulement si même la fenêtre retenue est au-dessus du plafond API
+- Fichiers locaux via `DIS_IMPORT_DIR` (extrait filtré, pas le zip national entier dans la requête)
+- Sync mensuelle = redéposer les fichiers à jour, pas de cron au MVP

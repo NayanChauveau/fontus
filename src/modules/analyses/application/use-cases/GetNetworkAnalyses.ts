@@ -2,6 +2,7 @@ import {
   latestMeasurementsByParameter,
   latestSample,
   isFreshAnalysisSync,
+  HUBEAU_ROW_HARD_CAP,
   HUBEAU_ROW_SOFT_CAP,
   type AnalysisSample,
   type ParameterSnapshot,
@@ -13,6 +14,10 @@ import {
   windowFromDate,
 } from "../../domain/chooseAnalysisWindow";
 import type { AnalysesCachePort } from "../ports/AnalysesCachePort";
+import {
+  emptyDisImport,
+  type DisImportPort,
+} from "../ports/DisImportPort";
 import type { ResultatsDisGatewayPort } from "../ports/ResultatsDisGatewayPort";
 
 const MAX_PAGES = 20;
@@ -30,7 +35,7 @@ export type AnalysesErrorReporter = {
 export type GetNetworkAnalysesResult = {
   networkCode: string;
   windowFrom: string;
-  source: "cache" | "remote";
+  source: "cache" | "remote" | "import";
   latestSample: AnalysisSample | null;
   latestMeasurements: ParameterSnapshot[];
   historySnapshots: ParameterSnapshot[];
@@ -44,6 +49,7 @@ export class GetNetworkAnalyses {
     private readonly cache: AnalysesCachePort,
     private readonly now: () => Date = () => new Date(),
     private readonly reporter: AnalysesErrorReporter = { report() {} },
+    private readonly disImport: DisImportPort = emptyDisImport,
   ) {}
 
   async execute(networkCode: string): Promise<GetNetworkAnalysesResult> {
@@ -79,6 +85,23 @@ export class GetNetworkAnalyses {
     }
 
     const window = await this.resolveWindow(networkCode, now);
+    if (window.count > HUBEAU_ROW_HARD_CAP) {
+      const imported = await this.tryImport(networkCode, window.dateMin);
+      if (imported) {
+        await this.persist(networkCode, imported, window.dateMin, now);
+        console.info(
+          JSON.stringify({
+            scope: "analyses",
+            event: "dis_import",
+            networkCode,
+            windowFrom: window.dateMin,
+            sampleCount: imported.length,
+          }),
+        );
+        return toResult(networkCode, window.dateMin, "import", imported);
+      }
+    }
+
     const samples = await this.fetchAllPages(networkCode, window.dateMin);
     await this.persist(networkCode, samples, window.dateMin, now);
 
@@ -159,7 +182,24 @@ export class GetNetworkAnalyses {
     return {
       months: chosen.months,
       dateMin: windowFromDate(now, chosen.months),
+      count: chosen.count,
     };
+  }
+
+  private async tryImport(networkCode: string, dateMin: string) {
+    try {
+      const samples = await this.disImport.listByNetwork(networkCode, dateMin);
+      return samples.length > 0 ? samples : null;
+    } catch (error) {
+      this.reporter.report({
+        level: "error",
+        scope: "analyses",
+        event: "dis_import_failed",
+        cause: error,
+        context: { networkCode },
+      });
+      return null;
+    }
   }
 
   private async fetchAllPages(networkCode: string, dateMin: string) {
@@ -186,7 +226,7 @@ export class GetNetworkAnalyses {
 function toResult(
   networkCode: string,
   windowFrom: string,
-  source: "cache" | "remote",
+  source: "cache" | "remote" | "import",
   samples: AnalysisSample[],
 ): GetNetworkAnalysesResult {
   return {

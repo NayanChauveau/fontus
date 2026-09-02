@@ -475,6 +475,103 @@ describe("GetNetworkAnalyses", () => {
     );
     await expect(empty.execute(PAULIN)).rejects.toThrow("down");
   });
+
+  it("uses Hub’Eau when no DIS importer is configured above the cap", async () => {
+    const useCase = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 25_000;
+        },
+        async listPage() {
+          return { count: 25_000, next: null, samples: [latest] };
+        },
+      },
+      memoryCache(),
+      () => NOW,
+    );
+
+    expect((await useCase.execute(PAULIN)).source).toBe("remote");
+  });
+
+  it("imports DIS files when Hub’Eau exceeds the hard cap", async () => {
+    let listed = false;
+    const imported: AnalysisSample = {
+      ...latest,
+      source: "dis",
+    };
+    const useCase = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 25_000;
+        },
+        async listPage() {
+          listed = true;
+          return { count: 25_000, next: null, samples: [] };
+        },
+      },
+      memoryCache(),
+      () => NOW,
+      { report() {} },
+      {
+        async listByNetwork() {
+          return [imported];
+        },
+      },
+    );
+
+    const result = await useCase.execute(PAULIN);
+    expect(result.source).toBe("import");
+    expect(result.latestSample?.source).toBe("dis");
+    expect(listed).toBe(false);
+  });
+
+  it("falls back to Hub’Eau when the DIS import is empty or fails", async () => {
+    const reported: string[] = [];
+    const emptyImport = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 25_000;
+        },
+        async listPage() {
+          return { count: 25_000, next: null, samples: [latest] };
+        },
+      },
+      memoryCache(),
+      () => NOW,
+      { report() {} },
+      {
+        async listByNetwork() {
+          return [];
+        },
+      },
+    );
+    expect((await emptyImport.execute(PAULIN)).source).toBe("remote");
+
+    const failingImport = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 25_000;
+        },
+        async listPage() {
+          return { count: 25_000, next: null, samples: [latest] };
+        },
+      },
+      memoryCache(),
+      () => NOW,
+      {
+        report(event) {
+          reported.push(event.event);
+        },
+      },
+      {
+        async listByNetwork() {
+          throw new Error("zip missing");
+        },
+      },
+    );
+    expect((await failingImport.execute(PAULIN)).source).toBe("remote");
+    expect(reported).toEqual(["dis_import_failed"]);
+  });
 });
 
 function trackingGateway(onCall: () => void): ResultatsDisGatewayPort {

@@ -31,6 +31,8 @@ App sur **http://localhost:3100** (pas 3000).
 pnpm type-check && pnpm lint && pnpm test
 ```
 
+Quand Hub’Eau dépasse 20 000 lignes même sur 6 mois, on lit un extrait DIS local (`DIS_IMPORT_DIR` : fichiers `UDI_COM`, `PLV`, `RESULT` dézippés depuis [data.gouv](https://www.data.gouv.fr/datasets/resultats-du-controle-sanitaire-de-leau-distribuee-commune-par-commune)) et on écrit le même cache Postgres.
+
 Architecture : [`docs/architecture.md`](docs/architecture.md).
 
 Les erreurs applicatives (503 Hub’Eau, dégradations, crash UI) passent par `ObservabilityPort` et sortent sur stderr (lisible en local, JSON en prod). Rien n’est stocké en base ; Datadog se branchera plus tard sur ces logs.

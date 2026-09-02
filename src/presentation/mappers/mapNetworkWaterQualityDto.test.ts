@@ -688,5 +688,17 @@ describe("mapNetworkWaterQualityDto", () => {
         ?.canonicalId,
     ).toBe("pfoa");
   });
+
+  it("labels a data.gouv DIS import", () => {
+    const viewModel = mapNetworkWaterQualityDto({
+      networkCode: "033001214",
+      windowFrom: "2025-09-02",
+      source: "import",
+      latestMeasurements: [],
+      latestSample: null,
+    });
+
+    expect(viewModel.sourceLabel).toBe("data.gouv (SISE-Eaux DIS)");
+  });
 });
 

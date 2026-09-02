@@ -2,6 +2,7 @@ import type { AnalysesModuleFacade } from "../application/public";
 import type { AnalysesErrorReporter } from "../application/use-cases/GetNetworkAnalyses";
 import { GetNetworkAnalyses } from "../application/use-cases/GetNetworkAnalyses";
 import { createDrizzleAnalysesCache } from "./cache/createDrizzleAnalysesCache";
+import { createFileDisImport } from "./dis/createFileDisImport";
 import { createHubeauResultatsDisGateway } from "./hubeau/createHubeauResultatsDisGateway";
 
 export function createAnalysesModule(
@@ -13,6 +14,7 @@ export function createAnalysesModule(
       createDrizzleAnalysesCache(),
       () => new Date(),
       reporter,
+      createFileDisImport(process.env.DIS_IMPORT_DIR ?? ""),
     ),
   };
 }

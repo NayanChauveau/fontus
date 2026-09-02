@@ -89,7 +89,7 @@ export type ParameterHistoryDto = {
 export type NetworkWaterQualityDto = {
   networkCode: string;
   windowFrom: string;
-  source: "cache" | "remote";
+  source: "cache" | "remote" | "import";
   latestSample: AnalysisSampleDto | null;
   latestMeasurements: MeasurementDto[];
   historyMeasurements?: MeasurementDto[];
