@@ -8,8 +8,8 @@ vi.mock("@/components/AddressSearch", () => ({
   AddressSearch: () => <div>address-search</div>,
 }));
 
-vi.mock("@/components/ThemeToggle", () => ({
-  ThemeToggle: () => <button type="button">theme-toggle</button>,
+vi.mock("@/components/HomeHeader", () => ({
+  HomeHeader: () => <h1>home-header</h1>,
 }));
 
 describe("Home page", () => {
@@ -17,6 +17,6 @@ describe("Home page", () => {
     render(<Home />);
     expect(screen.getByRole("heading", { level: 1 })).toBeTruthy();
     expect(screen.getByText("address-search")).toBeTruthy();
-    expect(screen.getByText("theme-toggle")).toBeTruthy();
+    expect(screen.getByText("home-header")).toBeTruthy();
   });
 });

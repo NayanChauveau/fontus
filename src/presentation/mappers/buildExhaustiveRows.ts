@@ -1,4 +1,5 @@
 import { fr } from "../i18n/fr";
+import type { Messages } from "../i18n/messages";
 import type { NetworkMeasurementViewModel } from "../view-models/NetworkAnalysesViewModel";
 
 export const WATCH_PARAMETERS = [
@@ -39,6 +40,7 @@ export const WATCH_PARAMETERS = [
 export function buildExhaustiveRows(
   measurements: NetworkMeasurementViewModel[],
   input: { networkCode: string; hasRecentSample: boolean },
+  messages: Messages = fr,
 ): NetworkMeasurementViewModel[] {
   const byId = new Map<string, NetworkMeasurementViewModel>();
   for (const measurement of measurements) {
@@ -51,7 +53,7 @@ export function buildExhaustiveRows(
   const watchRows = WATCH_PARAMETERS.map((parameter) => {
     return (
       byId.get(parameter.id) ??
-      emptyWatchRow(parameter, input)
+      emptyWatchRow(parameter, input, messages)
     );
   });
   const rest = measurements.filter(
@@ -65,6 +67,7 @@ export function buildExhaustiveRows(
 function emptyWatchRow(
   parameter: (typeof WATCH_PARAMETERS)[number],
   input: { networkCode: string; hasRecentSample: boolean },
+  messages: Messages,
 ): NetworkMeasurementViewModel {
   const emptyKind = input.hasRecentSample ? "not_analysed" : "no_recent";
   return {
@@ -76,8 +79,8 @@ function emptyWatchRow(
     originalLabel: null,
     valueLabel:
       emptyKind === "not_analysed"
-        ? fr.analyses.notAnalysed
-        : fr.analyses.noRecentAnalysis,
+        ? messages.analyses.notAnalysed
+        : messages.analyses.noRecentAnalysis,
     canonicalValueLabel: null,
     converted: false,
     reconstructed: false,

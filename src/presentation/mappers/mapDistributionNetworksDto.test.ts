@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { en } from "../i18n/en";
 import { mapDistributionNetworksDto } from "./mapDistributionNetworksDto";
 
 describe("mapDistributionNetworksDto", () => {
@@ -40,5 +41,23 @@ describe("mapDistributionNetworksDto", () => {
     });
     expect(none.confidenceLabel).toContain("aucun");
     expect(none.disclaimer).toContain("Aucun réseau");
+  });
+
+  it("can map labels in english", () => {
+    const mapped = mapDistributionNetworksDto(
+      {
+        citycode: "33063",
+        city: "Bordeaux",
+        year: 2026,
+        confidence: "ambiguous",
+        networks: [{ code: "2", name: "Paulin", neighborhoods: [] }],
+        hiddenNonResidentialCount: 2,
+        selectedNetworkCode: null,
+      },
+      en,
+    );
+    expect(mapped.confidenceLabel).toBe("ambiguous match");
+    expect(mapped.networks[0]?.neighborhoodsLabel).toBe("District not specified");
+    expect(mapped.hiddenNote).toContain("2");
   });
 });

@@ -5,6 +5,7 @@ import type {
   ParameterHistoryDto,
 } from "@/application/dtos/NetworkWaterQualityDto";
 import { fr } from "../i18n/fr";
+import type { Messages } from "../i18n/messages";
 import type {
   ComparisonViewModel,
   NetworkAnalysesViewModel,
@@ -16,33 +17,48 @@ import { buildPriorityCards } from "./buildPriorityCards";
 import { collectSources } from "./collectSources";
 import { resolveBannerTone } from "./resolveBannerTone";
 
+export type MapperI18n = {
+  messages: Messages;
+  dateLocale: string;
+};
+
+const defaultI18n: MapperI18n = {
+  messages: fr,
+  dateLocale: "fr-FR",
+};
+
 export function mapNetworkWaterQualityDto(
   dto: NetworkWaterQualityDto,
+  i18n: MapperI18n = defaultI18n,
 ): NetworkAnalysesViewModel {
+  const { messages, dateLocale } = i18n;
   const sample = dto.latestSample;
-  const sampledAtLabel = sample ? formatSampledAt(sample.sampledAt) : null;
+  const sampledAtLabel = sample
+    ? formatSampledAt(sample.sampledAt, dateLocale)
+    : null;
   const sourceLabel =
     sample?.source === "hubeau"
-      ? fr.analyses.sourceHubEau
-      : sample?.source ?? fr.analyses.sourceHubEau;
+      ? messages.analyses.sourceHubEau
+      : sample?.source ?? messages.analyses.sourceHubEau;
   const measurements = dto.latestMeasurements.map((measurement) =>
     toMeasurementViewModel(
       measurement,
       measurement.sampledAt
-        ? formatSampledAt(measurement.sampledAt)
+        ? formatSampledAt(measurement.sampledAt, dateLocale)
         : (sampledAtLabel ?? ""),
       sourceLabel,
       dto.networkCode,
+      i18n,
     ),
   );
 
   const priorityMeasurements = measurements.filter((row) => row.priority);
   const pageSourceLabel =
     dto.source === "cache"
-      ? fr.analyses.sourceCache
+      ? messages.analyses.sourceCache
       : dto.source === "import"
-        ? fr.analyses.sourceImport
-        : fr.analyses.sourceRemote;
+        ? messages.analyses.sourceImport
+        : messages.analyses.sourceRemote;
 
   return {
     networkCode: dto.networkCode,
@@ -53,25 +69,36 @@ export function mapNetworkWaterQualityDto(
       conformiteLimitesBact: sample?.conformiteLimitesBact ?? null,
       conformiteLimitesPc: sample?.conformiteLimitesPc ?? null,
     }),
-    limitesBactLabel: limiteLabel(sample?.conformiteLimitesBact ?? null),
-    limitesPcLabel: limiteLabel(sample?.conformiteLimitesPc ?? null),
-    officialNote: fr.analyses.officialNote,
-    perParameterDateNote: fr.analyses.perParameterDateNote,
-    disclaimer: fr.analyses.disclaimer,
+    limitesBactLabel: limiteLabel(
+      sample?.conformiteLimitesBact ?? null,
+      messages,
+    ),
+    limitesPcLabel: limiteLabel(sample?.conformiteLimitesPc ?? null, messages),
+    officialNote: messages.analyses.officialNote,
+    perParameterDateNote: messages.analyses.perParameterDateNote,
+    disclaimer: messages.analyses.disclaimer,
     sourceLabel: pageSourceLabel,
-    windowFromLabel: dto.windowFrom ? formatDateOnly(dto.windowFrom) : null,
-    parameterHistories: (dto.parameterHistories ?? []).map(toHistoryViewModel),
-    priorityCards: buildPriorityCards(priorityMeasurements),
+    windowFromLabel: dto.windowFrom
+      ? formatDateOnly(dto.windowFrom, dateLocale)
+      : null,
+    parameterHistories: (dto.parameterHistories ?? []).map((history) =>
+      toHistoryViewModel(history, i18n),
+    ),
+    priorityCards: buildPriorityCards(priorityMeasurements, messages),
     priorityMeasurements,
     otherMeasurements: measurements.filter((row) => !row.priority),
-    exhaustiveMeasurements: buildExhaustiveRows(measurements, {
-      networkCode: dto.networkCode,
-      hasRecentSample: sample !== null || measurements.length > 0,
-    }),
+    exhaustiveMeasurements: buildExhaustiveRows(
+      measurements,
+      {
+        networkCode: dto.networkCode,
+        hasRecentSample: sample !== null || measurements.length > 0,
+      },
+      messages,
+    ),
     reconstructedSumNote: measurements.some((row) => row.reconstructed)
-      ? fr.analyses.reconstructedSumNote
+      ? messages.analyses.reconstructedSumNote
       : null,
-    sources: collectSources(measurements, pageSourceLabel),
+    sources: collectSources(measurements, pageSourceLabel, messages),
   };
 }
 
@@ -80,6 +107,7 @@ function toMeasurementViewModel(
   sampledAtLabel: string,
   sourceLabel: string,
   udiLabel: string,
+  i18n: MapperI18n,
 ): NetworkMeasurementViewModel {
   const resolution = measurement.resolution;
   const canonicalName = resolution?.canonicalName ?? null;
@@ -96,7 +124,7 @@ function toMeasurementViewModel(
     valueLabel: measurement.unit
       ? `${measurement.rawText} ${measurement.unit}`
       : measurement.rawText,
-    canonicalValueLabel: formatCanonicalValue(measurement),
+    canonicalValueLabel: formatCanonicalValue(measurement, i18n.dateLocale),
     converted: resolution?.conversion === "converted",
     reconstructed: resolution?.derived === "reconstructed_sum",
     sampledAtLabel,
@@ -105,25 +133,29 @@ function toMeasurementViewModel(
     unitLabel: resolution?.canonicalUnit ?? measurement.unit,
     emptyKind: null,
     priority: (resolution?.displayPriority ?? 9999) < 1000,
-    fr: toComparisonViewModel(measurement.comparisons?.fr ?? null),
-    eu: toComparisonViewModel(measurement.comparisons?.eu ?? null),
-    ch: toComparisonViewModel(measurement.comparisons?.ch ?? null),
-    us: toComparisonViewModel(measurement.comparisons?.us ?? null),
-    strict: toComparisonViewModel(measurement.comparisons?.strict ?? null),
+    fr: toComparisonViewModel(measurement.comparisons?.fr ?? null, i18n.messages),
+    eu: toComparisonViewModel(measurement.comparisons?.eu ?? null, i18n.messages),
+    ch: toComparisonViewModel(measurement.comparisons?.ch ?? null, i18n.messages),
+    us: toComparisonViewModel(measurement.comparisons?.us ?? null, i18n.messages),
+    strict: toComparisonViewModel(
+      measurement.comparisons?.strict ?? null,
+      i18n.messages,
+    ),
   };
 }
 
 function toComparisonViewModel(
   comparison: ComparisonDto | null,
+  messages: Messages,
 ): ComparisonViewModel | null {
   if (!comparison) {
     return null;
   }
   return {
     status: comparison.status,
-    statusLabel: statusLabel(comparison.status),
+    statusLabel: statusLabel(comparison.status, messages),
     thresholdLabel: comparison.thresholdLabel,
-    kindLabel: kindLabel(comparison.kind),
+    kindLabel: kindLabel(comparison.kind, messages),
     citation: comparison.citation,
     sourceUrl: comparison.sourceUrl,
     binding: comparison.binding,
@@ -131,48 +163,55 @@ function toComparisonViewModel(
   };
 }
 
-function limiteLabel(code: string | null): string | null {
+function limiteLabel(code: string | null, messages: Messages): string | null {
   if (code === "C") {
-    return fr.analyses.conformeCode;
+    return messages.analyses.conformeCode;
   }
   if (code === "N") {
-    return fr.analyses.nonConformeCode;
+    return messages.analyses.nonConformeCode;
   }
   return null;
 }
 
-function statusLabel(status: ComparisonDto["status"]): string {
+function statusLabel(
+  status: ComparisonDto["status"],
+  messages: Messages,
+): string {
   if (status === "compliant") {
-    return fr.analyses.compliant;
+    return messages.analyses.compliant;
   }
   if (status === "exceedance") {
-    return fr.analyses.exceedance;
+    return messages.analyses.exceedance;
   }
   if (status === "below_loq") {
-    return fr.analyses.belowLoq;
+    return messages.analyses.belowLoq;
   }
   if (status === "not_comparable") {
-    return fr.analyses.notComparable;
+    return messages.analyses.notComparable;
   }
-  return fr.analyses.noThreshold;
+  return messages.analyses.noThreshold;
 }
 
 function kindLabel(
   kind: ComparisonDto["kind"],
+  messages: Messages,
 ): string | null {
   if (kind === "legal_limit") {
-    return fr.analyses.legalLimit;
+    return messages.analyses.legalLimit;
   }
   if (kind === "quality_reference") {
-    return fr.analyses.qualityReference;
+    return messages.analyses.qualityReference;
   }
   if (kind === "site_metric") {
-    return fr.analyses.siteMetric;
+    return messages.analyses.siteMetric;
   }
   return null;
 }
 
-function formatCanonicalValue(measurement: MeasurementDto): string | null {
+function formatCanonicalValue(
+  measurement: MeasurementDto,
+  dateLocale: string,
+): string | null {
   const resolution = measurement.resolution;
   if (!resolution) {
     return null;
@@ -192,35 +231,35 @@ function formatCanonicalValue(measurement: MeasurementDto): string | null {
         ? "> "
         : "";
   const unit = resolution.canonicalUnit ?? "";
-  return `${prefix}${formatFrenchNumber(resolution.canonicalNumericValue)}${
+  return `${prefix}${formatNumber(resolution.canonicalNumericValue, dateLocale)}${
     unit ? ` ${unit}` : ""
   }`;
 }
 
-function formatFrenchNumber(value: number): string {
-  return new Intl.NumberFormat("fr-FR", {
+function formatNumber(value: number, dateLocale: string): string {
+  return new Intl.NumberFormat(dateLocale, {
     maximumFractionDigits: 6,
   }).format(value);
 }
 
-function formatSampledAt(iso: string): string {
+function formatSampledAt(iso: string, dateLocale: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
     return iso;
   }
-  return new Intl.DateTimeFormat("fr-FR", {
+  return new Intl.DateTimeFormat(dateLocale, {
     dateStyle: "long",
     timeStyle: "short",
     timeZone: "Europe/Paris",
   }).format(date);
 }
 
-function formatDateOnly(iso: string): string {
+function formatDateOnly(iso: string, dateLocale: string): string {
   const date = new Date(iso.includes("T") ? iso : `${iso}T00:00:00.000Z`);
   if (Number.isNaN(date.getTime())) {
     return iso;
   }
-  return new Intl.DateTimeFormat("fr-FR", {
+  return new Intl.DateTimeFormat(dateLocale, {
     dateStyle: "long",
     timeZone: "Europe/Paris",
   }).format(date);
@@ -228,6 +267,7 @@ function formatDateOnly(iso: string): string {
 
 function toHistoryViewModel(
   history: ParameterHistoryDto,
+  i18n: MapperI18n,
 ): ParameterHistoryViewModel {
   const unit = history.unit ?? "";
   return {
@@ -236,39 +276,47 @@ function toHistoryViewModel(
     unit: history.unit,
     statsLabel:
       history.count === 0
-        ? fr.analyses.historyNoStats
-        : fr.analyses.historyStats
-            .replace("{{min}}", formatStat(history.min, unit))
-            .replace("{{median}}", formatStat(history.median, unit))
-            .replace("{{max}}", formatStat(history.max, unit))
+        ? i18n.messages.analyses.historyNoStats
+        : i18n.messages.analyses.historyStats
+            .replace("{{min}}", formatStat(history.min, unit, i18n.dateLocale))
+            .replace(
+              "{{median}}",
+              formatStat(history.median, unit, i18n.dateLocale),
+            )
+            .replace("{{max}}", formatStat(history.max, unit, i18n.dateLocale))
             .replace("{{count}}", String(history.count)),
     trend: history.trend,
-    trendLabel: historyTrendLabel(history.trend),
+    trendLabel: historyTrendLabel(history.trend, i18n.messages),
     warningLabels: history.warnings.includes("loq_changed")
-      ? [fr.analyses.historyLoqChanged]
+      ? [i18n.messages.analyses.historyLoqChanged]
       : [],
     points: history.points.map((point) => ({
       sampledAtLabel: point.sampledAt
-        ? formatSampledAt(point.sampledAt)
+        ? formatSampledAt(point.sampledAt, i18n.dateLocale)
         : "",
-      valueLabel: formatHistoryPoint(point, unit),
+      valueLabel: formatHistoryPoint(point, unit, i18n.dateLocale),
       y: point.resolution?.canonicalNumericValue ?? point.numericValue,
     })),
   };
 }
 
-function formatStat(value: number | null, unit: string): string {
+function formatStat(
+  value: number | null,
+  unit: string,
+  dateLocale: string,
+): string {
   if (value === null) {
     return "—";
   }
-  return `${formatFrenchNumber(value)}${unit ? ` ${unit}` : ""}`;
+  return `${formatNumber(value, dateLocale)}${unit ? ` ${unit}` : ""}`;
 }
 
 function formatHistoryPoint(
   point: MeasurementDto,
   fallbackUnit: string,
+  dateLocale: string,
 ): string {
-  const canonical = formatCanonicalValue(point);
+  const canonical = formatCanonicalValue(point, dateLocale);
   if (canonical) {
     return canonical;
   }
@@ -281,15 +329,16 @@ function formatHistoryPoint(
 
 function historyTrendLabel(
   trend: ParameterHistoryDto["trend"],
+  messages: Messages,
 ): string {
   if (trend === "rising") {
-    return fr.analyses.historyTrendRising;
+    return messages.analyses.historyTrendRising;
   }
   if (trend === "falling") {
-    return fr.analyses.historyTrendFalling;
+    return messages.analyses.historyTrendFalling;
   }
   if (trend === "stable") {
-    return fr.analyses.historyTrendStable;
+    return messages.analyses.historyTrendStable;
   }
-  return fr.analyses.historyTrendInsufficient;
+  return messages.analyses.historyTrendInsufficient;
 }

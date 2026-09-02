@@ -1,3 +1,5 @@
+import type { Messages } from "./en";
+
 export const fr = {
   home: {
     title: "Qualité de l’eau du robinet",
@@ -142,4 +144,9 @@ export const fr = {
     toggleToDark: "Passer en mode sombre",
     toggleToLight: "Passer en mode clair",
   },
-} as const;
+  locale: {
+    label: "Langue",
+    french: "Français",
+    english: "English",
+  },
+} as const satisfies Messages;

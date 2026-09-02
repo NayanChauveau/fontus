@@ -1,4 +1,5 @@
 import { fr } from "../i18n/fr";
+import type { Messages } from "../i18n/messages";
 import type {
   ComparisonViewModel,
   NetworkMeasurementViewModel,
@@ -7,44 +8,61 @@ import type {
 
 const HUBEAU_URL = "https://hubeau.eaufrance.fr/";
 
-const JURISDICTIONS = [
-  ["fr", fr.analyses.compareFr],
-  ["eu", fr.analyses.compareEu],
-  ["ch", fr.analyses.compareCh],
-  ["us", fr.analyses.compareUs],
-  ["strict", fr.analyses.compareStrict],
-] as const;
+function jurisdictions(messages: Messages) {
+  return [
+    ["fr", messages.analyses.compareFr],
+    ["eu", messages.analyses.compareEu],
+    ["ch", messages.analyses.compareCh],
+    ["us", messages.analyses.compareUs],
+    ["strict", messages.analyses.compareStrict],
+  ] as const;
+}
+
+function kindOrder(messages: Messages): string[] {
+  return [
+    messages.analyses.sourceMeasurements,
+    messages.analyses.compareFr,
+    messages.analyses.compareEu,
+    messages.analyses.compareCh,
+    messages.analyses.compareUs,
+    messages.analyses.compareStrict,
+  ];
+}
 
 export function collectSources(
   measurements: NetworkMeasurementViewModel[],
   measurementSourceLabel: string,
+  messages: Messages = fr,
 ): SourceRefViewModel[] {
   const byId = new Map<string, SourceRefViewModel>();
   byId.set("measurement", {
     id: "measurement",
     label: measurementSourceLabel,
     href: HUBEAU_URL,
-    kindLabel: fr.analyses.sourceMeasurements,
+    kindLabel: messages.analyses.sourceMeasurements,
   });
 
   for (const measurement of measurements) {
-    for (const [key, jurisdiction] of JURISDICTIONS) {
-      addComparison(byId, measurement[key], jurisdiction);
+    for (const [key, jurisdiction] of jurisdictions(messages)) {
+      addComparison(byId, measurement[key], jurisdiction, messages);
     }
   }
 
-  return [...byId.values()].sort(compareSources);
+  return [...byId.values()].sort((left, right) =>
+    compareSources(left, right, messages),
+  );
 }
 
 function addComparison(
   into: Map<string, SourceRefViewModel>,
   comparison: ComparisonViewModel | null,
   jurisdiction: string,
+  messages: Messages,
 ) {
   if (!comparison) {
     return;
   }
-  const label = comparison.citation ?? fr.analyses.thresholdSource;
+  const label = comparison.citation ?? messages.analyses.thresholdSource;
   const href = comparison.sourceUrl;
   if (!comparison.citation && !href) {
     return;
@@ -76,26 +94,21 @@ function normalizeCitation(citation: string): string {
   return citation.trim().replace(/\s+/g, " ");
 }
 
-const KIND_ORDER: string[] = [
-  fr.analyses.sourceMeasurements,
-  fr.analyses.compareFr,
-  fr.analyses.compareEu,
-  fr.analyses.compareCh,
-  fr.analyses.compareUs,
-  fr.analyses.compareStrict,
-];
-
-function compareSources(left: SourceRefViewModel, right: SourceRefViewModel): number {
-  const leftRank = kindRank(left.kindLabel);
-  const rightRank = kindRank(right.kindLabel);
+function compareSources(
+  left: SourceRefViewModel,
+  right: SourceRefViewModel,
+  messages: Messages,
+): number {
+  const leftRank = kindRank(left.kindLabel, messages);
+  const rightRank = kindRank(right.kindLabel, messages);
   if (leftRank !== rightRank) {
     return leftRank - rightRank;
   }
   return left.label.localeCompare(right.label, "fr");
 }
 
-function kindRank(kindLabel: string): number {
+function kindRank(kindLabel: string, messages: Messages): number {
   const first = kindLabel.split(",")[0]!.trim();
-  const index = KIND_ORDER.indexOf(first);
-  return index === -1 ? KIND_ORDER.length : index;
+  const index = kindOrder(messages).indexOf(first);
+  return index === -1 ? kindOrder(messages).length : index;
 }

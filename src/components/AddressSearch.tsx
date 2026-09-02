@@ -11,7 +11,7 @@ import type { AddressSuggestionDto } from "@/application/dtos/AddressDto";
 import { MIN_ADDRESS_QUERY_LENGTH } from "@/application/addressQuery";
 import { DistributionNetworkList } from "@/components/DistributionNetworkList";
 import { mapAddressDtoToViewModel } from "@/presentation/mappers/mapAddressDto";
-import { fr } from "@/presentation/i18n/fr";
+import { useMessages } from "@/presentation/i18n/useLocale";
 import type { AddressSuggestionViewModel } from "@/presentation/view-models/AddressViewModel";
 
 const DEBOUNCE_MS = 300;
@@ -19,6 +19,7 @@ const DEBOUNCE_MS = 300;
 type SearchStatus = "idle" | "loading" | "ready" | "unavailable";
 
 export function AddressSearch() {
+  const messages = useMessages();
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -146,10 +147,10 @@ export function AddressSearch() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-          {fr.address.title}
+          {messages.address.title}
         </h2>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {fr.address.subtitle}
+          {messages.address.subtitle}
         </p>
       </div>
 
@@ -158,7 +159,7 @@ export function AddressSearch() {
           htmlFor="address-query"
           className="mb-2 block text-sm font-medium text-zinc-800 dark:text-zinc-200"
         >
-          {fr.address.label}
+          {messages.address.label}
         </label>
         <input
           ref={inputRef}
@@ -172,7 +173,7 @@ export function AddressSearch() {
           aria-activedescendant={
             activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined
           }
-          placeholder={fr.address.placeholder}
+          placeholder={messages.address.placeholder}
           value={query}
           onChange={(event) => {
             const next = event.target.value;
@@ -197,17 +198,17 @@ export function AddressSearch() {
           >
             {status === "loading" && (
               <li className="px-4 py-3 text-sm text-zinc-500">
-                {fr.address.searching}
+                {messages.address.searching}
               </li>
             )}
             {status === "unavailable" && (
               <li className="px-4 py-3 text-sm text-red-700 dark:text-red-400">
-                {fr.address.unavailable}
+                {messages.address.unavailable}
               </li>
             )}
             {status === "ready" && suggestions.length === 0 && (
               <li className="px-4 py-3 text-sm text-zinc-500">
-                {fr.address.noResults}
+                {messages.address.noResults}
               </li>
             )}
             {status === "ready" &&
@@ -250,26 +251,26 @@ export function AddressSearch() {
         >
           <div className="mb-4 flex items-center justify-between gap-3">
             <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-              {fr.address.selectedTitle}
+              {messages.address.selectedTitle}
             </h3>
             <button
               type="button"
               onClick={clearSelection}
               className="text-sm text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
             >
-              {fr.address.clear}
+              {messages.address.clear}
             </button>
           </div>
           <dl className="grid gap-3 text-sm">
-            <Field label={fr.address.fieldLabel} value={selected.label} />
-            <Field label={fr.address.fieldCity} value={selected.city} />
+            <Field label={messages.address.fieldLabel} value={selected.label} />
+            <Field label={messages.address.fieldCity} value={selected.city} />
             <div className="hidden md:contents">
               <Field
-                label={fr.address.fieldCitycode}
+                label={messages.address.fieldCitycode}
                 value={selected.citycode}
               />
               <Field
-                label={fr.address.fieldCoordinates}
+                label={messages.address.fieldCoordinates}
                 value={selected.coordinates}
               />
             </div>

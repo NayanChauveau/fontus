@@ -1,19 +1,21 @@
 import type { ListDistributionNetworksResultDto } from "@/application/dtos/DistributionNetworkDto";
 import { fr } from "../i18n/fr";
+import type { Messages } from "../i18n/messages";
 import type { DistributionNetworksViewModel } from "../view-models/DistributionNetworkViewModel";
 
 export function mapDistributionNetworksDto(
   dto: ListDistributionNetworksResultDto,
+  messages: Messages = fr,
 ): DistributionNetworksViewModel {
   return {
     city: dto.city,
     year: dto.year,
     confidence: dto.confidence,
-    confidenceLabel: confidenceLabel(dto.confidence),
-    disclaimer: disclaimer(dto.confidence),
+    confidenceLabel: confidenceLabel(dto.confidence, messages),
+    disclaimer: disclaimer(dto.confidence, messages),
     hiddenNote:
       dto.hiddenNonResidentialCount > 0
-        ? fr.networks.hiddenNonResidential.replace(
+        ? messages.networks.hiddenNonResidential.replace(
             "{{count}}",
             String(dto.hiddenNonResidentialCount),
           )
@@ -25,31 +27,33 @@ export function mapDistributionNetworksDto(
       neighborhoodsLabel:
         network.neighborhoods.length > 0
           ? network.neighborhoods.join(" · ")
-          : fr.networks.noNeighborhood,
+          : messages.networks.noNeighborhood,
     })),
   };
 }
 
 function confidenceLabel(
   confidence: ListDistributionNetworksResultDto["confidence"],
+  messages: Messages,
 ): string {
   if (confidence === "exact") {
-    return fr.networks.confidenceExact;
+    return messages.networks.confidenceExact;
   }
   if (confidence === "ambiguous") {
-    return fr.networks.confidenceAmbiguous;
+    return messages.networks.confidenceAmbiguous;
   }
-  return fr.networks.confidenceNone;
+  return messages.networks.confidenceNone;
 }
 
 function disclaimer(
   confidence: ListDistributionNetworksResultDto["confidence"],
+  messages: Messages,
 ): string {
   if (confidence === "exact") {
-    return fr.networks.exactNote;
+    return messages.networks.exactNote;
   }
   if (confidence === "ambiguous") {
-    return fr.networks.ambiguousDisclaimer;
+    return messages.networks.ambiguousDisclaimer;
   }
-  return fr.networks.noneNote;
+  return messages.networks.noneNote;
 }

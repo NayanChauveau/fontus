@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { fr } from "@/presentation/i18n/fr";
+import { useMessages } from "@/presentation/i18n/useLocale";
 import {
   readTheme,
   setStoredTheme,
@@ -10,13 +10,16 @@ import {
 
 export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "light");
+  const messages = useMessages();
 
   function toggle() {
     setStoredTheme(theme === "dark" ? "light" : "dark");
   }
 
   const label =
-    theme === "dark" ? fr.theme.toggleToLight : fr.theme.toggleToDark;
+    theme === "dark"
+      ? messages.theme.toggleToLight
+      : messages.theme.toggleToDark;
 
   return (
     <button

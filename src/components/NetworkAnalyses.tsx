@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import type { NetworkWaterQualityDto } from "@/application/dtos/NetworkWaterQualityDto";
 import { mapNetworkWaterQualityDto } from "@/presentation/mappers/mapNetworkWaterQualityDto";
-import { fr } from "@/presentation/i18n/fr";
+import { intlLocale } from "@/presentation/i18n/messages";
+import { useLocale, useMessages } from "@/presentation/i18n/useLocale";
 import type {
   ComparisonViewModel,
   NetworkAnalysesViewModel,
@@ -16,10 +17,16 @@ import type {
 type LoadStatus = "loading" | "ready" | "unavailable";
 
 export function NetworkAnalyses({ networkCode }: { networkCode: string }) {
+  const messages = useMessages();
+  const locale = useLocale();
   const [status, setStatus] = useState<LoadStatus>("loading");
-  const [viewModel, setViewModel] = useState<NetworkAnalysesViewModel | null>(
-    null,
-  );
+  const [dto, setDto] = useState<NetworkWaterQualityDto | null>(null);
+  const viewModel = dto
+    ? mapNetworkWaterQualityDto(dto, {
+        messages,
+        dateLocale: intlLocale(locale),
+      })
+    : null;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -39,7 +46,7 @@ export function NetworkAnalyses({ networkCode }: { networkCode: string }) {
           return;
         }
 
-        setViewModel(mapNetworkWaterQualityDto(payload));
+        setDto(payload);
         setStatus("ready");
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
@@ -60,16 +67,16 @@ export function NetworkAnalyses({ networkCode }: { networkCode: string }) {
       className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900"
     >
       <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-        {fr.analyses.title}
+        {messages.analyses.title}
       </h3>
 
       {status === "loading" && (
-        <p className="mt-3 text-sm text-zinc-500">{fr.analyses.loading}</p>
+        <p className="mt-3 text-sm text-zinc-500">{messages.analyses.loading}</p>
       )}
 
       {status === "unavailable" && (
         <p className="mt-3 text-sm text-red-700 dark:text-red-400">
-          {fr.analyses.unavailable}
+          {messages.analyses.unavailable}
         </p>
       )}
 
@@ -85,6 +92,7 @@ function AnalysesResults({
 }: {
   viewModel: NetworkAnalysesViewModel;
 }) {
+  const messages = useMessages();
   const isEmpty =
     viewModel.priorityMeasurements.length === 0 &&
     viewModel.otherMeasurements.length === 0;
@@ -94,12 +102,12 @@ function AnalysesResults({
       <OfficialBanner viewModel={viewModel} />
 
       {isEmpty && (
-        <p className="text-sm text-zinc-500">{fr.analyses.empty}</p>
+        <p className="text-sm text-zinc-500">{messages.analyses.empty}</p>
       )}
 
       <section>
         <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-          {fr.analyses.cardsTitle}
+          {messages.analyses.cardsTitle}
         </h4>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {viewModel.priorityCards.map((card) => (
@@ -117,13 +125,13 @@ function AnalysesResults({
 
       {viewModel.priorityMeasurements.length > 0 && (
         <MeasurementTable
-          title={fr.analyses.comparisonTitle}
+          title={messages.analyses.comparisonTitle}
           measurements={viewModel.priorityMeasurements}
         />
       )}
 
       <MeasurementTable
-        title={fr.analyses.allAnalysesTitle}
+        title={messages.analyses.allAnalysesTitle}
         measurements={viewModel.exhaustiveMeasurements}
         provenance
       />
@@ -133,8 +141,8 @@ function AnalysesResults({
           {viewModel.reconstructedSumNote}
         </p>
       )}
-      <p className="text-xs text-zinc-500">{fr.analyses.noThresholdNote}</p>
-      <p className="text-xs text-zinc-500">{fr.analyses.strictNote}</p>
+      <p className="text-xs text-zinc-500">{messages.analyses.noThresholdNote}</p>
+      <p className="text-xs text-zinc-500">{messages.analyses.strictNote}</p>
       <p className="text-xs text-zinc-500">{viewModel.disclaimer}</p>
       <SourcesList sources={viewModel.sources} />
     </div>
@@ -146,6 +154,7 @@ function OfficialBanner({
 }: {
   viewModel: NetworkAnalysesViewModel;
 }) {
+  const messages = useMessages();
   const tone =
     viewModel.bannerTone === "alert"
       ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40"
@@ -162,19 +171,19 @@ function OfficialBanner({
   return (
     <div className={`rounded-lg border px-4 py-3 ${tone}`}>
       <p className={`text-xs font-medium uppercase tracking-wide ${kicker}`}>
-        {fr.analyses.conclusionTitle}
+        {messages.analyses.conclusionTitle}
       </p>
       <p className="mt-1 text-sm font-medium text-zinc-950 dark:text-zinc-50">
-        {viewModel.conclusion ?? fr.analyses.noConclusion}
+        {viewModel.conclusion ?? messages.analyses.noConclusion}
       </p>
       {viewModel.limitesBactLabel && (
         <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-          {fr.analyses.limitesBact} : {viewModel.limitesBactLabel}
+          {messages.analyses.limitesBact} : {viewModel.limitesBactLabel}
         </p>
       )}
       {viewModel.limitesPcLabel && (
         <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-          {fr.analyses.limitesPc} : {viewModel.limitesPcLabel}
+          {messages.analyses.limitesPc} : {viewModel.limitesPcLabel}
         </p>
       )}
       <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
@@ -182,11 +191,11 @@ function OfficialBanner({
       </p>
       {viewModel.sampledAtLabel && (
         <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
-          {fr.analyses.sampledAt} {viewModel.sampledAtLabel}
+          {messages.analyses.sampledAt} {viewModel.sampledAtLabel}
         </p>
       )}
       <p className="mt-1 text-xs text-zinc-500">
-        {fr.analyses.source} : {viewModel.sourceLabel}
+        {messages.analyses.source} : {viewModel.sourceLabel}
       </p>
       <p className="mt-2 text-xs text-zinc-500">
         {viewModel.perParameterDateNote}
@@ -196,6 +205,7 @@ function OfficialBanner({
 }
 
 function PriorityCard({ card }: { card: PriorityCardViewModel }) {
+  const messages = useMessages();
   const hero = card.measurements[0];
   const rest = card.measurements.slice(1);
 
@@ -205,7 +215,7 @@ function PriorityCard({ card }: { card: PriorityCardViewModel }) {
         {card.title}
       </h5>
       {!hero ? (
-        <p className="mt-2 text-sm text-zinc-500">{fr.analyses.cardEmpty}</p>
+        <p className="mt-2 text-sm text-zinc-500">{messages.analyses.cardEmpty}</p>
       ) : (
         <>
           <p className="mt-2 text-sm font-medium text-zinc-950 dark:text-zinc-50">
@@ -215,14 +225,14 @@ function PriorityCard({ card }: { card: PriorityCardViewModel }) {
             {hero.valueLabel}
           </p>
           {hero.reconstructed && (
-            <p className="text-[11px] text-zinc-500">{fr.analyses.reconstructed}</p>
+            <p className="text-[11px] text-zinc-500">{messages.analyses.reconstructed}</p>
           )}
           <div className="mt-2 text-xs">
             <ComparisonCell comparison={hero.fr} />
           </div>
           {hero.sampledAtLabel && (
             <p className="mt-2 text-[11px] text-zinc-500">
-              {fr.analyses.sampledAt} {hero.sampledAtLabel}
+              {messages.analyses.sampledAt} {hero.sampledAtLabel}
             </p>
           )}
           {rest.map((measurement) => (
@@ -248,14 +258,15 @@ function HistorySection({
   histories: ParameterHistoryViewModel[];
   windowFromLabel: string | null;
 }) {
+  const messages = useMessages();
   return (
     <section>
       <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-        {fr.analyses.historyTitle}
+        {messages.analyses.historyTitle}
       </h4>
       {windowFromLabel && (
         <p className="mb-3 text-xs text-zinc-500">
-          {fr.analyses.historyWindow} {windowFromLabel}
+          {messages.analyses.historyWindow} {windowFromLabel}
         </p>
       )}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
@@ -298,6 +309,7 @@ function HistorySparkline({
 }: {
   history: ParameterHistoryViewModel;
 }) {
+  const messages = useMessages();
   const values = history.points
     .map((point) => point.y)
     .filter((value): value is number => value !== null && Number.isFinite(value));
@@ -321,7 +333,7 @@ function HistorySparkline({
   return (
     <svg
       role="img"
-      aria-label={`${fr.analyses.historyChart} ${history.title}`}
+      aria-label={`${messages.analyses.historyChart} ${history.title}`}
       viewBox={`0 0 ${width} ${height}`}
       className="mt-3 h-14 w-full text-emerald-700 dark:text-emerald-400"
     >
@@ -346,6 +358,7 @@ function MeasurementTable({
   measurements: NetworkMeasurementViewModel[];
   provenance?: boolean;
 }) {
+  const messages = useMessages();
   return (
     <div>
       <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
@@ -355,26 +368,26 @@ function MeasurementTable({
         <table className="w-full min-w-[56rem] text-left text-sm">
           <thead>
             <tr className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800">
-              <th className="py-2 pr-3 font-medium">{fr.analyses.parameter}</th>
-              <th className="py-2 pr-3 font-medium">{fr.analyses.value}</th>
+              <th className="py-2 pr-3 font-medium">{messages.analyses.parameter}</th>
+              <th className="py-2 pr-3 font-medium">{messages.analyses.value}</th>
               {provenance && (
-                <th className="py-2 pr-3 font-medium">{fr.analyses.unit}</th>
+                <th className="py-2 pr-3 font-medium">{messages.analyses.unit}</th>
               )}
-              <th className="py-2 pr-3 font-medium">{fr.analyses.compareFr}</th>
-              <th className="py-2 pr-3 font-medium">{fr.analyses.compareEu}</th>
-              <th className="py-2 pr-3 font-medium">{fr.analyses.compareCh}</th>
-              <th className="py-2 pr-3 font-medium">{fr.analyses.compareUs}</th>
+              <th className="py-2 pr-3 font-medium">{messages.analyses.compareFr}</th>
+              <th className="py-2 pr-3 font-medium">{messages.analyses.compareEu}</th>
+              <th className="py-2 pr-3 font-medium">{messages.analyses.compareCh}</th>
+              <th className="py-2 pr-3 font-medium">{messages.analyses.compareUs}</th>
               <th
                 className="py-2 pr-3 font-medium"
-                title={fr.analyses.strictNote}
+                title={messages.analyses.strictNote}
               >
-                {fr.analyses.compareStrict}
+                {messages.analyses.compareStrict}
               </th>
-              <th className="py-2 pr-3 font-medium">{fr.analyses.date}</th>
+              <th className="py-2 pr-3 font-medium">{messages.analyses.date}</th>
               {provenance && (
-                <th className="py-2 pr-3 font-medium">{fr.analyses.udi}</th>
+                <th className="py-2 pr-3 font-medium">{messages.analyses.udi}</th>
               )}
-              <th className="py-2 font-medium">{fr.analyses.source}</th>
+              <th className="py-2 font-medium">{messages.analyses.source}</th>
             </tr>
           </thead>
           <tbody>
@@ -387,7 +400,7 @@ function MeasurementTable({
                   <p>{measurement.parameterLabel}</p>
                   {measurement.canonicalId && (
                     <p className="font-mono text-xs text-zinc-500">
-                      {fr.analyses.dictionaryId} {measurement.canonicalId}
+                      {messages.analyses.dictionaryId} {measurement.canonicalId}
                     </p>
                   )}
                   {measurement.originalLabel && (
@@ -409,9 +422,9 @@ function MeasurementTable({
                   {measurement.reconstructed && (
                     <p
                       className="font-sans text-[11px] text-zinc-500"
-                      title={fr.analyses.reconstructedSumNote}
+                      title={messages.analyses.reconstructedSumNote}
                     >
-                      {fr.analyses.reconstructed}
+                      {messages.analyses.reconstructed}
                     </p>
                   )}
                 </td>
@@ -460,9 +473,10 @@ function ComparisonCell({
 }: {
   comparison: ComparisonViewModel | null;
 }) {
+  const messages = useMessages();
   if (!comparison || comparison.status === "no_threshold") {
     return (
-      <span title={comparison?.citation ?? fr.analyses.noThreshold}>—</span>
+      <span title={comparison?.citation ?? messages.analyses.noThreshold}>—</span>
     );
   }
 
@@ -496,10 +510,11 @@ function ComparisonCell({
 }
 
 function SourcesList({ sources }: { sources: SourceRefViewModel[] }) {
+  const messages = useMessages();
   return (
     <section>
       <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-        {fr.analyses.sourcesTitle}
+        {messages.analyses.sourcesTitle}
       </h4>
       <ul className="space-y-1 text-xs text-zinc-600 dark:text-zinc-400">
         {sources.map((source) => (

@@ -1,4 +1,5 @@
 import { fr } from "../i18n/fr";
+import type { Messages } from "../i18n/messages";
 import type {
   NetworkMeasurementViewModel,
   PriorityCardId,
@@ -25,18 +26,22 @@ const HERO_IDS: Record<PriorityCardId, readonly string[]> = {
   hardness: ["hardness"],
 };
 
-const CARD_TITLE: Record<PriorityCardId, string> = {
-  pfas: fr.analyses.cardPfas,
-  nitrates: fr.analyses.cardNitrates,
-  pesticides: fr.analyses.cardPesticides,
-  lead: fr.analyses.cardLead,
-  arsenic: fr.analyses.cardArsenic,
-  microbio: fr.analyses.cardMicrobio,
-  hardness: fr.analyses.cardHardness,
-};
+function cardTitle(id: PriorityCardId, messages: Messages): string {
+  const titles: Record<PriorityCardId, string> = {
+    pfas: messages.analyses.cardPfas,
+    nitrates: messages.analyses.cardNitrates,
+    pesticides: messages.analyses.cardPesticides,
+    lead: messages.analyses.cardLead,
+    arsenic: messages.analyses.cardArsenic,
+    microbio: messages.analyses.cardMicrobio,
+    hardness: messages.analyses.cardHardness,
+  };
+  return titles[id];
+}
 
 export function buildPriorityCards(
   measurements: NetworkMeasurementViewModel[],
+  messages: Messages = fr,
 ): PriorityCardViewModel[] {
   const grouped = new Map<PriorityCardId, NetworkMeasurementViewModel[]>();
   for (const id of CARD_ORDER) {
@@ -54,7 +59,7 @@ export function buildPriorityCards(
     const rows = sortCardMeasurements(id, grouped.get(id) ?? []);
     return {
       id,
-      title: CARD_TITLE[id],
+      title: cardTitle(id, messages),
       empty: rows.length === 0,
       measurements: rows,
     };

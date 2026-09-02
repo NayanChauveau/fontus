@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { LOCALE_BOOTSTRAP_SCRIPT } from "@/presentation/i18n/locale";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/presentation/theme/theme";
 import "./globals.css";
 
@@ -28,7 +29,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <script
-          dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }}
+          dangerouslySetInnerHTML={{
+            __html: `${THEME_BOOTSTRAP_SCRIPT}${LOCALE_BOOTSTRAP_SCRIPT}`,
+          }}
         />
       </head>
       <body className="min-h-full flex flex-col">{children}</body>
