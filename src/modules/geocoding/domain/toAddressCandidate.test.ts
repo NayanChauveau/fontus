@@ -42,5 +42,12 @@ describe("toAddressCandidate", () => {
 
   it("drops a feature without coordinates", () => {
     expect(toAddressCandidate({ ...valid, longitude: Number.NaN })).toBeNull();
+    expect(toAddressCandidate({ ...valid, latitude: Number.NaN })).toBeNull();
+  });
+
+  it("drops incomplete identity fields", () => {
+    expect(toAddressCandidate({ ...valid, sourceId: "" })).toBeNull();
+    expect(toAddressCandidate({ ...valid, label: "" })).toBeNull();
+    expect(toAddressCandidate({ ...valid, city: "" })).toBeNull();
   });
 });

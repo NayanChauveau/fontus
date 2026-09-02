@@ -7,10 +7,12 @@ import type { ApplicationPorts } from "@/application/ports/ApplicationPorts";
 import { createAnalysesModule } from "@/modules/analyses";
 import { createGeocodingModule } from "@/modules/geocoding";
 import { createNetworkModule } from "@/modules/network";
+import { createParametersModule } from "@/modules/parameters";
 import { createAnalysesPortAdapter } from "./adapters/createAnalysesPortAdapter";
 import { createGeocodingPortAdapter } from "./adapters/createGeocodingPortAdapter";
 import { createHealthPortAdapter } from "./adapters/createHealthPortAdapter";
 import { createNetworkPortAdapter } from "./adapters/createNetworkPortAdapter";
+import { createParametersPortAdapter } from "./adapters/createParametersPortAdapter";
 
 function createApplicationPorts(): ApplicationPorts {
   return {
@@ -18,6 +20,7 @@ function createApplicationPorts(): ApplicationPorts {
     geocoding: createGeocodingPortAdapter(createGeocodingModule()),
     health: createHealthPortAdapter(),
     network: createNetworkPortAdapter(createNetworkModule()),
+    parameters: createParametersPortAdapter(createParametersModule()),
   };
 }
 

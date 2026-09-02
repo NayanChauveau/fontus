@@ -168,6 +168,99 @@ describe("GetNetworkAnalyses", () => {
 
     expect(result.latestSample?.code).toBe(latest.code);
     expect(codes).toEqual(["1339", "1383"]);
+    expect(
+      result.latestMeasurements.map((row) => row.measurement.parameterCode).sort(),
+    ).toEqual(["1339", "1340", "1383"]);
+  });
+
+  it("refetches when the cache is stale or unreadable and ignores a write failure", async () => {
+    const useCase = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 1;
+        },
+        async listPage() {
+          return { count: 1, next: null, samples: [latest] };
+        },
+      },
+      {
+        async read() {
+          throw new Error("db");
+        },
+        async write() {
+          throw new Error("db");
+        },
+      },
+      () => NOW,
+    );
+
+    const result = await useCase.execute(PAULIN);
+    expect(result.source).toBe("remote");
+    expect(result.latestSample?.code).toBe(latest.code);
+  });
+
+  it("ignores a stale cache entry", async () => {
+    const useCase = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 1;
+        },
+        async listPage() {
+          return { count: 1, next: null, samples: [latest] };
+        },
+      },
+      {
+        async read() {
+          return {
+            networkCode: PAULIN,
+            samples: [latest],
+            fetchedAt: new Date("2020-01-01T00:00:00.000Z"),
+            windowFrom: "2019-01-01",
+          };
+        },
+        async write() {},
+      },
+      () => NOW,
+    );
+
+    expect((await useCase.execute(PAULIN)).source).toBe("remote");
+  });
+
+  it("uses the system clock by default and skips a duplicate measurement on merge", async () => {
+    const useCase = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 1;
+        },
+        async listPage() {
+          return {
+            count: 1,
+            next: null,
+            samples: [
+              latest,
+              {
+                ...latest,
+                measurements: [
+                  latest.measurements[0]!,
+                  {
+                    parameterCode: "1383",
+                    parameterLabel: "Sodium",
+                    rawText: "8,4",
+                    numericValue: 8.4,
+                    qualifier: "eq",
+                    unit: "mg/L",
+                  },
+                ],
+              },
+            ],
+          };
+        },
+      },
+      memoryCache(),
+    );
+
+    const result = await useCase.execute(PAULIN);
+    expect(result.latestSample?.measurements).toHaveLength(2);
   });
 });
 

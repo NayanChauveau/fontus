@@ -11,3 +11,7 @@ export function ensureApplication(): ApplicationServices {
   }
   return getApplication();
 }
+
+export function resetBootstrap(): void {
+  started = false;
+}

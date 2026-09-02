@@ -235,6 +235,101 @@ describe("ListNetworksForCommune", () => {
     expect(result.confidence).toBe("ambiguous");
   });
 
+  it("skips Hub’Eau for the current year when the cache is fresh but empty", async () => {
+    const requested: number[] = [];
+    const { cache } = createMemoryCache([
+      {
+        citycode: "33063",
+        city: "Bordeaux",
+        year: 2026,
+        links: [],
+        fetchedAt: new Date("2026-09-01T10:00:00.000Z"),
+      },
+    ]);
+    const useCase = new ListNetworksForCommune(
+      {
+        async listByCommune(_citycode, year) {
+          requested.push(year);
+          return year === 2025 ? bordeaux.map((link) => ({ ...link, year: 2025 })) : [];
+        },
+      },
+      cache,
+      now,
+    );
+
+    const result = await useCase.execute("33063");
+    expect(requested).toEqual([2025]);
+    expect(result.commune.year).toBe(2025);
+  });
+
+  it("uses a fresh previous-year cache when the current year is empty", async () => {
+    const { cache } = createMemoryCache([
+      {
+        citycode: "33063",
+        city: "Bordeaux",
+        year: 2025,
+        links: bordeaux.map((link) => ({ ...link, year: 2025 })),
+        fetchedAt: new Date("2026-09-01T10:00:00.000Z"),
+      },
+    ]);
+    const useCase = new ListNetworksForCommune(
+      {
+        async listByCommune(_citycode, year) {
+          return year === 2026 ? [] : [];
+        },
+      },
+      cache,
+      now,
+    );
+
+    const result = await useCase.execute("33063");
+    expect(result.source).toBe("cache");
+    expect(result.commune.year).toBe(2025);
+  });
+
+  it("ignores a broken cache and still returns Hub’Eau", async () => {
+    const useCase = new ListNetworksForCommune(
+      {
+        async listByCommune() {
+          return arbanats;
+        },
+      },
+      {
+        async read() {
+          throw new Error("db down");
+        },
+        async write() {
+          throw new Error("db down");
+        },
+      },
+      now,
+    );
+
+    const result = await useCase.execute("33009");
+    expect(result.source).toBe("remote");
+    expect(result.confidence).toBe("exact");
+  });
+
+  it("uses the system clock and persists a missing city as empty", async () => {
+    const { cache } = createMemoryCache();
+    const useCase = new ListNetworksForCommune(
+      {
+        async listByCommune() {
+          return [
+            {
+              ...arbanats[0]!,
+              city: undefined as unknown as string,
+            },
+          ];
+        },
+      },
+      cache,
+    );
+
+    const result = await useCase.execute("33009");
+    expect(result.confidence).toBe("exact");
+  });
+
   it("throws instead of returning an empty network list", async () => {
     const { cache } = createMemoryCache();
     const useCase = new ListNetworksForCommune(
@@ -248,6 +343,31 @@ describe("ListNetworksForCommune", () => {
     );
 
     await expect(useCase.execute("99999")).rejects.toThrow(
+      "NO_DISTRIBUTION_NETWORK",
+    );
+  });
+
+  it("throws when a cache hit cannot be grouped into a commune", async () => {
+    const { cache } = createMemoryCache([
+      {
+        citycode: "33063",
+        city: "Bordeaux",
+        year: 2026,
+        links: [undefined as unknown as RawUdiLink],
+        fetchedAt: new Date("2026-09-01T10:00:00.000Z"),
+      },
+    ]);
+    const useCase = new ListNetworksForCommune(
+      {
+        async listByCommune() {
+          return [];
+        },
+      },
+      cache,
+      now,
+    );
+
+    await expect(useCase.execute("33063")).rejects.toThrow(
       "NO_DISTRIBUTION_NETWORK",
     );
   });

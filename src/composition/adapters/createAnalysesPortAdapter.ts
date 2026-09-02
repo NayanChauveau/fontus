@@ -2,7 +2,10 @@ import type { NetworkWaterQualityDto } from "@/application/dtos/NetworkWaterQual
 import { ApplicationError } from "@/application/errors/ApplicationError";
 import type { AnalysesPort } from "@/application/ports/AnalysesPort";
 import type { AnalysesModuleFacade } from "@/modules/analyses";
-import type { AnalysisSample } from "@/modules/analyses/domain/Analysis";
+import type {
+  AnalysisSample,
+  ParameterSnapshot,
+} from "@/modules/analyses/domain/Analysis";
 
 export function createAnalysesPortAdapter(
   module: AnalysesModuleFacade,
@@ -18,6 +21,7 @@ export function createAnalysesPortAdapter(
           latestSample: result.latestSample
             ? toSampleDto(result.latestSample)
             : null,
+          latestMeasurements: result.latestMeasurements.map(toMeasurementDto),
         } satisfies NetworkWaterQualityDto;
       } catch (error) {
         throw new ApplicationError("ANALYSES_UNAVAILABLE", error);
@@ -34,13 +38,29 @@ function toSampleDto(sample: AnalysisSample): NetworkWaterQualityDto["latestSamp
     conformiteLimitesBact: sample.conformiteLimitesBact,
     conformiteLimitesPc: sample.conformiteLimitesPc,
     source: sample.source,
-    measurements: sample.measurements.map((measurement) => ({
-      parameterCode: measurement.parameterCode,
-      parameterLabel: measurement.parameterLabel,
-      rawText: measurement.rawText,
-      numericValue: measurement.numericValue,
-      qualifier: measurement.qualifier,
-      unit: measurement.unit,
-    })),
+    measurements: sample.measurements.map((measurement) =>
+      toMeasurementDto({
+        sampledAt: sample.sampledAt,
+        measurement,
+      }),
+    ),
+  };
+}
+
+function toMeasurementDto(
+  snapshot: ParameterSnapshot,
+): NonNullable<NetworkWaterQualityDto["latestSample"]>["measurements"][number] {
+  const { measurement, sampledAt } = snapshot;
+  return {
+    parameterCode: measurement.parameterCode,
+    parameterLabel: measurement.parameterLabel,
+    siseCode: measurement.siseCode,
+    casCode: measurement.casCode,
+    rawText: measurement.rawText,
+    numericValue: measurement.numericValue,
+    qualifier: measurement.qualifier,
+    unit: measurement.unit,
+    sampledAt: sampledAt.toISOString(),
+    resolution: null,
   };
 }

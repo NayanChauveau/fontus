@@ -9,6 +9,26 @@ const paulin: Awaited<
   networkCode: "033001214",
   windowFrom: "2025-09-02",
   source: "remote",
+  latestMeasurements: [
+    {
+      parameterCode: "1339",
+      parameterLabel: "Nitrites (en NO2)",
+      rawText: "<0,01",
+      numericValue: 0.01,
+      qualifier: "lt",
+      unit: "mg/L",
+      sampledAt: "2026-06-18T11:40:00.000Z",
+      resolution: {
+        canonicalId: "nitrites",
+        canonicalName: "Nitrites",
+        category: "nutrients",
+        displayPriority: 21,
+        canonicalUnit: "mg/L",
+        canonicalNumericValue: 0.01,
+        conversion: "identity",
+      },
+    },
+  ],
   latestSample: {
     code: "03300277847",
     sampledAt: "2026-06-18T11:40:00.000Z",
@@ -24,6 +44,15 @@ const paulin: Awaited<
         numericValue: 0.01,
         qualifier: "lt",
         unit: "mg/L",
+        resolution: {
+          canonicalId: "nitrites",
+          canonicalName: "Nitrites",
+          category: "nutrients",
+          displayPriority: 21,
+          canonicalUnit: "mg/L",
+          canonicalNumericValue: 0.01,
+          conversion: "identity",
+        },
       },
     ],
   },
@@ -49,12 +78,25 @@ describe("GetNetworkWaterQualityUseCase", () => {
     expect(called).toBe(false);
   });
 
-  it("delegates a valid UDI code", async () => {
+  it("resolves measurements through the parameter dictionary", async () => {
     const { ports } = createFakeApplicationPorts({
       analyses: {
         async getByNetworkCode(networkCode) {
           expect(networkCode).toBe("033001214");
-          return paulin;
+          return {
+            ...paulin,
+            latestMeasurements: paulin.latestMeasurements.map(
+              (measurement) => ({ ...measurement, resolution: null }),
+            ),
+          };
+        },
+      },
+      parameters: {
+        async resolve(measurements) {
+          return measurements.map((measurement) => ({
+            ...measurement,
+            resolution: paulin.latestMeasurements[0]?.resolution ?? null,
+          }));
         },
       },
     });
@@ -63,8 +105,35 @@ describe("GetNetworkWaterQualityUseCase", () => {
       "033001214",
     );
 
-    expect(result).toEqual(paulin);
-    expect(result.latestSample?.measurements[0]?.rawText).toBe("<0,01");
+    expect(result.latestMeasurements[0]?.resolution?.canonicalId).toBe(
+      "nitrites",
+    );
+    expect(result.latestMeasurements[0]?.rawText).toBe("<0,01");
+  });
+
+  it("returns raw analyses when the dictionary fails", async () => {
+    const { ports } = createFakeApplicationPorts({
+      analyses: {
+        async getByNetworkCode() {
+          return {
+            ...paulin,
+            latestMeasurements: paulin.latestMeasurements.map(
+              (measurement) => ({ ...measurement, resolution: null }),
+            ),
+          };
+        },
+      },
+      parameters: {
+        async resolve() {
+          throw new Error("dictionary down");
+        },
+      },
+    });
+
+    const result = await new GetNetworkWaterQualityUseCase(ports).execute(
+      "033001214",
+    );
+    expect(result.latestMeasurements[0]?.resolution).toBeNull();
   });
 
   it("propagates ANALYSES_UNAVAILABLE", async () => {

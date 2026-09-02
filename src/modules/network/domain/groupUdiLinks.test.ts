@@ -45,7 +45,33 @@ describe("groupUdiLinks", () => {
     ]);
   });
 
+  it("does not duplicate a neighborhood already attached to the network", () => {
+    const grouped = groupUdiLinks([
+      {
+        citycode: "33063",
+        city: "Bordeaux",
+        networkCode: "033001214",
+        networkName: "PAULIN",
+        neighborhood: "Centre",
+        year: 2026,
+        supplyStartedOn: null,
+      },
+      {
+        citycode: "33063",
+        city: "Bordeaux",
+        networkCode: "033001214",
+        networkName: "PAULIN",
+        neighborhood: "Centre",
+        year: 2026,
+        supplyStartedOn: null,
+      },
+    ]);
+
+    expect(grouped?.networks[0]?.neighborhoods).toEqual(["Centre"]);
+  });
+
   it("returns null for an empty payload", () => {
     expect(groupUdiLinks([])).toBeNull();
+    expect(groupUdiLinks([undefined as never])).toBeNull();
   });
 });

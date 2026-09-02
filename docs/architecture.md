@@ -68,4 +68,15 @@ Module `analyses` : Hub’Eau `resultats_dis` + cache Postgres 7 jours + parse L
 - Use case : `GetNetworkWaterQualityUseCase`
 - HTTP : `GET /api/udi/:code/quality`
 
-Modules suivants : `parameters`, `norms`, `comparison`.
+## I4
+
+Module `parameters` : dictionnaire canonique + alias SANDRE / SISE / CAS + conversion d’unités.
+
+- Seed prioritaire (PFAS, nitrates, métaux, microbio, pesticides…) ; les autres codes vus sont importés (`unlisted:{code}`)
+- Priorité d’affichage ≠ périmètre d’import
+- Deux libellés / codes de la même substance → un `canonical_id` (`1340` et `NO3` → `nitrates`)
+- Conversion mg/L ↔ µg/L avant tout seuil ; `< LQ` reste une limite, pas zéro
+- Tableau = dernière valeur **par paramètre** (les campagnes PFAS ont souvent une autre date que le dernier contrôle courant)
+- Use case : `GetNetworkWaterQualityUseCase` enrichit les mesures via `ParametersPort.resolve`
+
+Modules suivants : `norms`, `comparison`.

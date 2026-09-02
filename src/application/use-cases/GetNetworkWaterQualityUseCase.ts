@@ -12,11 +12,23 @@ export class GetNetworkWaterQualityUseCase {
         windowFrom: "",
         source: "cache",
         latestSample: null,
+        latestMeasurements: [],
       };
     }
 
-    return this.ports.analyses.getByNetworkCode(
+    const dto = await this.ports.analyses.getByNetworkCode(
       normalizeNetworkCode(networkCode),
     );
+
+    try {
+      return {
+        ...dto,
+        latestMeasurements: await this.ports.parameters.resolve(
+          dto.latestMeasurements,
+        ),
+      };
+    } catch {
+      return dto;
+    }
   }
 }

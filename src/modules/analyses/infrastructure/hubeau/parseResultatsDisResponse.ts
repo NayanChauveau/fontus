@@ -74,6 +74,8 @@ function toMeasurementRow(
   const measurement = {
     parameterCode,
     parameterLabel,
+    siseCode: asString(record.code_parametre_se),
+    casCode: asString(record.code_parametre_cas),
     rawText: parsed.rawText,
     numericValue: parsed.numericValue,
     qualifier: parsed.qualifier,

@@ -24,6 +24,16 @@ describe("chooseAnalysisWindow", () => {
     ).toEqual({ months: 12, count: 8099 });
   });
 
+  it("falls back to the shortest window or 6 months when everything overflows", () => {
+    expect(
+      chooseAnalysisWindow([
+        { months: 36, count: 50000 },
+        { months: 6, count: 40000 },
+      ]),
+    ).toEqual({ months: 6, count: 40000 });
+    expect(chooseAnalysisWindow([])).toEqual({ months: 6, count: 0 });
+  });
+
   it("never picks a window above the 20 000 Hub’Eau cap when a smaller one exists", () => {
     expect(
       chooseAnalysisWindow([

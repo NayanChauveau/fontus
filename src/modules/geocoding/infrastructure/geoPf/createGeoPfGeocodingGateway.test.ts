@@ -54,4 +54,13 @@ describe("createGeoPfGeocodingGateway", () => {
       gateway.search("Bordeaux", { autocomplete: true, limit: 5 }),
     ).rejects.toThrow("GEO_PF_REQUEST_FAILED");
   });
+
+  it("throws on an HTTP error", async () => {
+    const gateway = createGeoPfGeocodingGateway(
+      async () => new Response("nope", { status: 502 }),
+    );
+    await expect(
+      gateway.search("Bordeaux", { autocomplete: false, limit: 5 }),
+    ).rejects.toThrow("GEO_PF_HTTP_502");
+  });
 });

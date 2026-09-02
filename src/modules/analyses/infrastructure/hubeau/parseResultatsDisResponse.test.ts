@@ -35,4 +35,76 @@ describe("parseResultatsDisResponse", () => {
       unit: "mg/L",
     });
   });
+
+  it("ignores invalid payloads and incomplete rows", () => {
+    expect(parseResultatsDisResponse(null, "033001214")).toEqual({
+      count: 0,
+      next: null,
+      samples: [],
+    });
+    expect(parseResultatsDisResponse({ data: [null, {}] }, "033001214").samples).toEqual(
+      [],
+    );
+  });
+
+  it("merges two parameters of the same sample and skips a duplicate code", () => {
+    const parsed = parseResultatsDisResponse(
+      {
+        count: 3,
+        next: "https://hubeau.example/next",
+        data: [
+          {
+            code_prelevement: "s1",
+            code_parametre: "1339",
+            libelle_parametre: "Nitrites",
+            resultat_alphanumerique: "<0,01",
+            date_prelevement: "2026-06-18T11:40:00Z",
+          },
+          {
+            code_prelevement: "s1",
+            code_parametre: "1340",
+            libelle_parametre: "Nitrates",
+            resultat_alphanumerique: "6",
+            date_prelevement: "2026-06-18T11:40:00Z",
+          },
+          {
+            code_prelevement: "s1",
+            code_parametre: "1339",
+            libelle_parametre: "Nitrites",
+            resultat_alphanumerique: "<0,01",
+            date_prelevement: "2026-06-18T11:40:00Z",
+          },
+        ],
+      },
+      "033001214",
+    );
+    expect(parsed.next).toContain("next");
+    expect(parsed.samples[0]?.measurements.map((m) => m.parameterCode)).toEqual([
+      "1339",
+      "1340",
+    ]);
+  });
+
+  it("treats a non-array data field and an invalid date as empty", () => {
+    expect(parseResultatsDisResponse({ data: "nope", count: "x" }, "033001214")).toEqual({
+      count: 0,
+      next: null,
+      samples: [],
+    });
+    expect(
+      parseResultatsDisResponse(
+        {
+          data: [
+            {
+              code_prelevement: "s1",
+              code_parametre: "1339",
+              libelle_parametre: "Nitrites",
+              date_prelevement: "not-a-date",
+            },
+          ],
+        },
+        "033001214",
+      ).samples,
+    ).toEqual([]);
+  });
 });

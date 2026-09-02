@@ -63,6 +63,8 @@ export const fr = {
     conclusionTitle: "Conclusion ARS",
     noConclusion: "Conclusion ARS non renseignée pour ce prélèvement.",
     officialNote: "Verdict officiel de l’ARS, non recalculé.",
+    perParameterDateNote:
+      "Chaque paramètre garde la date de sa dernière mesure. Les campagnes PFAS sont souvent distinctes du dernier contrôle courant.",
     sampledAt: "Prélèvement du",
     source: "Source",
     sourceRemote: "Hub’Eau (SISE-Eaux)",
@@ -70,6 +72,11 @@ export const fr = {
     sourceHubEau: "Hub’Eau",
     parameter: "Paramètre",
     value: "Résultat",
+    canonicalValue: "Valeur canonique",
     date: "Date",
+    priorityTitle: "Paramètres prioritaires",
+    otherTitle: "Autres paramètres vus",
+    converted: "converti",
+    dictionaryId: "id",
   },
 } as const;

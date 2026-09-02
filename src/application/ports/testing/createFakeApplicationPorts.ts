@@ -13,6 +13,7 @@ export function createFakeApplicationPorts(
           windowFrom: "",
           source: "cache",
           latestSample: null,
+          latestMeasurements: [],
         };
       },
     },
@@ -27,6 +28,11 @@ export function createFakeApplicationPorts(
     health: {
       async ping() {
         return { ok: true, at: FIXED_PING_AT };
+      },
+    },
+    parameters: {
+      async resolve(measurements) {
+        return measurements;
       },
     },
     network: {

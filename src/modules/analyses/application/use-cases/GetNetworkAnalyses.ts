@@ -1,7 +1,9 @@
 import {
+  latestMeasurementsByParameter,
   latestSample,
   isFreshAnalysisSync,
   type AnalysisSample,
+  type ParameterSnapshot,
 } from "../../domain/Analysis";
 import {
   ANALYSIS_WINDOW_MONTHS,
@@ -18,6 +20,7 @@ export type GetNetworkAnalysesResult = {
   windowFrom: string;
   source: "cache" | "remote";
   latestSample: AnalysisSample | null;
+  latestMeasurements: ParameterSnapshot[];
 };
 
 export class GetNetworkAnalyses {
@@ -38,12 +41,12 @@ export class GetNetworkAnalyses {
           networkCode,
         }),
       );
-      return {
+      return toResult(
         networkCode,
-        windowFrom: cached.windowFrom,
-        source: "cache",
-        latestSample: latestSample(cached.samples),
-      };
+        cached.windowFrom,
+        "cache",
+        cached.samples,
+      );
     }
 
     const window = await this.resolveWindow(networkCode, now);
@@ -60,12 +63,7 @@ export class GetNetworkAnalyses {
       }),
     );
 
-    return {
-      networkCode,
-      windowFrom: window.dateMin,
-      source: "remote",
-      latestSample: latestSample(samples),
-    };
+    return toResult(networkCode, window.dateMin, "remote", samples);
   }
 
   private async readFresh(networkCode: string, now: Date) {
@@ -125,6 +123,21 @@ export class GetNetworkAnalyses {
     }
     return [...merged.values()];
   }
+}
+
+function toResult(
+  networkCode: string,
+  windowFrom: string,
+  source: "cache" | "remote",
+  samples: AnalysisSample[],
+): GetNetworkAnalysesResult {
+  return {
+    networkCode,
+    windowFrom,
+    source,
+    latestSample: latestSample(samples),
+    latestMeasurements: latestMeasurementsByParameter(samples),
+  };
 }
 
 function mergeSamples(

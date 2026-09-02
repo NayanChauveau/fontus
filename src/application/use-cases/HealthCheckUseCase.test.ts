@@ -14,6 +14,20 @@ describe("HealthCheckUseCase", () => {
     });
   });
 
+  it("returns error when ping is not ok", async () => {
+    const { ports } = createFakeApplicationPorts({
+      health: {
+        async ping() {
+          return { ok: false, at: new Date("2026-09-02T08:00:00.000Z") };
+        },
+      },
+    });
+
+    const result = await new HealthCheckUseCase(ports).execute();
+    expect(result.status).toBe("error");
+    expect(result.postgres).toBe(false);
+  });
+
   it("returns error when the health port throws", async () => {
     const { ports } = createFakeApplicationPorts({
       health: {

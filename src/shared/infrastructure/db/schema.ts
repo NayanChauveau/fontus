@@ -57,6 +57,29 @@ export const samples = pgTable("samples", {
   source: text("source").notNull(),
 });
 
+export const parameters = pgTable("parameters", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  cas: text("cas"),
+  category: text("category").notNull(),
+  canonicalUnit: text("canonical_unit"),
+  displayPriority: integer("display_priority").notNull(),
+  origin: text("origin").notNull(),
+});
+
+export const parameterAliases = pgTable(
+  "parameter_aliases",
+  {
+    source: text("source").notNull(),
+    externalCode: text("external_code").notNull(),
+    label: text("label"),
+    parameterId: text("parameter_id")
+      .notNull()
+      .references(() => parameters.id),
+  },
+  (table) => [primaryKey({ columns: [table.source, table.externalCode] })],
+);
+
 export const measurements = pgTable(
   "measurements",
   {

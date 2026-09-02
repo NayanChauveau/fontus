@@ -31,11 +31,40 @@ describe("parseAlphanumericResult", () => {
     });
   });
 
+  it("falls back to the numeric when the alphanumeric is empty", () => {
+    expect(parseAlphanumericResult("", 3.2)).toEqual({
+      rawText: "3.2",
+      numericValue: 3.2,
+      qualifier: "eq",
+    });
+    expect(parseAlphanumericResult(null, null)).toEqual({
+      rawText: "",
+      numericValue: null,
+      qualifier: "eq",
+    });
+  });
+
+  it("parses a greater-than limit", () => {
+    expect(parseAlphanumericResult(">10", 0)).toEqual({
+      rawText: ">10",
+      numericValue: 10,
+      qualifier: "gt",
+    });
+  });
+
   it("keeps qualitative results without inventing a number", () => {
     expect(parseAlphanumericResult("Aspect normal", 0.0)).toEqual({
       rawText: "Aspect normal",
       numericValue: null,
       qualifier: "eq",
+    });
+  });
+
+  it("rejects a French token that is not a finite number", () => {
+    expect(parseAlphanumericResult(`<${"1".padEnd(400, "0")}`, 0)).toEqual({
+      rawText: `<${"1".padEnd(400, "0")}`,
+      numericValue: null,
+      qualifier: "lt",
     });
   });
 });

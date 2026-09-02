@@ -1,7 +1,8 @@
 export type ApplicationErrorCode =
   | "GEOCODING_UNAVAILABLE"
   | "NETWORKS_UNAVAILABLE"
-  | "ANALYSES_UNAVAILABLE";
+  | "ANALYSES_UNAVAILABLE"
+  | "PARAMETERS_UNAVAILABLE";
 
 export class ApplicationError extends Error {
   constructor(

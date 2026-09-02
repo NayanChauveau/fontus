@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import type { NetworkWaterQualityDto } from "@/application/dtos/NetworkWaterQualityDto";
 import { mapNetworkWaterQualityDto } from "@/presentation/mappers/mapNetworkWaterQualityDto";
 import { fr } from "@/presentation/i18n/fr";
-import type { NetworkAnalysesViewModel } from "@/presentation/view-models/NetworkAnalysesViewModel";
+import type {
+  NetworkAnalysesViewModel,
+  NetworkMeasurementViewModel,
+} from "@/presentation/view-models/NetworkAnalysesViewModel";
 
 type LoadStatus = "loading" | "ready" | "unavailable";
 
@@ -78,6 +81,10 @@ function AnalysesResults({
 }: {
   viewModel: NetworkAnalysesViewModel;
 }) {
+  const isEmpty =
+    viewModel.priorityMeasurements.length === 0 &&
+    viewModel.otherMeasurements.length === 0;
+
   return (
     <div className="mt-3 flex flex-col gap-4">
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900 dark:bg-emerald-950/40">
@@ -98,45 +105,99 @@ function AnalysesResults({
         <p className="mt-1 text-xs text-zinc-500">
           {fr.analyses.source} : {viewModel.sourceLabel}
         </p>
+        <p className="mt-2 text-xs text-zinc-500">
+          {viewModel.perParameterDateNote}
+        </p>
       </div>
 
-      {viewModel.measurements.length === 0 ? (
+      {isEmpty ? (
         <p className="text-sm text-zinc-500">{fr.analyses.empty}</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[28rem] text-left text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800">
-                <th className="py-2 pr-3 font-medium">{fr.analyses.parameter}</th>
-                <th className="py-2 pr-3 font-medium">{fr.analyses.value}</th>
-                <th className="py-2 pr-3 font-medium">{fr.analyses.date}</th>
-                <th className="py-2 font-medium">{fr.analyses.source}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {viewModel.measurements.map((measurement) => (
-                <tr
-                  key={measurement.parameterCode}
-                  className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
-                >
-                  <td className="py-2 pr-3 text-zinc-950 dark:text-zinc-50">
-                    {measurement.parameterLabel}
-                  </td>
-                  <td className="py-2 pr-3 font-mono text-zinc-800 dark:text-zinc-200">
-                    {measurement.valueLabel}
-                  </td>
-                  <td className="py-2 pr-3 text-xs text-zinc-500">
-                    {measurement.sampledAtLabel}
-                  </td>
-                  <td className="py-2 text-xs text-zinc-500">
-                    {measurement.sourceLabel}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {viewModel.priorityMeasurements.length > 0 && (
+            <MeasurementTable
+              title={fr.analyses.priorityTitle}
+              measurements={viewModel.priorityMeasurements}
+            />
+          )}
+          {viewModel.otherMeasurements.length > 0 && (
+            <MeasurementTable
+              title={fr.analyses.otherTitle}
+              measurements={viewModel.otherMeasurements}
+            />
+          )}
+        </>
       )}
+    </div>
+  );
+}
+
+function MeasurementTable({
+  title,
+  measurements,
+}: {
+  title: string;
+  measurements: NetworkMeasurementViewModel[];
+}) {
+  return (
+    <div>
+      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        {title}
+      </h4>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[32rem] text-left text-sm">
+          <thead>
+            <tr className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800">
+              <th className="py-2 pr-3 font-medium">{fr.analyses.parameter}</th>
+              <th className="py-2 pr-3 font-medium">{fr.analyses.value}</th>
+              <th className="py-2 pr-3 font-medium">
+                {fr.analyses.canonicalValue}
+              </th>
+              <th className="py-2 pr-3 font-medium">{fr.analyses.date}</th>
+              <th className="py-2 font-medium">{fr.analyses.source}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {measurements.map((measurement) => (
+              <tr
+                key={measurement.parameterCode}
+                className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
+              >
+                <td className="py-2 pr-3 text-zinc-950 dark:text-zinc-50">
+                  <p>{measurement.parameterLabel}</p>
+                  {measurement.canonicalId && (
+                    <p className="font-mono text-xs text-zinc-500">
+                      {fr.analyses.dictionaryId} {measurement.canonicalId}
+                    </p>
+                  )}
+                  {measurement.originalLabel && (
+                    <p className="text-xs text-zinc-500">
+                      {measurement.originalLabel}
+                    </p>
+                  )}
+                </td>
+                <td className="py-2 pr-3 font-mono text-zinc-800 dark:text-zinc-200">
+                  {measurement.valueLabel}
+                </td>
+                <td className="py-2 pr-3 font-mono text-zinc-800 dark:text-zinc-200">
+                  {measurement.canonicalValueLabel ?? "—"}
+                  {measurement.converted && (
+                    <span className="ml-1 text-xs font-sans text-emerald-700 dark:text-emerald-400">
+                      {fr.analyses.converted}
+                    </span>
+                  )}
+                </td>
+                <td className="py-2 pr-3 text-xs text-zinc-500">
+                  {measurement.sampledAtLabel}
+                </td>
+                <td className="py-2 text-xs text-zinc-500">
+                  {measurement.sourceLabel}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

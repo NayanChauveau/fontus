@@ -42,5 +42,10 @@ describe("parseGeoPfSearchResponse", () => {
   it("returns empty on a malformed payload", () => {
     expect(parseGeoPfSearchResponse(null)).toEqual([]);
     expect(parseGeoPfSearchResponse({ type: "Error" })).toEqual([]);
+    expect(
+      parseGeoPfSearchResponse({
+        features: [null, { geometry: { coordinates: [1] } }],
+      }),
+    ).toEqual([]);
   });
 });

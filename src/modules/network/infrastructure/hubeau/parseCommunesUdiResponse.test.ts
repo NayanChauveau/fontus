@@ -40,4 +40,24 @@ describe("parseCommunesUdiResponse", () => {
       }).links,
     ).toEqual([]);
   });
+
+  it("accepts a numeric year and ignores invalid rows", () => {
+    const parsed = parseCommunesUdiResponse({
+      next: 1,
+      data: [
+        null,
+        {
+          code_commune: "33063",
+          nom_commune: "Bordeaux",
+          code_reseau: "033001174",
+          nom_reseau: "CAP ROUX",
+          annee: 2026,
+        },
+      ],
+    });
+    expect(parsed.next).toBeNull();
+    expect(parsed.links[0]?.year).toBe(2026);
+    expect(parseCommunesUdiResponse(null).links).toEqual([]);
+    expect(parseCommunesUdiResponse({ data: "nope" }).links).toEqual([]);
+  });
 });
