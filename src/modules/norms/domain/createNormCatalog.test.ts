@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createNormCatalog } from "./createNormCatalog";
 import { FR_EU_THRESHOLDS } from "./frEuCatalog";
+import { SEEDED_THRESHOLDS } from "./seededThresholds";
 
 describe("createNormCatalog", () => {
   it("looks up the seed and ignores a duplicate add", () => {
@@ -26,5 +27,15 @@ describe("createNormCatalog", () => {
     expect(catalog.findActive(extra.parameterId, extra.jurisdiction, extra.validFrom)).toBe(
       extra,
     );
+  });
+
+  it("exposes Swiss and US PFOA limits from the combined seed", () => {
+    const catalog = createNormCatalog(SEEDED_THRESHOLDS);
+    const at = new Date("2026-05-18T00:00:00.000Z");
+    expect(catalog.findActive("pfoa", "fr", at)).toBeNull();
+    expect(catalog.findActive("pfoa", "ch", at)?.value).toBe(0.5);
+    expect(catalog.findActive("pfoa", "us", at)?.value).toBe(0.004);
+    expect(catalog.findActive("nitrates", "us", at)?.value).toBe(44.3);
+    expect(catalog.findActive("cadmium", "ch", at)?.value).toBe(3);
   });
 });

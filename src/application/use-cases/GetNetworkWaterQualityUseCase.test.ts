@@ -186,7 +186,7 @@ describe("GetNetworkWaterQualityUseCase", () => {
     expect(reported).toEqual(["compare_failed"]);
   });
 
-  it("attaches FR/UE comparisons after resolving", async () => {
+  it("attaches comparisons after resolving", async () => {
     const { ports } = createFakeApplicationPorts({
       analyses: {
         async getByNetworkCode() {
@@ -213,6 +213,30 @@ describe("GetNetworkWaterQualityUseCase", () => {
                 thresholdLabel: "≤ 0,5 mg/L",
                 citation: "directive",
                 sourceUrl: "https://example.test",
+              },
+              ch: {
+                status: "compliant",
+                kind: "legal_limit",
+                binding: true,
+                thresholdLabel: "≤ 0,1 mg/L",
+                citation: "OPBD",
+                sourceUrl: "https://example.test",
+              },
+              us: {
+                status: "compliant",
+                kind: "legal_limit",
+                binding: true,
+                thresholdLabel: "≤ 3,28 mg/L",
+                citation: "NPDWR",
+                sourceUrl: "https://example.test",
+              },
+              strict: {
+                status: "compliant",
+                kind: "site_metric",
+                binding: false,
+                thresholdLabel: "≤ 0,1 mg/L",
+                citation: "référence stricte",
+                sourceUrl: null,
               },
             },
           }));

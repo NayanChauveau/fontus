@@ -1,5 +1,9 @@
 import { compareMeasurement } from "../../domain/compareMeasurement";
 import type { ComparisonStatus } from "../../domain/compareMeasurement";
+import {
+  pickStrictThreshold,
+  STRICT_REFERENCE_CITATION,
+} from "../../domain/pickStrictThreshold";
 import type { NormCatalog } from "../../../norms/domain/createNormCatalog";
 import type { ThresholdKind } from "../../../norms/domain/ThresholdVersion";
 import type { NormCatalogPort } from "../../../norms/application/ports/NormCatalogPort";
@@ -14,7 +18,7 @@ export type ComparisonInput = {
 
 export type ComparisonDto = {
   status: ComparisonStatus;
-  kind: ThresholdKind | null;
+  kind: ThresholdKind | "site_metric" | null;
   binding: boolean;
   thresholdLabel: string | null;
   citation: string | null;
@@ -25,6 +29,9 @@ export type ComparedMeasurement<T extends ComparisonInput> = T & {
   comparisons: {
     fr: ComparisonDto | null;
     eu: ComparisonDto | null;
+    ch: ComparisonDto | null;
+    us: ComparisonDto | null;
+    strict: ComparisonDto | null;
   };
 };
 
@@ -52,12 +59,27 @@ export class CompareMeasurements {
         parameterId && at
           ? this.catalog.findActive(parameterId, "eu", at)
           : null;
+      const ch =
+        parameterId && at
+          ? this.catalog.findActive(parameterId, "ch", at)
+          : null;
+      const us =
+        parameterId && at
+          ? this.catalog.findActive(parameterId, "us", at)
+          : null;
+      const strict = pickStrictThreshold([fr, eu, ch, us]);
 
       return {
         ...measurement,
         comparisons: {
           fr: toDto(compareMeasurement(measurement, fr), measurement),
           eu: toDto(compareMeasurement(measurement, eu), measurement),
+          ch: toDto(compareMeasurement(measurement, ch), measurement),
+          us: toDto(compareMeasurement(measurement, us), measurement),
+          strict: toStrictDto(
+            compareMeasurement(measurement, strict),
+            measurement,
+          ),
         },
       };
     });
@@ -88,6 +110,23 @@ function parseSampledAt(iso: string | undefined): Date | null {
   }
   const date = new Date(iso);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function toStrictDto(
+  result: ReturnType<typeof compareMeasurement>,
+  measurement: ComparisonInput,
+): ComparisonDto | null {
+  const dto = toDto(result, measurement);
+  if (!dto || dto.status === "no_threshold") {
+    return dto;
+  }
+  return {
+    ...dto,
+    kind: "site_metric",
+    binding: false,
+    citation: STRICT_REFERENCE_CITATION,
+    sourceUrl: null,
+  };
 }
 
 function toDto(

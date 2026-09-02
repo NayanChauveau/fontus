@@ -74,7 +74,9 @@ export const fr = {
     value: "Résultat",
     canonicalValue: "Valeur canonique",
     noThresholdNote:
-      "Les PFAS individuels (PFOA, PFOS, etc.) n’ont pas de limite légale FR/UE. Seule la somme PFAS-20 (0,10 µg/L) est réglementée aujourd’hui.",
+      "En FR/UE, les PFAS individuels (PFOA, PFOS, etc.) n’ont pas de limite légale : seule la somme PFAS-20 (0,10 µg/L) est réglementée. La Suisse et les États-Unis fixent des limites individuelles.",
+    strictNote:
+      "La colonne « Stricte » est une métrique du site : plus basse limite légale comparable parmi FR, UE, CH et US. Ce n’est pas une norme officielle.",
     reconstructed: "reconstruit",
     reconstructedSumNote:
       "Quand Hub’Eau publie « <SEUIL » pour la somme PFAS-20, on calcule une borne haute à partir des 20 substances du même prélèvement (LQ si non détecté).",
@@ -85,6 +87,9 @@ export const fr = {
     dictionaryId: "id",
     compareFr: "FR",
     compareEu: "UE",
+    compareCh: "CH",
+    compareUs: "US",
+    compareStrict: "Stricte",
     compliant: "conforme",
     exceedance: "dépassement",
     belowLoq: "LQ > seuil",
@@ -92,6 +97,7 @@ export const fr = {
     noThreshold: "pas de seuil",
     legalLimit: "limite légale",
     qualityReference: "référence de qualité",
+    siteMetric: "référence stricte (site)",
   },
   errors: {
     unexpected: "Une erreur inattendue s’est produite.",

@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { createNormCatalog } from "../../../norms/domain/createNormCatalog";
 import { FR_EU_THRESHOLDS } from "../../../norms/domain/frEuCatalog";
+import { SEEDED_THRESHOLDS } from "../../../norms/domain/seededThresholds";
 import type { NormCatalogPort } from "../../../norms/application/ports/NormCatalogPort";
+import { STRICT_REFERENCE_CITATION } from "../../domain/pickStrictThreshold";
 import { CompareMeasurements } from "./CompareMeasurements";
 
 describe("CompareMeasurements", () => {
   it("compares FR and UE at the sampling date and hydrates twice without re-persisting", async () => {
     const persisted: string[] = [];
     const useCase = new CompareMeasurements(
-      createNormCatalog(FR_EU_THRESHOLDS),
+      createNormCatalog(SEEDED_THRESHOLDS),
       memoryStore(persisted),
     );
 
@@ -40,9 +42,31 @@ describe("CompareMeasurements", () => {
     expect(first[0]?.comparisons.fr?.kind).toBe("legal_limit");
     expect(first[0]?.comparisons.fr?.thresholdLabel).toBe("12,3 / 50 mg/L");
     expect(first[0]?.comparisons.eu?.status).toBe("compliant");
+    expect(first[0]?.comparisons.ch?.thresholdLabel).toBe("12,3 / 40 mg/L");
+    expect(first[0]?.comparisons.us?.thresholdLabel).toBe("12,3 / 44,3 mg/L");
+    expect(first[0]?.comparisons.strict?.thresholdLabel).toBe("12,3 / 40 mg/L");
+    expect(first[0]?.comparisons.strict?.kind).toBe("site_metric");
     expect(first[1]?.comparisons.fr?.status).toBe("no_threshold");
+    expect(first[1]?.comparisons.eu?.status).toBe("no_threshold");
+    expect(first[1]?.comparisons.ch?.status).toBe("compliant");
+    expect(first[1]?.comparisons.ch?.thresholdLabel).toBe("0,001 / 0,5 µg/L");
+    expect(first[1]?.comparisons.us?.status).toBe("compliant");
+    expect(first[1]?.comparisons.us?.thresholdLabel).toBe("0,001 / 0,004 µg/L");
+    expect(first[1]?.comparisons.us?.kind).toBe("legal_limit");
+    expect(first[1]?.comparisons.strict?.status).toBe("compliant");
+    expect(first[1]?.comparisons.strict?.kind).toBe("site_metric");
+    expect(first[1]?.comparisons.strict?.binding).toBe(false);
+    expect(first[1]?.comparisons.strict?.thresholdLabel).toBe(
+      "0,001 / 0,004 µg/L",
+    );
+    expect(first[1]?.comparisons.strict?.citation).toBe(STRICT_REFERENCE_CITATION);
+    expect(first[1]?.comparisons.strict?.sourceUrl).toBeNull();
     expect(first[2]?.comparisons.fr?.status).toBe("compliant");
     expect(first[2]?.comparisons.fr?.thresholdLabel).toBe("0,016 / 0,1 µg/L");
+    expect(first[2]?.comparisons.ch?.status).toBe("no_threshold");
+    expect(first[2]?.comparisons.strict?.thresholdLabel).toBe(
+      "0,016 / 0,1 µg/L",
+    );
 
     const before = persisted.length;
     await useCase.execute([]);
@@ -225,6 +249,39 @@ describe("CompareMeasurements", () => {
     expect(result[2]?.comparisons.fr?.status).toBe("not_comparable");
     expect(result[2]?.comparisons.fr?.thresholdLabel).toBe("0,5 µg/L");
     expect(result[3]?.comparisons.fr?.thresholdLabel).toBe("50 mg/L");
+  });
+
+  it("keeps an EPA action level as a reco and does not use it for the site metric", async () => {
+    const useCase = new CompareMeasurements(
+      createNormCatalog(SEEDED_THRESHOLDS),
+      {
+        async persist() {},
+        async list() {
+          return [];
+        },
+      },
+    );
+
+    const result = await useCase.execute([
+      {
+        parameterId: "lead",
+        canonicalNumericValue: 8,
+        qualifier: "eq",
+        conversion: "identity",
+        sampledAt: "2026-09-02T00:00:00.000Z",
+      },
+    ]);
+
+    expect(result[0]?.comparisons.fr?.thresholdLabel).toBe("8 / 10 µg/L");
+    expect(result[0]?.comparisons.us?.kind).toBe("quality_reference");
+    expect(result[0]?.comparisons.us?.binding).toBe(false);
+    expect(result[0]?.comparisons.us?.thresholdLabel).toBe("8 / 15 µg/L");
+    expect(result[0]?.comparisons.ch?.thresholdLabel).toBe("8 / 5 µg/L");
+    expect(result[0]?.comparisons.ch?.status).toBe("exceedance");
+    expect(result[0]?.comparisons.strict?.thresholdLabel).toBe("8 / 5 µg/L");
+    expect(result[0]?.comparisons.strict?.kind).toBe("site_metric");
+    expect(result[0]?.comparisons.strict?.binding).toBe(false);
+    expect(result[0]?.comparisons.strict?.status).toBe("exceedance");
   });
 });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { FR_EU_THRESHOLDS } from "./frEuCatalog";
+import { SEEDED_THRESHOLDS } from "./seededThresholds";
 import { findActiveThreshold, isActiveAt } from "./ThresholdVersion";
 
 describe("findActiveThreshold", () => {
@@ -77,5 +78,41 @@ describe("findActiveThreshold", () => {
         new Date("2026-06-18T00:00:00.000Z"),
       ),
     ).toBeNull();
+  });
+});
+
+describe("CH / US versions", () => {
+  it("versions Swiss lead and US PFOA at the sampling date", () => {
+    const leadBefore = findActiveThreshold(
+      SEEDED_THRESHOLDS,
+      "lead",
+      "ch",
+      new Date("2026-07-31T00:00:00.000Z"),
+    );
+    const leadAfter = findActiveThreshold(
+      SEEDED_THRESHOLDS,
+      "lead",
+      "ch",
+      new Date("2026-08-01T00:00:00.000Z"),
+    );
+    const pfoaUs = findActiveThreshold(
+      SEEDED_THRESHOLDS,
+      "pfoa",
+      "us",
+      new Date("2026-05-18T00:00:00.000Z"),
+    );
+    const leadUs = findActiveThreshold(
+      SEEDED_THRESHOLDS,
+      "lead",
+      "us",
+      new Date("2026-06-18T00:00:00.000Z"),
+    );
+
+    expect(leadBefore?.value).toBe(10);
+    expect(leadAfter?.value).toBe(5);
+    expect(pfoaUs?.value).toBe(0.004);
+    expect(pfoaUs?.kind).toBe("legal_limit");
+    expect(leadUs?.kind).toBe("quality_reference");
+    expect(leadUs?.binding).toBe(false);
   });
 });

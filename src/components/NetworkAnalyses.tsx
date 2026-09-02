@@ -133,6 +133,7 @@ function AnalysesResults({
             </p>
           )}
           <p className="text-xs text-zinc-500">{fr.analyses.noThresholdNote}</p>
+          <p className="text-xs text-zinc-500">{fr.analyses.strictNote}</p>
         </>
       )}
     </div>
@@ -151,14 +152,22 @@ function MeasurementTable({
       <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
         {title}
       </h4>
-      <div className="overflow-x-auto md:overflow-visible">
-        <table className="w-full min-w-[40rem] text-left text-sm md:min-w-0">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[56rem] text-left text-sm">
           <thead>
             <tr className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800">
               <th className="py-2 pr-3 font-medium">{fr.analyses.parameter}</th>
               <th className="py-2 pr-3 font-medium">{fr.analyses.value}</th>
               <th className="py-2 pr-3 font-medium">{fr.analyses.compareFr}</th>
               <th className="py-2 pr-3 font-medium">{fr.analyses.compareEu}</th>
+              <th className="py-2 pr-3 font-medium">{fr.analyses.compareCh}</th>
+              <th className="py-2 pr-3 font-medium">{fr.analyses.compareUs}</th>
+              <th
+                className="py-2 pr-3 font-medium"
+                title={fr.analyses.strictNote}
+              >
+                {fr.analyses.compareStrict}
+              </th>
               <th className="py-2 pr-3 font-medium">{fr.analyses.date}</th>
               <th className="py-2 font-medium">{fr.analyses.source}</th>
             </tr>
@@ -199,6 +208,15 @@ function MeasurementTable({
                 <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
                   <ComparisonCell comparison={measurement.eu} />
                 </td>
+                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+                  <ComparisonCell comparison={measurement.ch} />
+                </td>
+                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+                  <ComparisonCell comparison={measurement.us} />
+                </td>
+                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+                  <ComparisonCell comparison={measurement.strict} />
+                </td>
                 <td className="py-2 pr-3 text-xs text-zinc-500">
                   {measurement.sampledAtLabel}
                 </td>
@@ -229,11 +247,15 @@ function ComparisonCell({
     <div title={comparison.citation ?? undefined}>
       <p
         className={
-          comparison.status === "exceedance"
-            ? "font-medium text-red-700 dark:text-red-400"
-            : comparison.status === "compliant"
-              ? "font-medium text-emerald-700 dark:text-emerald-400"
-              : "text-zinc-600 dark:text-zinc-400"
+          comparison.siteMetric
+            ? comparison.status === "exceedance"
+              ? "font-medium text-amber-800 dark:text-amber-300"
+              : "text-zinc-700 dark:text-zinc-300"
+            : comparison.status === "exceedance"
+              ? "font-medium text-red-700 dark:text-red-400"
+              : comparison.status === "compliant"
+                ? "font-medium text-emerald-700 dark:text-emerald-400"
+                : "text-zinc-600 dark:text-zinc-400"
         }
       >
         {comparison.statusLabel}

@@ -63,6 +63,90 @@ describe("NetworkAnalyses", () => {
                   citation: "Directive (UE) 2020/2184",
                   sourceUrl: "https://eur-lex.europa.eu",
                 },
+                ch: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+                us: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+                strict: {
+                  status: "compliant",
+                  kind: "site_metric",
+                  binding: false,
+                  thresholdLabel: "< 0,034 / 0,1 µg/L",
+                  citation: "référence stricte",
+                  sourceUrl: null,
+                },
+              },
+            },
+            {
+              parameterCode: "5347",
+              parameterLabel: "PFOA",
+              rawText: "0,001",
+              numericValue: 0.001,
+              qualifier: "eq",
+              unit: "µg/L",
+              sampledAt: "2026-05-18T11:55:00.000Z",
+              resolution: {
+                canonicalId: "pfoa",
+                canonicalName: "PFOA",
+                category: "pfas",
+                displayPriority: 10,
+                canonicalUnit: "µg/L",
+                canonicalNumericValue: 0.001,
+                conversion: "identity",
+              },
+              comparisons: {
+                fr: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+                eu: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+                ch: {
+                  status: "compliant",
+                  kind: "legal_limit",
+                  binding: true,
+                  thresholdLabel: "0,001 / 0,5 µg/L",
+                  citation: "OPBD",
+                  sourceUrl: "https://www.fedlex.admin.ch",
+                },
+                us: {
+                  status: "compliant",
+                  kind: "legal_limit",
+                  binding: true,
+                  thresholdLabel: "0,001 / 0,004 µg/L",
+                  citation: "NPDWR",
+                  sourceUrl: "https://www.epa.gov",
+                },
+                strict: {
+                  status: "compliant",
+                  kind: "site_metric",
+                  binding: false,
+                  thresholdLabel: "0,001 / 0,004 µg/L",
+                  citation: "référence stricte",
+                  sourceUrl: null,
+                },
               },
             },
             {
@@ -92,6 +176,23 @@ describe("NetworkAnalyses", () => {
                   sourceUrl: "https://example.test",
                 },
                 eu: null,
+                ch: {
+                  status: "compliant",
+                  kind: "legal_limit",
+                  binding: true,
+                  thresholdLabel: "5 / 200 µg/L",
+                  citation: "OPBD",
+                  sourceUrl: "https://example.test",
+                },
+                us: null,
+                strict: {
+                  status: "exceedance",
+                  kind: "site_metric",
+                  binding: false,
+                  thresholdLabel: "300 / 200 µg/L",
+                  citation: "référence stricte",
+                  sourceUrl: null,
+                },
               },
             },
             {
@@ -128,6 +229,30 @@ describe("NetworkAnalyses", () => {
                   citation: null,
                   sourceUrl: null,
                 },
+                ch: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+                us: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+                strict: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
               },
             },
             {
@@ -156,6 +281,30 @@ describe("NetworkAnalyses", () => {
                   citation: null,
                   sourceUrl: null,
                 },
+                ch: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+                us: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+                strict: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
               },
             },
           ],
@@ -169,15 +318,25 @@ describe("NetworkAnalyses", () => {
       expect(screen.getByText("Eau conforme")).toBeTruthy();
     });
     expect(screen.getByText("Somme PFAS-20")).toBeTruthy();
+    expect(screen.getByText("PFOA")).toBeTruthy();
     expect(screen.getByText("<0,034 µg/L")).toBeTruthy();
     expect(screen.getByText("reconstruit")).toBeTruthy();
     expect(screen.getAllByText("< 0,034 / 0,1 µg/L").length).toBeGreaterThan(0);
+    expect(screen.getByText("0,001 / 0,5 µg/L")).toBeTruthy();
+    expect(screen.getAllByText("0,001 / 0,004 µg/L").length).toBeGreaterThan(0);
     expect(screen.getAllByText("conforme").length).toBeGreaterThan(0);
-    expect(screen.getByText("dépassement")).toBeTruthy();
+    expect(screen.getAllByText("dépassement").length).toBeGreaterThan(0);
     expect(screen.getByText("non comparable")).toBeTruthy();
     expect(screen.getByText("LQ > seuil")).toBeTruthy();
     expect(screen.getAllByText("FR").length).toBeGreaterThan(0);
     expect(screen.getAllByText("UE").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CH").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("US").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Stricte").length).toBeGreaterThan(0);
+    expect(screen.getByText(/métrique du site/)).toBeTruthy();
+    expect(screen.getAllByText("référence stricte (site)").length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getByText("Aluminium")).toBeTruthy();
     expect(screen.getByText("Inconnu")).toBeTruthy();
     expect(screen.getByText("Aspect")).toBeTruthy();

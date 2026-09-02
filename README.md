@@ -22,7 +22,7 @@ App sur **http://localhost:3100** (pas 3000).
 - `/api/addresses/suggest?q=` : suggestions
 - `/api/addresses/resolve` : confirmation d’une suggestion
 - `/api/networks?citycode=` : UDI de la commune (cache 7 jours)
-- `/api/udi/:code/quality` : dernier prélèvement du réseau, mesures résolues + comparaison FR/UE
+- `/api/udi/:code/quality` : dernier prélèvement du réseau, mesures résolues + comparaison FR/UE/CH/US et référence stricte (métrique du site)
 - `/api/health` : `{ status, postgres, checkedAt }`
 
 ## Quality gate

@@ -6,6 +6,7 @@ export type ComparisonViewModel = {
   citation: string | null;
   sourceUrl: string | null;
   binding: boolean;
+  siteMetric: boolean;
 };
 
 export type NetworkMeasurementViewModel = {
@@ -23,6 +24,9 @@ export type NetworkMeasurementViewModel = {
   priority: boolean;
   fr: ComparisonViewModel | null;
   eu: ComparisonViewModel | null;
+  ch: ComparisonViewModel | null;
+  us: ComparisonViewModel | null;
+  strict: ComparisonViewModel | null;
 };
 
 export type NetworkAnalysesViewModel = {

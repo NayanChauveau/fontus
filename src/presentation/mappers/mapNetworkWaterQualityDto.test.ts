@@ -232,6 +232,30 @@ describe("mapNetworkWaterQualityDto", () => {
               citation: "directive",
               sourceUrl: "https://example.test",
             },
+            ch: {
+              status: "compliant",
+              kind: "legal_limit",
+              binding: true,
+              thresholdLabel: "≤ 40 mg/L",
+              citation: "OPBD",
+              sourceUrl: "https://example.test",
+            },
+            us: {
+              status: "compliant",
+              kind: "legal_limit",
+              binding: true,
+              thresholdLabel: "≤ 44,3 mg/L",
+              citation: "NPDWR",
+              sourceUrl: "https://example.test",
+            },
+            strict: {
+              status: "compliant",
+              kind: "site_metric",
+              binding: false,
+              thresholdLabel: "≤ 40 mg/L",
+              citation: "référence stricte",
+              sourceUrl: null,
+            },
           },
         },
         {
@@ -268,6 +292,30 @@ describe("mapNetworkWaterQualityDto", () => {
               citation: null,
               sourceUrl: null,
             },
+            ch: {
+              status: "compliant",
+              kind: "legal_limit",
+              binding: true,
+              thresholdLabel: "< 0,002 / 0,5 µg/L",
+              citation: "OPBD",
+              sourceUrl: "https://example.test",
+            },
+            us: {
+              status: "compliant",
+              kind: "legal_limit",
+              binding: true,
+              thresholdLabel: "< 0,002 / 0,004 µg/L",
+              citation: "NPDWR",
+              sourceUrl: "https://example.test",
+            },
+            strict: {
+              status: "compliant",
+              kind: "site_metric",
+              binding: false,
+              thresholdLabel: "< 0,002 / 0,004 µg/L",
+              citation: "référence stricte",
+              sourceUrl: null,
+            },
           },
         },
         {
@@ -297,6 +345,23 @@ describe("mapNetworkWaterQualityDto", () => {
               sourceUrl: "https://example.test",
             },
             eu: null,
+            ch: {
+              status: "exceedance",
+              kind: "legal_limit",
+              binding: true,
+              thresholdLabel: "≤ 200 µg/L",
+              citation: "OPBD",
+              sourceUrl: "https://example.test",
+            },
+            us: null,
+            strict: {
+              status: "exceedance",
+              kind: "site_metric",
+              binding: false,
+              thresholdLabel: "≤ 200 µg/L",
+              citation: "référence stricte",
+              sourceUrl: null,
+            },
           },
         },
       ],
@@ -317,8 +382,12 @@ describe("mapNetworkWaterQualityDto", () => {
     expect(nitrates?.fr?.kindLabel).toBe("limite légale");
     expect(nitrates?.eu?.statusLabel).toBe("LQ > seuil");
     expect(nitrates?.eu?.kindLabel).toBe("référence de qualité");
+    expect(nitrates?.ch?.statusLabel).toBe("conforme");
+    expect(nitrates?.strict?.kindLabel).toBe("référence stricte (site)");
+    expect(nitrates?.strict?.siteMetric).toBe(true);
     expect(pfoa?.fr?.statusLabel).toBe("pas de seuil");
     expect(pfoa?.eu?.statusLabel).toBe("non comparable");
+    expect(pfoa?.us?.thresholdLabel).toBe("< 0,002 / 0,004 µg/L");
     expect(aluminium?.fr?.statusLabel).toBe("dépassement");
     expect(aluminium?.eu).toBeNull();
   });

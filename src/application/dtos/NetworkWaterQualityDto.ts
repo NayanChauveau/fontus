@@ -15,7 +15,7 @@ export type ComparisonStatusDto =
 
 export type ComparisonDto = {
   status: ComparisonStatusDto;
-  kind: "legal_limit" | "quality_reference" | null;
+  kind: "legal_limit" | "quality_reference" | "site_metric" | null;
   binding: boolean;
   thresholdLabel: string | null;
   citation: string | null;
@@ -25,6 +25,9 @@ export type ComparisonDto = {
 export type MeasurementComparisonsDto = {
   fr: ComparisonDto | null;
   eu: ComparisonDto | null;
+  ch: ComparisonDto | null;
+  us: ComparisonDto | null;
+  strict: ComparisonDto | null;
 };
 
 export type MeasurementResolutionDto = {

@@ -74,6 +74,9 @@ function toMeasurementViewModel(
     priority: (resolution?.displayPriority ?? 9999) < 1000,
     fr: toComparisonViewModel(measurement.comparisons?.fr ?? null),
     eu: toComparisonViewModel(measurement.comparisons?.eu ?? null),
+    ch: toComparisonViewModel(measurement.comparisons?.ch ?? null),
+    us: toComparisonViewModel(measurement.comparisons?.us ?? null),
+    strict: toComparisonViewModel(measurement.comparisons?.strict ?? null),
   };
 }
 
@@ -91,6 +94,7 @@ function toComparisonViewModel(
     citation: comparison.citation,
     sourceUrl: comparison.sourceUrl,
     binding: comparison.binding,
+    siteMetric: comparison.kind === "site_metric",
   };
 }
 
@@ -118,6 +122,9 @@ function kindLabel(
   }
   if (kind === "quality_reference") {
     return fr.analyses.qualityReference;
+  }
+  if (kind === "site_metric") {
+    return fr.analyses.siteMetric;
   }
   return null;
 }

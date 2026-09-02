@@ -94,4 +94,13 @@ Modules `norms` + `comparison` : seuils FR/UE versionnés + moteur à la date du
 - `quality_reference` n’est jamais une `legal_limit` ; le bandeau ARS n’est pas recalculé
 - Use case : `GetNetworkWaterQualityUseCase` enchaîne `ParametersPort.resolve` puis `ComparisonPort.compare`
 
-Modules suivants : I6 (CH/US + référence stricte), I7 (cartes).
+## I6
+
+Juridictions CH (OPBD / OSAV) et US (EPA NPDWR) + référence stricte du site.
+
+- Seeds cités ; jamais de seuil dans React
+- Référence stricte = plus basse `legal_limit` comparable (`lte`, même unité) parmi FR / UE / CH / US
+- Ce n’est pas une norme officielle : pas de score, reco EPA (action level, MCLG) ≠ interdiction
+- Use case : `CompareMeasurements` enrichit chaque mesure avec `fr` / `eu` / `ch` / `us` / `strict`
+
+Modules suivants : I7 (cartes).
