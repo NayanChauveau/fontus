@@ -38,6 +38,7 @@ describe("createAnalysesPortAdapter", () => {
             latestMeasurements: [
               { sampledAt: sample.sampledAt, measurement: sample.measurements[0]! },
             ],
+            historySnapshots: [],
           };
         },
       } as never,
@@ -48,6 +49,8 @@ describe("createAnalysesPortAdapter", () => {
     expect(dto.latestMeasurements[0]?.sampledAt).toBe(
       "2026-06-18T11:40:00.000Z",
     );
+    expect(dto.historyMeasurements).toEqual([]);
+    expect(dto.parameterHistories).toEqual([]);
   });
 
   it("returns a null sample when the module has none", async () => {
@@ -60,6 +63,7 @@ describe("createAnalysesPortAdapter", () => {
             source: "cache",
             latestSample: null,
             latestMeasurements: [],
+            historySnapshots: [],
           };
         },
       } as never,

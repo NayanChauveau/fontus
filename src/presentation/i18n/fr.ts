@@ -115,6 +115,17 @@ export const fr = {
     legalLimit: "limite légale",
     qualityReference: "référence de qualité",
     siteMetric: "référence stricte (site)",
+    historyTitle: "Historique",
+    historyWindow: "Fenêtre depuis",
+    historyStats: "Min {{min}} · Médiane {{median}} · Max {{max}} ({{count}} mesures)",
+    historyNoStats: "Pas assez de valeurs numériques pour des statistiques.",
+    historyTrendRising: "tendance à la hausse",
+    historyTrendFalling: "tendance à la baisse",
+    historyTrendStable: "tendance stable",
+    historyTrendInsufficient: "tendance : pas assez de points",
+    historyLoqChanged:
+      "La limite de quantification a changé sur la période : les points ne sont pas tous comparables.",
+    historyChart: "Évolution",
   },
   errors: {
     unexpected: "Une erreur inattendue s’est produite.",

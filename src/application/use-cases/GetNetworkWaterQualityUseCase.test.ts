@@ -252,6 +252,177 @@ describe("GetNetworkWaterQualityUseCase", () => {
     );
   });
 
+  it("builds a nitrates history after resolving the window", async () => {
+    const { ports } = createFakeApplicationPorts({
+      analyses: {
+        async getByNetworkCode() {
+          return {
+            ...paulin,
+            historyMeasurements: [
+              {
+                parameterCode: "1340",
+                parameterLabel: "Nitrates",
+                rawText: "8",
+                numericValue: 8,
+                qualifier: "eq",
+                unit: "mg/L",
+                sampledAt: "2026-01-01T00:00:00.000Z",
+                resolution: null,
+              },
+              {
+                parameterCode: "1340",
+                parameterLabel: "Nitrates",
+                rawText: "10",
+                numericValue: 10,
+                qualifier: "eq",
+                unit: "mg/L",
+                sampledAt: "2026-03-01T00:00:00.000Z",
+                resolution: null,
+              },
+              {
+                parameterCode: "1340",
+                parameterLabel: "Nitrates",
+                rawText: "12",
+                numericValue: 12,
+                qualifier: "eq",
+                unit: "mg/L",
+                sampledAt: "2026-06-01T00:00:00.000Z",
+                resolution: null,
+              },
+            ],
+          };
+        },
+      },
+      parameters: {
+        async resolve(measurements) {
+          return measurements.map((measurement) => ({
+            ...measurement,
+            resolution:
+              measurement.parameterCode === "1340"
+                ? {
+                    canonicalId: "nitrates",
+                    canonicalName: "Nitrates",
+                    category: "nutrients",
+                    displayPriority: 20,
+                    canonicalUnit: "mg/L",
+                    canonicalNumericValue: measurement.numericValue,
+                    conversion: "identity" as const,
+                  }
+                : (paulin.latestMeasurements[0]?.resolution ?? null),
+          }));
+        },
+      },
+    });
+
+    const result = await new GetNetworkWaterQualityUseCase(ports).execute(
+      "033001214",
+    );
+    expect(result.parameterHistories?.[0]?.canonicalId).toBe("nitrates");
+    expect(result.parameterHistories?.[0]?.trend).toBe("rising");
+    expect(result.parameterHistories?.[0]?.count).toBe(3);
+  });
+
+  it("keeps latest results when history resolve fails", async () => {
+    const reported: string[] = [];
+    let resolveCalls = 0;
+    const { ports } = createFakeApplicationPorts({
+      analyses: {
+        async getByNetworkCode() {
+          return {
+            ...paulin,
+            historyMeasurements: paulin.latestMeasurements,
+          };
+        },
+      },
+      parameters: {
+        async resolve(measurements) {
+          resolveCalls += 1;
+          if (resolveCalls > 1) {
+            throw new Error("history down");
+          }
+          return measurements;
+        },
+      },
+      observability: {
+        report(event) {
+          reported.push(event.event);
+        },
+      },
+    });
+
+    const result = await new GetNetworkWaterQualityUseCase(ports).execute(
+      "033001214",
+    );
+    expect(result.latestMeasurements).toHaveLength(1);
+    expect(result.parameterHistories).toEqual([]);
+    expect(reported).toEqual(["history_resolve_failed"]);
+  });
+
+  it("keeps resolved history when history comparison fails", async () => {
+    const reported: string[] = [];
+    let compareCalls = 0;
+    const { ports } = createFakeApplicationPorts({
+      analyses: {
+        async getByNetworkCode() {
+          return {
+            ...paulin,
+            historyMeasurements: [
+              {
+                parameterCode: "1340",
+                parameterLabel: "Nitrates",
+                rawText: "8",
+                numericValue: 8,
+                qualifier: "eq",
+                unit: "mg/L",
+                sampledAt: "2026-01-01T00:00:00.000Z",
+                resolution: null,
+              },
+            ],
+          };
+        },
+      },
+      parameters: {
+        async resolve(measurements) {
+          return measurements.map((measurement) => ({
+            ...measurement,
+            resolution:
+              measurement.parameterCode === "1340"
+                ? {
+                    canonicalId: "nitrates",
+                    canonicalName: "Nitrates",
+                    category: "nutrients",
+                    displayPriority: 20,
+                    canonicalUnit: "mg/L",
+                    canonicalNumericValue: measurement.numericValue,
+                    conversion: "identity" as const,
+                  }
+                : (paulin.latestMeasurements[0]?.resolution ?? null),
+          }));
+        },
+      },
+      comparison: {
+        async compare(measurements) {
+          compareCalls += 1;
+          if (compareCalls > 1) {
+            throw new Error("history norms");
+          }
+          return measurements;
+        },
+      },
+      observability: {
+        report(event) {
+          reported.push(event.event);
+        },
+      },
+    });
+
+    const result = await new GetNetworkWaterQualityUseCase(ports).execute(
+      "033001214",
+    );
+    expect(result.parameterHistories?.[0]?.canonicalId).toBe("nitrates");
+    expect(reported).toEqual(["history_compare_failed"]);
+  });
+
   it("propagates ANALYSES_UNAVAILABLE", async () => {
     const { ports } = createFakeApplicationPorts({
       analyses: {

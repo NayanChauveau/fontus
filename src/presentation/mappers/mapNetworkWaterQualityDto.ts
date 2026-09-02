@@ -2,12 +2,14 @@ import type {
   ComparisonDto,
   MeasurementDto,
   NetworkWaterQualityDto,
+  ParameterHistoryDto,
 } from "@/application/dtos/NetworkWaterQualityDto";
 import { fr } from "../i18n/fr";
 import type {
   ComparisonViewModel,
   NetworkAnalysesViewModel,
   NetworkMeasurementViewModel,
+  ParameterHistoryViewModel,
 } from "../view-models/NetworkAnalysesViewModel";
 import { buildPriorityCards } from "./buildPriorityCards";
 import { resolveBannerTone } from "./resolveBannerTone";
@@ -51,6 +53,8 @@ export function mapNetworkWaterQualityDto(
       dto.source === "cache"
         ? fr.analyses.sourceCache
         : fr.analyses.sourceRemote,
+    windowFromLabel: dto.windowFrom ? formatDateOnly(dto.windowFrom) : null,
+    parameterHistories: (dto.parameterHistories ?? []).map(toHistoryViewModel),
     priorityCards: buildPriorityCards(priorityMeasurements),
     priorityMeasurements,
     otherMeasurements: measurements.filter((row) => !row.priority),
@@ -194,4 +198,83 @@ function formatSampledAt(iso: string): string {
     timeStyle: "short",
     timeZone: "Europe/Paris",
   }).format(date);
+}
+
+function formatDateOnly(iso: string): string {
+  const date = new Date(iso.includes("T") ? iso : `${iso}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) {
+    return iso;
+  }
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "long",
+    timeZone: "Europe/Paris",
+  }).format(date);
+}
+
+function toHistoryViewModel(
+  history: ParameterHistoryDto,
+): ParameterHistoryViewModel {
+  const unit = history.unit ?? "";
+  return {
+    canonicalId: history.canonicalId,
+    title: history.canonicalName,
+    unit: history.unit,
+    statsLabel:
+      history.count === 0
+        ? fr.analyses.historyNoStats
+        : fr.analyses.historyStats
+            .replace("{{min}}", formatStat(history.min, unit))
+            .replace("{{median}}", formatStat(history.median, unit))
+            .replace("{{max}}", formatStat(history.max, unit))
+            .replace("{{count}}", String(history.count)),
+    trend: history.trend,
+    trendLabel: historyTrendLabel(history.trend),
+    warningLabels: history.warnings.includes("loq_changed")
+      ? [fr.analyses.historyLoqChanged]
+      : [],
+    points: history.points.map((point) => ({
+      sampledAtLabel: point.sampledAt
+        ? formatSampledAt(point.sampledAt)
+        : "",
+      valueLabel: formatHistoryPoint(point, unit),
+      y: point.resolution?.canonicalNumericValue ?? point.numericValue,
+    })),
+  };
+}
+
+function formatStat(value: number | null, unit: string): string {
+  if (value === null) {
+    return "—";
+  }
+  return `${formatFrenchNumber(value)}${unit ? ` ${unit}` : ""}`;
+}
+
+function formatHistoryPoint(
+  point: MeasurementDto,
+  fallbackUnit: string,
+): string {
+  const canonical = formatCanonicalValue(point);
+  if (canonical) {
+    return canonical;
+  }
+  return point.unit
+    ? `${point.rawText} ${point.unit}`
+    : fallbackUnit
+      ? `${point.rawText} ${fallbackUnit}`
+      : point.rawText;
+}
+
+function historyTrendLabel(
+  trend: ParameterHistoryDto["trend"],
+): string {
+  if (trend === "rising") {
+    return fr.analyses.historyTrendRising;
+  }
+  if (trend === "falling") {
+    return fr.analyses.historyTrendFalling;
+  }
+  if (trend === "stable") {
+    return fr.analyses.historyTrendStable;
+  }
+  return fr.analyses.historyTrendInsufficient;
 }

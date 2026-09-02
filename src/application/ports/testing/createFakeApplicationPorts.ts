@@ -14,6 +14,7 @@ export function createFakeApplicationPorts(
           source: "cache",
           latestSample: null,
           latestMeasurements: [],
+          parameterHistories: [],
         };
       },
     },

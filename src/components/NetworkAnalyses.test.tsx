@@ -27,6 +27,88 @@ describe("NetworkAnalyses", () => {
             source: "hubeau",
             measurements: [],
           },
+          parameterHistories: [
+            {
+              canonicalId: "nitrates",
+              canonicalName: "Nitrates",
+              unit: "mg/L",
+              min: 6,
+              max: 12,
+              median: 8,
+              count: 3,
+              trend: "stable",
+              warnings: ["loq_changed"],
+              points: [
+                {
+                  parameterCode: "1340",
+                  parameterLabel: "Nitrates",
+                  rawText: "6",
+                  numericValue: 6,
+                  qualifier: "eq",
+                  unit: "mg/L",
+                  sampledAt: "2026-01-01T00:00:00.000Z",
+                  resolution: {
+                    canonicalId: "nitrates",
+                    canonicalName: "Nitrates",
+                    category: "nutrients",
+                    displayPriority: 20,
+                    canonicalUnit: "mg/L",
+                    canonicalNumericValue: 6,
+                    conversion: "identity",
+                  },
+                },
+                {
+                  parameterCode: "1340",
+                  parameterLabel: "Nitrates",
+                  rawText: "12",
+                  numericValue: 12,
+                  qualifier: "eq",
+                  unit: "mg/L",
+                  sampledAt: "2026-06-01T00:00:00.000Z",
+                  resolution: {
+                    canonicalId: "nitrates",
+                    canonicalName: "Nitrates",
+                    category: "nutrients",
+                    displayPriority: 20,
+                    canonicalUnit: "mg/L",
+                    canonicalNumericValue: 12,
+                    conversion: "identity",
+                  },
+                },
+              ],
+            },
+            {
+              canonicalId: "lead",
+              canonicalName: "Plomb",
+              unit: "µg/L",
+              min: 0.5,
+              max: 0.5,
+              median: 0.5,
+              count: 1,
+              trend: "insufficient",
+              warnings: [],
+              points: [
+                {
+                  parameterCode: "1382",
+                  parameterLabel: "Plomb",
+                  rawText: "<0,5",
+                  numericValue: 0.5,
+                  qualifier: "lt",
+                  unit: "µg/L",
+                  sampledAt: "2026-05-18T11:55:00.000Z",
+                  resolution: {
+                    canonicalId: "lead",
+                    canonicalName: "Plomb",
+                    category: "metals",
+                    displayPriority: 30,
+                    canonicalUnit: "µg/L",
+                    canonicalNumericValue: 0.5,
+                    conversion: "identity",
+                  },
+                },
+              ],
+            },
+          ],
           latestMeasurements: [
             {
               parameterCode: "8847",
@@ -317,6 +399,10 @@ describe("NetworkAnalyses", () => {
     await waitFor(() => {
       expect(screen.getByText("Eau conforme")).toBeTruthy();
     });
+    expect(screen.getByText("Historique")).toBeTruthy();
+    expect(screen.getByText("tendance stable")).toBeTruthy();
+    expect(screen.getByText(/quantification a changé/)).toBeTruthy();
+    expect(screen.getByLabelText(/Évolution Nitrates/)).toBeTruthy();
     expect(screen.getByText("Points de vigilance")).toBeTruthy();
     expect(screen.getByText("Comparaison par substance")).toBeTruthy();
     expect(screen.getByText("Limites bactériologiques : conformes")).toBeTruthy();

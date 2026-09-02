@@ -273,7 +273,56 @@ describe("ResolveMeasurements", () => {
     expect(sum?.resolution?.canonicalNumericValue).toBe(0.02);
     expect(sum?.resolution?.derived).toBe("reconstructed_sum");
   });
+
+  it("reconstructs each PFAS-20 sample independently", async () => {
+    const useCase = new ResolveMeasurements(
+      createParameterCatalog(PRIORITY_PARAMETERS),
+      memoryStore([]),
+    );
+    const first = "2025-04-23T14:35:00.000Z";
+    const second = "2026-06-30T11:59:00.000Z";
+
+    const result = await useCase.execute([
+      ...pfas20Sample(first, 0.001),
+      ...pfas20Sample(second, 0.002),
+    ]);
+
+    const sums = result.filter((row) => row.resolution?.canonicalId === "pfas20");
+    expect(sums).toHaveLength(2);
+    expect(sums.find((row) => row.sampledAt === first)?.rawText).toBe("<0,02");
+    expect(sums.find((row) => row.sampledAt === second)?.rawText).toBe("<0,04");
+    expect(sums.every((row) => row.resolution?.derived === "reconstructed_sum")).toBe(
+      true,
+    );
+  });
 });
+
+function pfas20Sample(sampledAt: string, memberLq: number) {
+  const members = PRIORITY_PARAMETERS.filter(
+    (parameter) => parameter.category === "pfas" && parameter.id !== "pfas20",
+  ).map((parameter) => ({
+    parameterCode: parameter.aliases[0]!.externalCode,
+    parameterLabel: parameter.name,
+    rawText: `<${String(memberLq).replace(".", ",")}`,
+    numericValue: memberLq,
+    qualifier: "lt" as const,
+    unit: "µg/L",
+    sampledAt,
+  }));
+
+  return [
+    {
+      parameterCode: "8847",
+      parameterLabel: "Somme de 20 substances perfluoroalkylées (PFAS)",
+      rawText: "<SEUIL",
+      numericValue: null,
+      qualifier: "lt" as const,
+      unit: "µg/L",
+      sampledAt,
+    },
+    ...members,
+  ];
+}
 
 function memoryStore(persisted: string[]): ParameterCatalogPort {
   return {

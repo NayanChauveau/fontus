@@ -112,4 +112,14 @@ Page résultat à deux niveaux, sans score.
 - Tableau B : comparaison par substance (FR / UE / CH / US / stricte)
 - Disclaimer : on ne dit pas si l’eau est « bonne »
 
-Modules suivants : I8 (historique).
+## I8
+
+Historique nitrates / PFAS-20 / plomb sur la fenêtre déjà cachée (6–36 mois).
+
+- Série extraite du cache, pas un second crawl Hub’Eau
+- Un prélèvement PFAS-20 emporte aussi les 20 substances : `<SEUIL` est reconstruit comme sur le dernier résultat
+- Min / médiane / max, tendance simple (≥ 3 points), alerte si la LQ change
+- On ne détecte pas encore un changement de méthode (champ absent de `resultats_dis`)
+- Graphique SVG local, pas de bibliothèque de charts
+
+Modules suivants : I9 (tableau exhaustif).

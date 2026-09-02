@@ -6,6 +6,7 @@ import {
   type AnalysisSample,
   type ParameterSnapshot,
 } from "../../domain/Analysis";
+import { extractHistorySnapshots } from "../../domain/extractHistorySnapshots";
 import {
   ANALYSIS_WINDOW_MONTHS,
   chooseAnalysisWindow,
@@ -32,6 +33,7 @@ export type GetNetworkAnalysesResult = {
   source: "cache" | "remote";
   latestSample: AnalysisSample | null;
   latestMeasurements: ParameterSnapshot[];
+  historySnapshots: ParameterSnapshot[];
 };
 
 export class GetNetworkAnalyses {
@@ -193,6 +195,7 @@ function toResult(
     source,
     latestSample: latestSample(samples),
     latestMeasurements: latestMeasurementsByParameter(samples),
+    historySnapshots: extractHistorySnapshots(samples),
   };
 }
 

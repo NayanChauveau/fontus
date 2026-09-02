@@ -1,3 +1,4 @@
+import { buildParameterHistories } from "../buildParameterHistories";
 import type { NetworkWaterQualityDto } from "../dtos/NetworkWaterQualityDto";
 import { isNetworkCode, normalizeNetworkCode } from "../networkCode";
 import type { ApplicationPorts } from "../ports/ApplicationPorts";
@@ -13,22 +14,28 @@ export class GetNetworkWaterQualityUseCase {
         source: "cache",
         latestSample: null,
         latestMeasurements: [],
+        parameterHistories: [],
       };
     }
 
     const dto = await this.ports.analyses.getByNetworkCode(
       normalizeNetworkCode(networkCode),
     );
+    const historyMeasurements = dto.historyMeasurements ?? [];
 
     try {
       const resolved = await this.ports.parameters.resolve(
         dto.latestMeasurements,
       );
       try {
-        return {
-          ...dto,
-          latestMeasurements: await this.ports.comparison.compare(resolved),
-        };
+        return await this.withHistories(
+          {
+            ...dto,
+            latestMeasurements: await this.ports.comparison.compare(resolved),
+            parameterHistories: [],
+          },
+          historyMeasurements,
+        );
       } catch (error) {
         this.ports.observability.report({
           level: "error",
@@ -37,7 +44,10 @@ export class GetNetworkWaterQualityUseCase {
           cause: error,
           context: { networkCode: dto.networkCode },
         });
-        return { ...dto, latestMeasurements: resolved };
+        return this.withHistories(
+          { ...dto, latestMeasurements: resolved, parameterHistories: [] },
+          historyMeasurements,
+        );
       }
     } catch (error) {
       this.ports.observability.report({
@@ -47,7 +57,48 @@ export class GetNetworkWaterQualityUseCase {
         cause: error,
         context: { networkCode: dto.networkCode },
       });
-      return dto;
+      return { ...dto, parameterHistories: dto.parameterHistories ?? [] };
+    }
+  }
+
+  private async withHistories(
+    dto: NetworkWaterQualityDto,
+    historyMeasurements: NetworkWaterQualityDto["latestMeasurements"],
+  ): Promise<NetworkWaterQualityDto> {
+    if (historyMeasurements.length === 0) {
+      return { ...dto, parameterHistories: [] };
+    }
+
+    try {
+      const resolved = await this.ports.parameters.resolve(historyMeasurements);
+      try {
+        const compared = await this.ports.comparison.compare(resolved);
+        return {
+          ...dto,
+          parameterHistories: buildParameterHistories(compared),
+        };
+      } catch (error) {
+        this.ports.observability.report({
+          level: "error",
+          scope: "comparison",
+          event: "history_compare_failed",
+          cause: error,
+          context: { networkCode: dto.networkCode },
+        });
+        return {
+          ...dto,
+          parameterHistories: buildParameterHistories(resolved),
+        };
+      }
+    } catch (error) {
+      this.ports.observability.report({
+        level: "error",
+        scope: "parameters",
+        event: "history_resolve_failed",
+        cause: error,
+        context: { networkCode: dto.networkCode },
+      });
+      return { ...dto, parameterHistories: [] };
     }
   }
 }

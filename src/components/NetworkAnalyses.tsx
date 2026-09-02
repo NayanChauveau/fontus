@@ -8,6 +8,7 @@ import type {
   ComparisonViewModel,
   NetworkAnalysesViewModel,
   NetworkMeasurementViewModel,
+  ParameterHistoryViewModel,
   PriorityCardViewModel,
 } from "@/presentation/view-models/NetworkAnalysesViewModel";
 
@@ -105,6 +106,13 @@ function AnalysesResults({
               ))}
             </div>
           </section>
+
+          {viewModel.parameterHistories.length > 0 && (
+            <HistorySection
+              histories={viewModel.parameterHistories}
+              windowFromLabel={viewModel.windowFromLabel}
+            />
+          )}
 
           {viewModel.priorityMeasurements.length > 0 && (
             <MeasurementTable
@@ -236,6 +244,102 @@ function PriorityCard({ card }: { card: PriorityCardViewModel }) {
         </>
       )}
     </article>
+  );
+}
+
+function HistorySection({
+  histories,
+  windowFromLabel,
+}: {
+  histories: ParameterHistoryViewModel[];
+  windowFromLabel: string | null;
+}) {
+  return (
+    <section>
+      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        {fr.analyses.historyTitle}
+      </h4>
+      {windowFromLabel && (
+        <p className="mb-3 text-xs text-zinc-500">
+          {fr.analyses.historyWindow} {windowFromLabel}
+        </p>
+      )}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        {histories.map((history) => (
+          <article
+            key={history.canonicalId}
+            className="rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950"
+          >
+            <h5 className="text-sm font-medium text-zinc-950 dark:text-zinc-50">
+              {history.title}
+            </h5>
+            <p className="mt-1 text-xs text-zinc-500">{history.statsLabel}</p>
+            <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+              {history.trendLabel}
+            </p>
+            {history.warningLabels.map((warning) => (
+              <p key={warning} className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                {warning}
+              </p>
+            ))}
+            <HistorySparkline history={history} />
+            <ol className="mt-3 max-h-40 space-y-1 overflow-auto text-xs text-zinc-600 dark:text-zinc-400">
+              {history.points.map((point, index) => (
+                <li key={`${history.canonicalId}-${index}`}>
+                  <span className="text-zinc-500">{point.sampledAtLabel}</span>
+                  {" · "}
+                  <span className="font-mono">{point.valueLabel}</span>
+                </li>
+              ))}
+            </ol>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HistorySparkline({
+  history,
+}: {
+  history: ParameterHistoryViewModel;
+}) {
+  const values = history.points
+    .map((point) => point.y)
+    .filter((value): value is number => value !== null && Number.isFinite(value));
+  if (values.length < 2) {
+    return null;
+  }
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const width = 240;
+  const height = 56;
+  const pad = 4;
+  const coords = values.map((value, index) => {
+    const x =
+      pad + (index / (values.length - 1)) * (width - pad * 2);
+    const y = height - pad - ((value - min) / span) * (height - pad * 2);
+    return `${x},${y}`;
+  });
+
+  return (
+    <svg
+      role="img"
+      aria-label={`${fr.analyses.historyChart} ${history.title}`}
+      viewBox={`0 0 ${width} ${height}`}
+      className="mt-3 h-14 w-full text-emerald-700 dark:text-emerald-400"
+    >
+      <polyline
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        points={coords.join(" ")}
+      />
+    </svg>
   );
 }
 

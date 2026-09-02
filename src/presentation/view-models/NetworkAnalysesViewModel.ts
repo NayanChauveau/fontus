@@ -46,6 +46,21 @@ export type PriorityCardViewModel = {
   measurements: NetworkMeasurementViewModel[];
 };
 
+export type ParameterHistoryViewModel = {
+  canonicalId: string;
+  title: string;
+  unit: string | null;
+  statsLabel: string;
+  trend: string;
+  trendLabel: string;
+  warningLabels: string[];
+  points: Array<{
+    sampledAtLabel: string;
+    valueLabel: string;
+    y: number | null;
+  }>;
+};
+
 export type NetworkAnalysesViewModel = {
   networkCode: string;
   sampledAtLabel: string | null;
@@ -58,6 +73,8 @@ export type NetworkAnalysesViewModel = {
   reconstructedSumNote: string | null;
   disclaimer: string;
   sourceLabel: string;
+  windowFromLabel: string | null;
+  parameterHistories: ParameterHistoryViewModel[];
   priorityCards: PriorityCardViewModel[];
   priorityMeasurements: NetworkMeasurementViewModel[];
   otherMeasurements: NetworkMeasurementViewModel[];

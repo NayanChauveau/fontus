@@ -59,6 +59,105 @@ describe("GetNetworkAnalyses", () => {
     expect(result.latestSample?.measurements[0]?.rawText).toBe("<0,01");
     expect(result.latestSample?.measurements[0]?.numericValue).toBe(0.01);
     expect(result.latestSample?.measurements[0]?.qualifier).toBe("lt");
+    expect(result.historySnapshots).toEqual([]);
+  });
+
+  it("extracts a nitrates history from the cached window", async () => {
+    const older: AnalysisSample = {
+      ...latest,
+      code: "s-old",
+      sampledAt: new Date("2026-01-10T10:00:00.000Z"),
+      measurements: [
+        {
+          parameterCode: "1340",
+          parameterLabel: "Nitrates",
+          rawText: "8",
+          numericValue: 8,
+          qualifier: "eq",
+          unit: "mg/L",
+        },
+      ],
+    };
+    const newer: AnalysisSample = {
+      ...latest,
+      measurements: [
+        ...latest.measurements,
+        {
+          parameterCode: "1340",
+          parameterLabel: "Nitrates",
+          rawText: "12",
+          numericValue: 12,
+          qualifier: "eq",
+          unit: "mg/L",
+        },
+      ],
+    };
+    const useCase = new GetNetworkAnalyses(
+      trackingGateway(() => {}),
+      {
+        async read() {
+          return {
+            networkCode: PAULIN,
+            samples: [newer, older],
+            fetchedAt: new Date("2026-09-01T00:00:00.000Z"),
+            windowFrom: "2025-09-02",
+          };
+        },
+        async write() {},
+      },
+      () => NOW,
+    );
+
+    const result = await useCase.execute(PAULIN);
+    expect(result.historySnapshots.map((row) => row.measurement.numericValue)).toEqual([
+      8, 12,
+    ]);
+  });
+
+  it("keeps PFAS-20 companions from the same sample", async () => {
+    const useCase = new GetNetworkAnalyses(
+      trackingGateway(() => {}),
+      {
+        async read() {
+          return {
+            networkCode: PAULIN,
+            samples: [
+              {
+                ...latest,
+                measurements: [
+                  {
+                    parameterCode: "8847",
+                    parameterLabel: "Somme PFAS-20",
+                    rawText: "<SEUIL",
+                    numericValue: null,
+                    qualifier: "lt",
+                    unit: "µg/L",
+                  },
+                  {
+                    parameterCode: "5347",
+                    parameterLabel: "PFOA",
+                    rawText: "<0,001",
+                    numericValue: 0.001,
+                    qualifier: "lt",
+                    unit: "µg/L",
+                  },
+                ],
+              },
+            ],
+            fetchedAt: new Date("2026-09-01T00:00:00.000Z"),
+            windowFrom: "2025-09-02",
+          };
+        },
+        async write() {},
+      },
+      () => NOW,
+    );
+
+    const result = await useCase.execute(PAULIN);
+    expect(result.historySnapshots.map((row) => row.measurement.parameterCode)).toEqual([
+      "8847",
+      "5347",
+    ]);
   });
 
   it("picks a window under the soft cap then persists the latest sample", async () => {

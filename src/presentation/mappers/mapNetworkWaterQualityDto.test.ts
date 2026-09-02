@@ -79,6 +79,231 @@ describe("mapNetworkWaterQualityDto", () => {
       viewModel.priorityCards.find((card) => card.id === "nitrates")?.empty,
     ).toBe(false);
     expect(viewModel.disclaimer).toMatch(/verdict légal/);
+    expect(viewModel.parameterHistories).toEqual([]);
+    expect(viewModel.windowFromLabel).toMatch(/2025/);
+  });
+
+  it("maps a nitrates history with stats and an LQ warning", () => {
+    const viewModel = mapNetworkWaterQualityDto({
+      networkCode: "033001214",
+      windowFrom: "2025-09-02",
+      source: "cache",
+      latestMeasurements: [],
+      latestSample: null,
+      parameterHistories: [
+        {
+          canonicalId: "nitrates",
+          canonicalName: "Nitrates",
+          unit: "mg/L",
+          min: 8,
+          max: 12,
+          median: 10,
+          count: 3,
+          trend: "rising",
+          warnings: ["loq_changed"],
+          points: [
+            {
+              parameterCode: "1340",
+              parameterLabel: "Nitrates",
+              rawText: "8",
+              numericValue: 8,
+              qualifier: "eq",
+              unit: "mg/L",
+              sampledAt: "2026-01-01T00:00:00.000Z",
+              resolution: {
+                canonicalId: "nitrates",
+                canonicalName: "Nitrates",
+                category: "nutrients",
+                displayPriority: 20,
+                canonicalUnit: "mg/L",
+                canonicalNumericValue: 8,
+                conversion: "identity",
+              },
+            },
+            {
+              parameterCode: "1340",
+              parameterLabel: "Nitrates",
+              rawText: "<0,01",
+              numericValue: 0.01,
+              qualifier: "lt",
+              unit: "mg/L",
+              sampledAt: "not-a-date",
+              resolution: {
+                canonicalId: "nitrates",
+                canonicalName: "Nitrates",
+                category: "nutrients",
+                displayPriority: 20,
+                canonicalUnit: "mg/L",
+                canonicalNumericValue: null,
+                conversion: "not_numeric",
+              },
+            },
+          ],
+        },
+        {
+          canonicalId: "lead",
+          canonicalName: "Plomb",
+          unit: null,
+          min: null,
+          max: null,
+          median: null,
+          count: 0,
+          trend: "insufficient",
+          warnings: [],
+          points: [
+            {
+              parameterCode: "1382",
+              parameterLabel: "Plomb",
+              rawText: "<SEUIL",
+              numericValue: null,
+              qualifier: "lt",
+              unit: null,
+              resolution: null,
+            },
+          ],
+        },
+        {
+          canonicalId: "pfas20",
+          canonicalName: "Somme PFAS-20",
+          unit: "µg/L",
+          min: 0.01,
+          max: 0.02,
+          median: 0.015,
+          count: 3,
+          trend: "falling",
+          warnings: [],
+          points: [],
+        },
+      ],
+    });
+
+    const nitrates = viewModel.parameterHistories[0];
+    expect(nitrates?.title).toBe("Nitrates");
+    expect(nitrates?.trendLabel).toBe("tendance à la hausse");
+    expect(nitrates?.statsLabel).toMatch(/8/);
+    expect(nitrates?.warningLabels[0]).toMatch(/quantification/);
+    expect(nitrates?.points[1]?.sampledAtLabel).toBe("not-a-date");
+    expect(viewModel.parameterHistories[1]?.statsLabel).toMatch(/Pas assez/);
+    expect(viewModel.parameterHistories[1]?.trendLabel).toBe(
+      "tendance : pas assez de points",
+    );
+    expect(viewModel.parameterHistories[1]?.points[0]?.valueLabel).toBe("<SEUIL");
+    expect(viewModel.parameterHistories[2]?.trendLabel).toBe(
+      "tendance à la baisse",
+    );
+  });
+
+  it("formats history fallbacks and an invalid window date", () => {
+    const viewModel = mapNetworkWaterQualityDto({
+      networkCode: "033001214",
+      windowFrom: "not-a-date",
+      source: "cache",
+      latestMeasurements: [],
+      latestSample: null,
+      parameterHistories: [
+        {
+          canonicalId: "nitrates",
+          canonicalName: "Nitrates",
+          unit: "mg/L",
+          min: null,
+          max: 12,
+          median: 10,
+          count: 2,
+          trend: "stable",
+          warnings: [],
+          points: [
+            {
+              parameterCode: "1340",
+              parameterLabel: "Nitrates",
+              rawText: "8",
+              numericValue: 8,
+              qualifier: "eq",
+              unit: "mg/L",
+              resolution: {
+                canonicalId: "nitrates",
+                canonicalName: "Nitrates",
+                category: "nutrients",
+                displayPriority: 20,
+                canonicalUnit: "mg/L",
+                canonicalNumericValue: null,
+                conversion: "not_numeric",
+              },
+            },
+            {
+              parameterCode: "1340",
+              parameterLabel: "Nitrates",
+              rawText: "10",
+              numericValue: 10,
+              qualifier: "eq",
+              unit: null,
+              sampledAt: "2026-06-01T00:00:00.000Z",
+              resolution: {
+                canonicalId: "nitrates",
+                canonicalName: "Nitrates",
+                category: "nutrients",
+                displayPriority: 20,
+                canonicalUnit: null,
+                canonicalNumericValue: null,
+                conversion: "not_numeric",
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(viewModel.windowFromLabel).toBe("not-a-date");
+    expect(viewModel.parameterHistories[0]?.trendLabel).toBe("tendance stable");
+    expect(viewModel.parameterHistories[0]?.statsLabel).toContain("—");
+    expect(viewModel.parameterHistories[0]?.points[0]?.sampledAtLabel).toBe("");
+    expect(viewModel.parameterHistories[0]?.points[0]?.valueLabel).toBe("8 mg/L");
+    expect(viewModel.parameterHistories[0]?.points[1]?.valueLabel).toBe("10 mg/L");
+  });
+
+  it("keeps a raw history value when no unit is available", () => {
+    const viewModel = mapNetworkWaterQualityDto({
+      networkCode: "033001214",
+      windowFrom: "2025-09-02T00:00:00.000Z",
+      source: "cache",
+      latestMeasurements: [],
+      latestSample: null,
+      parameterHistories: [
+        {
+          canonicalId: "lead",
+          canonicalName: "Plomb",
+          unit: null,
+          min: 1,
+          max: 1,
+          median: 1,
+          count: 1,
+          trend: "insufficient",
+          warnings: [],
+          points: [
+            {
+              parameterCode: "1382",
+              parameterLabel: "Plomb",
+              rawText: "nd",
+              numericValue: null,
+              qualifier: "eq",
+              unit: null,
+              sampledAt: "2026-06-01T00:00:00.000Z",
+              resolution: {
+                canonicalId: "lead",
+                canonicalName: "Plomb",
+                category: "metals",
+                displayPriority: 30,
+                canonicalUnit: null,
+                canonicalNumericValue: null,
+                conversion: "not_numeric",
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(viewModel.parameterHistories[0]?.points[0]?.valueLabel).toBe("nd");
+    expect(viewModel.parameterHistories[0]?.statsLabel).toContain("1");
   });
 
   it("marks a reconstructed PFAS-20 sum", () => {

@@ -65,10 +65,33 @@ export type AnalysisSampleDto = {
   measurements: MeasurementDto[];
 };
 
+export type HistoryTrendDto =
+  | "rising"
+  | "falling"
+  | "stable"
+  | "insufficient";
+
+export type HistoryWarningDto = "loq_changed";
+
+export type ParameterHistoryDto = {
+  canonicalId: string;
+  canonicalName: string;
+  unit: string | null;
+  points: MeasurementDto[];
+  min: number | null;
+  max: number | null;
+  median: number | null;
+  count: number;
+  trend: HistoryTrendDto;
+  warnings: HistoryWarningDto[];
+};
+
 export type NetworkWaterQualityDto = {
   networkCode: string;
   windowFrom: string;
   source: "cache" | "remote";
   latestSample: AnalysisSampleDto | null;
   latestMeasurements: MeasurementDto[];
+  historyMeasurements?: MeasurementDto[];
+  parameterHistories?: ParameterHistoryDto[];
 };

@@ -22,6 +22,8 @@ export function createAnalysesPortAdapter(
             ? toSampleDto(result.latestSample)
             : null,
           latestMeasurements: result.latestMeasurements.map(toMeasurementDto),
+          historyMeasurements: result.historySnapshots.map(toMeasurementDto),
+          parameterHistories: [],
         } satisfies NetworkWaterQualityDto;
       } catch (error) {
         throw new ApplicationError("ANALYSES_UNAVAILABLE", error);
