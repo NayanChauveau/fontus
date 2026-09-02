@@ -40,6 +40,9 @@ export function createFakeApplicationPorts(
         return measurements;
       },
     },
+    observability: {
+      report() {},
+    },
     network: {
       async listByCitycode() {
         return {

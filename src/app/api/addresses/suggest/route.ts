@@ -1,5 +1,5 @@
-import { isApplicationError } from "@/application/errors/ApplicationError";
 import { ensureApplication } from "@/composition/bootstrap";
+import { handleRouteError } from "@/composition/http/handleRouteError";
 
 export const dynamic = "force-dynamic";
 
@@ -12,9 +12,10 @@ export async function GET(request: Request) {
     );
     return Response.json(dto);
   } catch (error) {
-    if (isApplicationError(error)) {
-      return Response.json({ error: error.code }, { status: 503 });
-    }
-    throw error;
+    return handleRouteError(error, {
+      scope: "geocoding",
+      event: "suggest_unavailable",
+      context: { queryLength: query.length },
+    });
   }
 }

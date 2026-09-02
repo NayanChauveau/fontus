@@ -3,6 +3,7 @@ import type { ComparisonPort } from "./ComparisonPort";
 import type { GeocodingPort } from "./GeocodingPort";
 import type { HealthPort } from "./HealthPort";
 import type { NetworkPort } from "./NetworkPort";
+import type { ObservabilityPort } from "./ObservabilityPort";
 import type { ParametersPort } from "./ParametersPort";
 
 export type ApplicationPorts = {
@@ -11,5 +12,6 @@ export type ApplicationPorts = {
   geocoding: GeocodingPort;
   health: HealthPort;
   network: NetworkPort;
+  observability: ObservabilityPort;
   parameters: ParametersPort;
 };

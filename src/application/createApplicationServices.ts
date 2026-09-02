@@ -1,4 +1,5 @@
 import type { ApplicationPorts } from "./ports/ApplicationPorts";
+import type { ObservabilityEvent } from "./ports/ObservabilityPort";
 import { GetNetworkWaterQualityUseCase } from "./use-cases/GetNetworkWaterQualityUseCase";
 import { HealthCheckUseCase } from "./use-cases/HealthCheckUseCase";
 import { ListDistributionNetworksUseCase } from "./use-cases/ListDistributionNetworksUseCase";
@@ -12,6 +13,9 @@ export function createApplicationServices(ports: ApplicationPorts) {
     listDistributionNetworksUseCase: new ListDistributionNetworksUseCase(ports),
     resolveAddressUseCase: new ResolveAddressUseCase(ports),
     suggestAddressesUseCase: new SuggestAddressesUseCase(ports),
+    reportError(event: Omit<ObservabilityEvent, "level">) {
+      ports.observability.report({ ...event, level: "error" });
+    },
   };
 }
 

@@ -26,6 +26,10 @@ Shared → jamais Application
 
 `src/app` n’importe jamais `drizzle-orm`, `postgres`, ni un client HTTP Hub’Eau / GeoPF.
 
+## Observabilité
+
+`ObservabilityPort.report` est le seul point de sortie des erreurs (routes, use cases qui dégradent, cache). En local : dump lisible sur stderr. En prod : une ligne JSON (prête pour Datadog plus tard). On ne persiste pas les erreurs en base.
+
 ## Bootstrap Next.js
 
 Les Server Components et route handlers appellent `ensureApplication()` (`src/composition/bootstrap.ts`), qui initialise une fois `createApp()` puis délègue à `getApplication()`.

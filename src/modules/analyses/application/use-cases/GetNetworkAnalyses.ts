@@ -16,6 +16,16 @@ import type { ResultatsDisGatewayPort } from "../ports/ResultatsDisGatewayPort";
 
 const MAX_PAGES = 20;
 
+export type AnalysesErrorReporter = {
+  report(event: {
+    level: "error";
+    scope: "analyses";
+    event: string;
+    cause?: unknown;
+    context?: Record<string, string>;
+  }): void;
+};
+
 export type GetNetworkAnalysesResult = {
   networkCode: string;
   windowFrom: string;
@@ -31,6 +41,7 @@ export class GetNetworkAnalyses {
     private readonly gateway: ResultatsDisGatewayPort,
     private readonly cache: AnalysesCachePort,
     private readonly now: () => Date = () => new Date(),
+    private readonly reporter: AnalysesErrorReporter = { report() {} },
   ) {}
 
   async execute(networkCode: string): Promise<GetNetworkAnalysesResult> {
@@ -89,7 +100,14 @@ export class GetNetworkAnalyses {
         return null;
       }
       return cached;
-    } catch {
+    } catch (error) {
+      this.reporter.report({
+        level: "error",
+        scope: "analyses",
+        event: "cache_read_failed",
+        cause: error,
+        context: { networkCode },
+      });
       return null;
     }
   }
@@ -107,8 +125,14 @@ export class GetNetworkAnalyses {
         windowFrom,
         fetchedAt,
       });
-    } catch {
-      // Cache is an optimization.
+    } catch (error) {
+      this.reporter.report({
+        level: "error",
+        scope: "analyses",
+        event: "cache_write_failed",
+        cause: error,
+        context: { networkCode },
+      });
     }
   }
 

@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApplicationError } from "@/application/errors/ApplicationError";
 
 const execute = vi.fn();
+const reportError = vi.fn();
 
 vi.mock("@/composition/bootstrap", () => ({
   ensureApplication: () => ({
     resolveAddressUseCase: { execute },
+    reportError,
   }),
 }));
 

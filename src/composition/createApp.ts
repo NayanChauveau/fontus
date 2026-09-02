@@ -15,16 +15,19 @@ import { createComparisonPortAdapter } from "./adapters/createComparisonPortAdap
 import { createGeocodingPortAdapter } from "./adapters/createGeocodingPortAdapter";
 import { createHealthPortAdapter } from "./adapters/createHealthPortAdapter";
 import { createNetworkPortAdapter } from "./adapters/createNetworkPortAdapter";
+import { createObservabilityPortAdapter } from "./adapters/createObservabilityPortAdapter";
 import { createParametersPortAdapter } from "./adapters/createParametersPortAdapter";
 
 function createApplicationPorts(): ApplicationPorts {
   const norms = createNormsModule();
+  const observability = createObservabilityPortAdapter();
   return {
-    analyses: createAnalysesPortAdapter(createAnalysesModule()),
+    analyses: createAnalysesPortAdapter(createAnalysesModule(observability)),
     comparison: createComparisonPortAdapter(createComparisonModule(norms)),
     geocoding: createGeocodingPortAdapter(createGeocodingModule()),
     health: createHealthPortAdapter(),
     network: createNetworkPortAdapter(createNetworkModule()),
+    observability,
     parameters: createParametersPortAdapter(createParametersModule()),
   };
 }

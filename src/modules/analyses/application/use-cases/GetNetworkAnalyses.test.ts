@@ -174,6 +174,7 @@ describe("GetNetworkAnalyses", () => {
   });
 
   it("refetches when the cache is stale or unreadable and ignores a write failure", async () => {
+    const reported: string[] = [];
     const useCase = new GetNetworkAnalyses(
       {
         async count() {
@@ -192,11 +193,17 @@ describe("GetNetworkAnalyses", () => {
         },
       },
       () => NOW,
+      {
+        report(event) {
+          reported.push(event.event);
+        },
+      },
     );
 
     const result = await useCase.execute(PAULIN);
     expect(result.source).toBe("remote");
     expect(result.latestSample?.code).toBe(latest.code);
+    expect(reported).toEqual(["cache_read_failed", "cache_write_failed"]);
   });
 
   it("ignores a stale cache entry", async () => {

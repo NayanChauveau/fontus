@@ -93,4 +93,8 @@ export const fr = {
     legalLimit: "limite légale",
     qualityReference: "référence de qualité",
   },
+  errors: {
+    unexpected: "Une erreur inattendue s’est produite.",
+    retry: "Réessayer",
+  },
 } as const;

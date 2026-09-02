@@ -14,5 +14,7 @@ describe("createFakeApplicationPorts", () => {
     expect((await ports.network.listByCitycode("33063")).confidence).toBe(
       "none",
     );
+    expect(ports.observability.report({ level: "error", scope: "x", event: "y" })).toBeUndefined();
   });
 });
+

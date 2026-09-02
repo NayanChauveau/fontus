@@ -32,3 +32,5 @@ pnpm type-check && pnpm lint && pnpm test
 ```
 
 Architecture : [`docs/architecture.md`](docs/architecture.md).
+
+Les erreurs applicatives (503 Hub’Eau, dégradations, crash UI) passent par `ObservabilityPort` et sortent sur stderr (lisible en local, JSON en prod). Rien n’est stocké en base ; Datadog se branchera plus tard sur ces logs.

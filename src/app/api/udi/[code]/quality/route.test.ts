@@ -2,16 +2,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApplicationError } from "@/application/errors/ApplicationError";
 
 const execute = vi.fn();
+const reportError = vi.fn();
 
 vi.mock("@/composition/bootstrap", () => ({
   ensureApplication: () => ({
     getNetworkWaterQualityUseCase: { execute },
+    reportError,
   }),
 }));
 
 describe("GET /api/udi/:code/quality", () => {
   beforeEach(() => {
     execute.mockReset();
+    reportError.mockReset();
   });
 
   it("rejects an invalid network code", async () => {
@@ -39,7 +42,6 @@ describe("GET /api/udi/:code/quality", () => {
   });
 
   it("maps application errors to 503", async () => {
-    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
     execute.mockRejectedValueOnce(
       new ApplicationError("ANALYSES_UNAVAILABLE", new Error("timeout")),
     );
@@ -49,15 +51,12 @@ describe("GET /api/udi/:code/quality", () => {
       { params: Promise.resolve({ code: "033001214" }) },
     );
     expect(response.status).toBe(503);
-    expect(logged).toHaveBeenCalled();
-
-    execute.mockRejectedValueOnce(new ApplicationError("ANALYSES_UNAVAILABLE"));
-    const again = await GET(
-      new Request("http://localhost/api/udi/033001214/quality"),
-      { params: Promise.resolve({ code: "033001214" }) },
+    expect(reportError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "quality_unavailable",
+        code: "ANALYSES_UNAVAILABLE",
+      }),
     );
-    expect(again.status).toBe(503);
-    logged.mockRestore();
   });
 
   it("rethrows unexpected errors", async () => {

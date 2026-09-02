@@ -29,10 +29,24 @@ export class GetNetworkWaterQualityUseCase {
           ...dto,
           latestMeasurements: await this.ports.comparison.compare(resolved),
         };
-      } catch {
+      } catch (error) {
+        this.ports.observability.report({
+          level: "error",
+          scope: "comparison",
+          event: "compare_failed",
+          cause: error,
+          context: { networkCode: dto.networkCode },
+        });
         return { ...dto, latestMeasurements: resolved };
       }
-    } catch {
+    } catch (error) {
+      this.ports.observability.report({
+        level: "error",
+        scope: "parameters",
+        event: "resolve_failed",
+        cause: error,
+        context: { networkCode: dto.networkCode },
+      });
       return dto;
     }
   }

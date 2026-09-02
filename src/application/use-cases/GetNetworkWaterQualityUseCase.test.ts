@@ -112,6 +112,7 @@ describe("GetNetworkWaterQualityUseCase", () => {
   });
 
   it("returns raw analyses when the dictionary fails", async () => {
+    const reported: string[] = [];
     const { ports } = createFakeApplicationPorts({
       analyses: {
         async getByNetworkCode() {
@@ -128,15 +129,22 @@ describe("GetNetworkWaterQualityUseCase", () => {
           throw new Error("dictionary down");
         },
       },
+      observability: {
+        report(event) {
+          reported.push(event.event);
+        },
+      },
     });
 
     const result = await new GetNetworkWaterQualityUseCase(ports).execute(
       "033001214",
     );
     expect(result.latestMeasurements[0]?.resolution).toBeNull();
+    expect(reported).toEqual(["resolve_failed"]);
   });
 
   it("keeps resolved measurements when comparison fails", async () => {
+    const reported: string[] = [];
     const { ports } = createFakeApplicationPorts({
       analyses: {
         async getByNetworkCode() {
@@ -161,6 +169,11 @@ describe("GetNetworkWaterQualityUseCase", () => {
           throw new Error("norms down");
         },
       },
+      observability: {
+        report(event) {
+          reported.push(event.event);
+        },
+      },
     });
 
     const result = await new GetNetworkWaterQualityUseCase(ports).execute(
@@ -170,6 +183,7 @@ describe("GetNetworkWaterQualityUseCase", () => {
       "nitrites",
     );
     expect(result.latestMeasurements[0]?.comparisons).toBeUndefined();
+    expect(reported).toEqual(["compare_failed"]);
   });
 
   it("attaches FR/UE comparisons after resolving", async () => {
