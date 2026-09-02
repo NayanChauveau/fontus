@@ -34,7 +34,6 @@ export function AddressSearch() {
   const [selected, setSelected] = useState<AddressSuggestionViewModel | null>(
     null,
   );
-  const [resolving, setResolving] = useState(false);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -47,6 +46,7 @@ export function AddressSearch() {
       const controller = new AbortController();
       abortRef.current = controller;
       setStatus("loading");
+      setOpen(true);
 
       void (async () => {
         try {
@@ -58,7 +58,7 @@ export function AddressSearch() {
             | { suggestions: AddressSuggestionDto[] }
             | { error: string };
 
-          if (!response.ok || "error" in payload) {
+          if (!response.ok || !("suggestions" in payload)) {
             setSuggestions([]);
             setStatus("unavailable");
             setOpen(true);
@@ -86,29 +86,9 @@ export function AddressSearch() {
     };
   }, [query]);
 
-  async function selectSuggestion(suggestion: AddressSuggestionViewModel) {
+  function selectSuggestion(suggestion: AddressSuggestionViewModel) {
     setOpen(false);
-    setResolving(true);
     setSelected(suggestion);
-
-    try {
-      const response = await fetch("/api/addresses/resolve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: suggestion.id, label: suggestion.label }),
-      });
-      const payload = (await response.json()) as
-        | { address: AddressSuggestionDto | null }
-        | { error: string };
-
-      if (response.ok && "address" in payload && payload.address) {
-        setSelected(mapAddressDtoToViewModel(payload.address));
-      }
-    } catch {
-      // Keep the suggestion already shown — I1 needs the fields visible.
-    } finally {
-      setResolving(false);
-    }
   }
 
   function clearSelection() {
@@ -136,7 +116,7 @@ export function AddressSearch() {
       event.preventDefault();
       const suggestion = suggestions[activeIndex];
       if (suggestion) {
-        void selectSuggestion(suggestion);
+        selectSuggestion(suggestion);
       }
     } else if (event.key === "Escape") {
       setOpen(false);
@@ -218,26 +198,22 @@ export function AddressSearch() {
                   id={`${listboxId}-${index}`}
                   role="option"
                   aria-selected={index === activeIndex}
+                  className={`flex cursor-pointer flex-col items-start px-4 py-2.5 text-left ${
+                    index === activeIndex
+                      ? "bg-emerald-50 dark:bg-emerald-950/40"
+                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  }`}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => {
+                    selectSuggestion(suggestion);
+                  }}
                 >
-                  <button
-                    type="button"
-                    className={`flex w-full flex-col items-start px-4 py-2.5 text-left ${
-                      index === activeIndex
-                        ? "bg-emerald-50 dark:bg-emerald-950/40"
-                        : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                    }`}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onClick={() => {
-                      void selectSuggestion(suggestion);
-                    }}
-                  >
-                    <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50">
-                      {suggestion.label}
-                    </span>
-                    <span className="text-xs text-zinc-500">
-                      {suggestion.city} · {suggestion.citycode}
-                    </span>
-                  </button>
+                  <span className="text-sm font-medium text-zinc-950 dark:text-zinc-50">
+                    {suggestion.label}
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    {suggestion.city} · {suggestion.citycode}
+                  </span>
                 </li>
               ))}
           </ul>
@@ -278,7 +254,7 @@ export function AddressSearch() {
         </section>
       )}
 
-      {selected && !resolving && (
+      {selected && (
         <DistributionNetworkList
           key={selected.citycode}
           citycode={selected.citycode}

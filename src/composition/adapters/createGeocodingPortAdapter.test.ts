@@ -14,12 +14,17 @@ const candidate = {
 describe("createGeocodingPortAdapter", () => {
   it("maps suggestions and resolve matches", async () => {
     const adapter = createGeocodingPortAdapter({
-      gateway: {
-        async search() {
+      suggestAddresses: {
+        async execute() {
           return [candidate];
         },
       },
-    });
+      resolveAddress: {
+        async execute(input: { id: string; label: string }) {
+          return input.id === "id-1" ? candidate : null;
+        },
+      },
+    } as never);
 
     expect(await adapter.suggest("12 rue")).toEqual([
       {
@@ -41,12 +46,17 @@ describe("createGeocodingPortAdapter", () => {
 
   it("wraps gateway failures", async () => {
     const adapter = createGeocodingPortAdapter({
-      gateway: {
-        async search() {
+      suggestAddresses: {
+        async execute() {
           throw new Error("down");
         },
       },
-    });
+      resolveAddress: {
+        async execute() {
+          throw new Error("down");
+        },
+      },
+    } as never);
 
     await expect(adapter.suggest("abc")).rejects.toBeInstanceOf(ApplicationError);
     await expect(

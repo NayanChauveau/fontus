@@ -54,16 +54,16 @@ describe("POST /api/addresses/resolve", () => {
     expect(response.status).toBe(503);
   });
 
-  it("rethrows unexpected errors", async () => {
+  it("returns 500 for unexpected errors", async () => {
     execute.mockRejectedValueOnce(new Error("boom"));
     const { POST } = await import("./route");
-    await expect(
-      POST(
-        new Request("http://localhost/api/addresses/resolve", {
-          method: "POST",
-          body: "{}",
-        }),
-      ),
-    ).rejects.toThrow("boom");
+    const response = await POST(
+      new Request("http://localhost/api/addresses/resolve", {
+        method: "POST",
+        body: "{}",
+      }),
+    );
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: "UNEXPECTED" });
   });
 });

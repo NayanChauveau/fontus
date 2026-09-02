@@ -1,13 +1,16 @@
 /** @vitest-environment happy-dom */
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { setStoredLocale } from "@/presentation/i18n/locale";
 import { NetworkAnalyses } from "./NetworkAnalyses";
 
 describe("NetworkAnalyses", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    window.localStorage.clear();
+    document.documentElement.lang = "fr";
   });
 
   it("shows the official conclusion and both measurement groups", async () => {
@@ -572,5 +575,78 @@ describe("NetworkAnalyses", () => {
       expect(screen.getByText(/Chargement/)).toBeTruthy();
     });
     vi.unstubAllGlobals();
+  });
+
+  it("hides comparison tables when comparison failed", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          networkCode: "033001214",
+          windowFrom: "2025-09-02",
+          source: "cache",
+          latestSample: {
+            code: "s1",
+            sampledAt: "2026-06-18T11:40:00.000Z",
+            conclusion: "Eau conforme",
+            conformiteLimitesBact: "C",
+            conformiteLimitesPc: "C",
+            source: "hubeau",
+            measurements: [],
+          },
+          latestMeasurements: [
+            {
+              parameterCode: "1340",
+              parameterLabel: "Nitrates",
+              rawText: "8",
+              numericValue: 8,
+              qualifier: "eq",
+              unit: "mg/L",
+              sampledAt: "2026-06-18T11:40:00.000Z",
+              resolution: {
+                canonicalId: "nitrates",
+                canonicalName: "Nitrates",
+                category: "nutrients",
+                displayPriority: 20,
+                canonicalUnit: "mg/L",
+                canonicalNumericValue: 8,
+                conversion: "identity",
+              },
+            },
+          ],
+          comparisonFailed: true,
+        }),
+      ),
+    );
+    render(<NetworkAnalyses networkCode="033001214" />);
+    await waitFor(() => {
+      expect(
+        screen.getByText(/comparaisons sont temporairement indisponibles/i),
+      ).toBeTruthy();
+    });
+    expect(screen.queryByText("Comparaison par substance")).toBeNull();
+    expect(screen.queryByText("Toutes les analyses")).toBeNull();
+  });
+
+  it("remaps copy on locale switch without refetch", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        networkCode: "033001214",
+        windowFrom: "2025-09-02",
+        source: "cache",
+        latestSample: null,
+        latestMeasurements: [],
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    render(<NetworkAnalyses networkCode="033001214" />);
+    await waitFor(() => {
+      expect(screen.getByText("Dernières analyses")).toBeTruthy();
+    });
+    act(() => {
+      setStoredLocale("en");
+    });
+    expect(screen.getByText("Latest analyses")).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

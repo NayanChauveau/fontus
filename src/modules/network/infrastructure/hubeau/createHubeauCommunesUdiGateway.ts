@@ -1,3 +1,4 @@
+import { parseHubeauUrl } from "@/shared/infrastructure/http/assertHubeauUrl";
 import type { RawUdiLink } from "../../domain/DistributionNetwork";
 import type { CommunesUdiGatewayPort } from "../../application/ports/CommunesUdiGatewayPort";
 import { parseCommunesUdiResponse } from "./parseCommunesUdiResponse";
@@ -29,7 +30,7 @@ export function createHubeauCommunesUdiGateway(
         if (!parsed.next) {
           break;
         }
-        pageUrl = new URL(parsed.next);
+        pageUrl = parseHubeauUrl(parsed.next);
       }
 
       return links;

@@ -9,5 +9,7 @@ describe("db schema", () => {
     expect(schema.udis).toBeDefined();
     expect(schema.jurisdictions).toBeDefined();
     expect(schema.thresholdVersions).toBeDefined();
+    expect(schema.rateBuckets).toBeDefined();
+    expect(schema.seenParameterCodes).toBeDefined();
   });
 });

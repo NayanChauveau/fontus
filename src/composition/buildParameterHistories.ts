@@ -1,8 +1,8 @@
-import { summarizeHistory } from "@/modules/analyses/domain/summarizeHistory";
 import type {
   MeasurementDto,
   ParameterHistoryDto,
-} from "./dtos/NetworkWaterQualityDto";
+} from "@/application/dtos/NetworkWaterQualityDto";
+import { summarizeHistory } from "@/modules/analyses/domain/summarizeHistory";
 
 export const HISTORY_CANONICAL_IDS = ["nitrates", "pfas20", "lead"] as const;
 

@@ -1,7 +1,9 @@
-import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readdir, readFile, realpath, stat } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import type { DisImportPort } from "../../application/ports/DisImportPort";
 import { parseDisExport } from "../../domain/parseDisExport";
+
+const MAX_FILE_BYTES = 8_000_000;
 
 export function createFileDisImport(directory: string): DisImportPort {
   return {
@@ -11,10 +13,11 @@ export function createFileDisImport(directory: string): DisImportPort {
       }
 
       try {
-        const files = await readdir(directory);
-        const udiCom = await readNamed(directory, files, /udi_com/i);
-        const plv = await readNamed(directory, files, /plv/i);
-        const result = await readNamed(directory, files, /result/i);
+        const root = await realpath(resolve(directory));
+        const files = await readdir(root);
+        const udiCom = await readNamed(root, files, "udiCom");
+        const plv = await readNamed(root, files, "plv");
+        const result = await readNamed(root, files, "result");
         if (!plv || !result) {
           return [];
         }
@@ -33,14 +36,36 @@ export function createFileDisImport(directory: string): DisImportPort {
   };
 }
 
+function classifyDisFile(file: string): "udiCom" | "plv" | "result" | null {
+  const base = file.replace(/\.[^.]+$/, "").toUpperCase();
+  if (base === "UDI_COM" || base === "DIS_UDI_COM") {
+    return "udiCom";
+  }
+  if (base === "PLV" || base === "DIS_PLV") {
+    return "plv";
+  }
+  if (base === "RESULT" || base === "DIS_RESULT") {
+    return "result";
+  }
+  return null;
+}
+
 async function readNamed(
   directory: string,
   files: string[],
-  pattern: RegExp,
+  kind: "udiCom" | "plv" | "result",
 ): Promise<string | undefined> {
-  const name = files.find((file) => pattern.test(file));
+  const name = files.find((file) => classifyDisFile(file) === kind);
   if (!name) {
     return undefined;
   }
-  return readFile(join(directory, name), "utf8");
+  const path = await realpath(join(directory, name));
+  if (!path.startsWith(directory)) {
+    return undefined;
+  }
+  const info = await stat(path);
+  if (!info.isFile() || info.size > MAX_FILE_BYTES) {
+    return undefined;
+  }
+  return readFile(path, "utf8");
 }

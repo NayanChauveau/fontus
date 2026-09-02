@@ -85,4 +85,11 @@ describe("createAnalysesPortAdapter", () => {
       ApplicationError,
     );
   });
+
+  it("summarizes histories through the module helper", () => {
+    const adapter = createAnalysesPortAdapter({
+      getNetworkAnalyses: { async execute() { throw new Error("unused"); } },
+    } as never);
+    expect(adapter.summarizeHistories([])).toEqual([]);
+  });
 });

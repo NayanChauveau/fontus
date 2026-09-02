@@ -13,6 +13,13 @@ export function createApplicationServices(ports: ApplicationPorts) {
     listDistributionNetworksUseCase: new ListDistributionNetworksUseCase(ports),
     resolveAddressUseCase: new ResolveAddressUseCase(ports),
     suggestAddressesUseCase: new SuggestAddressesUseCase(ports),
+    consumeRateLimit(input: {
+      key: string;
+      limit: number;
+      windowMs: number;
+    }) {
+      return ports.rateLimit.consume(input);
+    },
     reportError(event: Omit<ObservabilityEvent, "level">) {
       ports.observability.report({ ...event, level: "error" });
     },

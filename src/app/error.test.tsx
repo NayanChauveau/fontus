@@ -1,13 +1,16 @@
 /** @vitest-environment happy-dom */
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { setStoredLocale } from "@/presentation/i18n/locale";
 import ErrorPage from "./error";
 
 describe("app error boundary", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    window.localStorage.clear();
+    document.documentElement.lang = "fr";
   });
 
   it("reports the render error and can retry", async () => {
@@ -26,5 +29,25 @@ describe("app error boundary", () => {
         expect.objectContaining({ method: "POST" }),
       );
     });
+  });
+
+  it("remaps copy on locale switch without refetch", async () => {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <ErrorPage
+        error={Object.assign(new Error("boom"), { digest: "d1" })}
+        reset={() => {}}
+      />,
+    );
+    expect(screen.getByText(/erreur inattendue/)).toBeTruthy();
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+    act(() => {
+      setStoredLocale("en");
+    });
+    expect(screen.getByText("An unexpected error occurred.")).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

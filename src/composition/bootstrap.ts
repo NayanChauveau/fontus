@@ -1,3 +1,4 @@
+import "server-only";
 import type { ApplicationServices } from "@/application/createApplicationServices";
 import { getApplication } from "@/application/getApplication";
 import { createApp } from "./createApp";

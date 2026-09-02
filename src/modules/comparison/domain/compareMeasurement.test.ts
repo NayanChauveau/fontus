@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ThresholdVersion } from "../../norms/domain/ThresholdVersion";
+import type { ThresholdVersion } from "@/modules/norms";
 import { compareMeasurement } from "./compareMeasurement";
 
 const nitrates: ThresholdVersion = {

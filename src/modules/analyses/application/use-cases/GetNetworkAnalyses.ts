@@ -24,11 +24,11 @@ const MAX_PAGES = 20;
 
 export type AnalysesErrorReporter = {
   report(event: {
-    level: "error";
+    level: "info" | "error";
     scope: "analyses";
     event: string;
     cause?: unknown;
-    context?: Record<string, string>;
+    context?: Record<string, string | number | boolean | null | undefined>;
   }): void;
 };
 
@@ -58,9 +58,11 @@ export class GetNetworkAnalyses {
       return running;
     }
 
-    const pending = this.load(networkCode).finally(() => {
-      this.inflight.delete(networkCode);
-    });
+    const pending = this.cache
+      .withNetworkLock(networkCode, () => this.load(networkCode))
+      .finally(() => {
+        this.inflight.delete(networkCode);
+      });
     this.inflight.set(networkCode, pending);
     return pending;
   }
@@ -69,13 +71,12 @@ export class GetNetworkAnalyses {
     const now = this.now();
     const cached = await this.readFresh(networkCode, now);
     if (cached) {
-      console.info(
-        JSON.stringify({
-          scope: "analyses",
-          event: "cache_hit",
-          networkCode,
-        }),
-      );
+      this.reporter.report({
+        level: "info",
+        scope: "analyses",
+        event: "cache_hit",
+        context: { networkCode },
+      });
       return toResult(
         networkCode,
         cached.windowFrom,
@@ -89,33 +90,37 @@ export class GetNetworkAnalyses {
       const imported = await this.tryImport(networkCode, window.dateMin);
       if (imported) {
         await this.persist(networkCode, imported, window.dateMin, now);
-        console.info(
-          JSON.stringify({
-            scope: "analyses",
-            event: "dis_import",
+        this.reporter.report({
+          level: "info",
+          scope: "analyses",
+          event: "dis_import",
+          context: {
             networkCode,
             windowFrom: window.dateMin,
             sampleCount: imported.length,
-          }),
-        );
+          },
+        });
         return toResult(networkCode, window.dateMin, "import", imported);
       }
     }
 
-    const samples = await this.fetchAllPages(networkCode, window.dateMin);
-    await this.persist(networkCode, samples, window.dateMin, now);
+    const fetched = await this.fetchAllPages(networkCode, window.dateMin);
+    if (fetched.complete) {
+      await this.persist(networkCode, fetched.samples, window.dateMin, now);
+    }
 
-    console.info(
-      JSON.stringify({
-        scope: "analyses",
-        event: "hubeau_fetch",
+    this.reporter.report({
+      level: "info",
+      scope: "analyses",
+      event: "hubeau_fetch",
+      context: {
         networkCode,
         windowFrom: window.dateMin,
-        sampleCount: samples.length,
-      }),
-    );
+        sampleCount: fetched.samples.length,
+      },
+    });
 
-    return toResult(networkCode, window.dateMin, "remote", samples);
+    return toResult(networkCode, window.dateMin, "remote", fetched.samples);
   }
 
   private async readFresh(networkCode: string, now: Date) {
@@ -143,6 +148,9 @@ export class GetNetworkAnalyses {
     windowFrom: string,
     fetchedAt: Date,
   ) {
+    if (samples.length === 0) {
+      return;
+    }
     try {
       await this.cache.write({
         networkCode,
@@ -202,7 +210,10 @@ export class GetNetworkAnalyses {
     }
   }
 
-  private async fetchAllPages(networkCode: string, dateMin: string) {
+  private async fetchAllPages(
+    networkCode: string,
+    dateMin: string,
+  ): Promise<{ samples: AnalysisSample[]; complete: boolean }> {
     const merged = new Map<string, AnalysisSample>();
     let next: string | undefined;
     try {
@@ -210,16 +221,17 @@ export class GetNetworkAnalyses {
         const result = await this.gateway.listPage(networkCode, dateMin, next);
         mergeSamples(merged, result.samples);
         if (!result.next) {
-          break;
+          return { samples: [...merged.values()], complete: true };
         }
         next = result.next;
       }
+      return { samples: [...merged.values()], complete: true };
     } catch (error) {
       if (merged.size === 0) {
         throw error;
       }
+      return { samples: [...merged.values()], complete: false };
     }
-    return [...merged.values()];
   }
 }
 

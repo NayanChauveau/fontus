@@ -14,21 +14,31 @@ describe("LanguageSelect", () => {
 
   it("defaults to french then persists english", () => {
     render(<LanguageSelect />);
-    expect(screen.getByRole("group", { name: "Langue" })).toBeTruthy();
+    expect(screen.getByRole("radiogroup", { name: "Langue" })).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Français" }).getAttribute(
-        "aria-pressed",
+      screen.getByRole("radio", { name: "Français" }).getAttribute(
+        "aria-checked",
       ),
     ).toBe("true");
 
-    fireEvent.click(screen.getByRole("button", { name: "English" }));
+    fireEvent.click(screen.getByRole("radio", { name: "English" }));
     expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("en");
+    expect(document.cookie).toContain("eau-robinet-locale=en");
     expect(document.documentElement.lang).toBe("en");
-    expect(screen.getByRole("group", { name: "Language" })).toBeTruthy();
+    expect(screen.getByRole("radiogroup", { name: "Language" })).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "English" }).getAttribute(
-        "aria-pressed",
+      screen.getByRole("radio", { name: "English" }).getAttribute(
+        "aria-checked",
       ),
     ).toBe("true");
+
+    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowLeft" });
+    expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("fr");
+    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowRight" });
+    expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("en");
+    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowDown" });
+    expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("fr");
+    fireEvent.keyDown(screen.getByRole("radiogroup"), { key: "ArrowUp" });
+    expect(window.localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("en");
   });
 });

@@ -1,3 +1,4 @@
+import "server-only";
 import {
   createApplicationServices,
   type ApplicationServices,
@@ -17,6 +18,7 @@ import { createHealthPortAdapter } from "./adapters/createHealthPortAdapter";
 import { createNetworkPortAdapter } from "./adapters/createNetworkPortAdapter";
 import { createObservabilityPortAdapter } from "./adapters/createObservabilityPortAdapter";
 import { createParametersPortAdapter } from "./adapters/createParametersPortAdapter";
+import { createDrizzleRateLimiter } from "@/shared/infrastructure/http/createDrizzleRateLimiter";
 
 function createApplicationPorts(): ApplicationPorts {
   const norms = createNormsModule();
@@ -29,6 +31,7 @@ function createApplicationPorts(): ApplicationPorts {
     network: createNetworkPortAdapter(createNetworkModule()),
     observability,
     parameters: createParametersPortAdapter(createParametersModule()),
+    rateLimit: createDrizzleRateLimiter(),
   };
 }
 

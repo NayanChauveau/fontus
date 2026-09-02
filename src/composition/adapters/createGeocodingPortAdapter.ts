@@ -1,7 +1,10 @@
 import type { AddressSuggestionDto } from "@/application/dtos/AddressDto";
 import { ApplicationError } from "@/application/errors/ApplicationError";
 import type { GeocodingPort } from "@/application/ports/GeocodingPort";
-import type { AddressCandidate, GeocodingModuleFacade } from "@/modules/geocoding";
+import type {
+  AddressCandidate,
+  GeocodingModuleFacade,
+} from "@/modules/geocoding";
 
 function toDto(candidate: AddressCandidate): AddressSuggestionDto {
   return {
@@ -20,23 +23,16 @@ export function createGeocodingPortAdapter(
   return {
     async suggest(query) {
       try {
-        const candidates = await module.gateway.search(query, {
-          autocomplete: true,
-          limit: 7,
-        });
+        const candidates = await module.suggestAddresses.execute(query);
         return candidates.map(toDto);
       } catch (error) {
         throw new ApplicationError("GEOCODING_UNAVAILABLE", error);
       }
     },
 
-    async resolve({ id, label }) {
+    async resolve(input) {
       try {
-        const candidates = await module.gateway.search(label, {
-          autocomplete: false,
-          limit: 5,
-        });
-        const match = candidates.find((candidate) => candidate.sourceId === id);
+        const match = await module.resolveAddress.execute(input);
         return match ? toDto(match) : null;
       } catch (error) {
         throw new ApplicationError("GEOCODING_UNAVAILABLE", error);

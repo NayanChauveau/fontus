@@ -26,7 +26,9 @@ describe("createHubeauResultatsDisGateway", () => {
 
   it("follows an explicit page URL and accepts HTTP 206", async () => {
     const gateway = createHubeauResultatsDisGateway(async (url) => {
-      expect(url.toString()).toBe("https://hubeau.example/page/2");
+      expect(url.toString()).toBe(
+        "https://hubeau.eaufrance.fr/api/v1/qualite_eau_potable/resultats_dis?page=2",
+      );
       return new Response(JSON.stringify({ count: 0, next: null, data: [] }), {
         status: 206,
       });
@@ -34,9 +36,18 @@ describe("createHubeauResultatsDisGateway", () => {
     const page = await gateway.listPage(
       "033001214",
       "2025-09-02",
-      "https://hubeau.example/page/2",
+      "https://hubeau.eaufrance.fr/api/v1/qualite_eau_potable/resultats_dis?page=2",
     );
     expect(page.count).toBe(0);
+  });
+
+  it("rejects a next URL outside the official host", async () => {
+    const gateway = createHubeauResultatsDisGateway(async () => {
+      throw new Error("should not fetch");
+    });
+    await expect(
+      gateway.listPage("033001214", "2025-09-02", "https://evil.test/page/2"),
+    ).rejects.toThrow("HUBEAU_UNTRUSTED_NEXT");
   });
 
   it("throws when Hub’Eau fails", async () => {

@@ -1,4 +1,3 @@
-import { buildParameterHistories } from "../buildParameterHistories";
 import type { NetworkWaterQualityDto } from "../dtos/NetworkWaterQualityDto";
 import { isNetworkCode, normalizeNetworkCode } from "../networkCode";
 import type { ApplicationPorts } from "../ports/ApplicationPorts";
@@ -45,7 +44,12 @@ export class GetNetworkWaterQualityUseCase {
           context: { networkCode: dto.networkCode },
         });
         return this.withHistories(
-          { ...dto, latestMeasurements: resolved, parameterHistories: [] },
+          {
+            ...dto,
+            latestMeasurements: resolved,
+            parameterHistories: [],
+            comparisonFailed: true,
+          },
           historyMeasurements,
         );
       }
@@ -75,7 +79,7 @@ export class GetNetworkWaterQualityUseCase {
         const compared = await this.ports.comparison.compare(resolved);
         return {
           ...dto,
-          parameterHistories: buildParameterHistories(compared),
+          parameterHistories: this.ports.analyses.summarizeHistories(compared),
         };
       } catch (error) {
         this.ports.observability.report({
@@ -87,7 +91,7 @@ export class GetNetworkWaterQualityUseCase {
         });
         return {
           ...dto,
-          parameterHistories: buildParameterHistories(resolved),
+          parameterHistories: this.ports.analyses.summarizeHistories(resolved),
         };
       }
     } catch (error) {

@@ -3,7 +3,9 @@ export type ApplicationErrorCode =
   | "NETWORKS_UNAVAILABLE"
   | "ANALYSES_UNAVAILABLE"
   | "PARAMETERS_UNAVAILABLE"
-  | "COMPARISON_UNAVAILABLE";
+  | "COMPARISON_UNAVAILABLE"
+  | "RATE_LIMITED"
+  | "UNEXPECTED";
 
 export class ApplicationError extends Error {
   constructor(

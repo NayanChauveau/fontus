@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ThresholdVersion } from "../../norms/domain/ThresholdVersion";
+import type { ThresholdVersion } from "@/modules/norms";
 import { pickStrictThreshold } from "./pickStrictThreshold";
 
 function limit(
@@ -47,9 +47,16 @@ describe("pickStrictThreshold", () => {
     ).toBeNull();
   });
 
-  it("does not mix units", () => {
+  it("converts units before picking the lowest legal max", () => {
     const ug = limit("pfoa:us", 0.004);
-    const ng = limit("pfoa:other", 4, { unit: "ng/L" });
-    expect(pickStrictThreshold([ug, ng])).toBe(ug);
+    const ng = limit("pfoa:other", 2, { unit: "ng/L" });
+    expect(pickStrictThreshold([ug, ng])).toBe(ng);
+  });
+
+  it("skips thresholds that cannot be converted to a mass unit", () => {
+    const ug = limit("pfoa:us", 0.004);
+    const ph = limit("ph:fr", 7, { unit: "pH" });
+    expect(pickStrictThreshold([ph, ug])).toBe(ug);
+    expect(pickStrictThreshold([ph])).toBeNull();
   });
 });

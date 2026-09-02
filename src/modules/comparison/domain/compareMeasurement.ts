@@ -1,4 +1,4 @@
-import type { ThresholdVersion } from "../../norms/domain/ThresholdVersion";
+import type { ThresholdVersion } from "@/modules/norms";
 
 export type ComparisonStatus =
   | "compliant"

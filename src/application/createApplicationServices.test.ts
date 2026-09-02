@@ -3,7 +3,7 @@ import { createApplicationServices } from "./createApplicationServices";
 import { createFakeApplicationPorts } from "./ports/testing/createFakeApplicationPorts";
 
 describe("createApplicationServices", () => {
-  it("wires every use case and reports errors through observability", () => {
+  it("wires every use case and reports errors through observability", async () => {
     const reported: unknown[] = [];
     const { ports } = createFakeApplicationPorts({
       observability: {
@@ -18,6 +18,9 @@ describe("createApplicationServices", () => {
     expect(application.listDistributionNetworksUseCase).toBeDefined();
     expect(application.resolveAddressUseCase).toBeDefined();
     expect(application.suggestAddressesUseCase).toBeDefined();
+    await expect(
+      application.consumeRateLimit({ key: "quality:1", limit: 1, windowMs: 1 }),
+    ).resolves.toBe(true);
 
     application.reportError({
       scope: "analyses",

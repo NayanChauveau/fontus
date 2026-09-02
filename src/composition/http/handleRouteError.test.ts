@@ -27,17 +27,48 @@ describe("handleRouteError", () => {
     });
   });
 
-  it("reports then rethrows an unexpected error", async () => {
+  it("maps rate limits and unexpected application errors", async () => {
     const { handleRouteError } = await import("./handleRouteError");
-    const boom = new Error("boom");
-    expect(() =>
-      handleRouteError(boom, { scope: "network", event: "networks_unavailable" }),
-    ).toThrow("boom");
+    const limited = handleRouteError(new ApplicationError("RATE_LIMITED"), {
+      scope: "analyses",
+      event: "quality_rate_limited",
+    });
+    expect(limited.status).toBe(429);
+    const unexpectedApp = handleRouteError(new ApplicationError("UNEXPECTED"), {
+      scope: "analyses",
+      event: "quality_unexpected",
+    });
+    expect(unexpectedApp.status).toBe(500);
+  });
+
+  it("reports then returns 500 for an unexpected error", async () => {
+    const { handleRouteError } = await import("./handleRouteError");
+    const boom = new Error("boom postgres://secret.example/db");
+    const response = handleRouteError(boom, {
+      scope: "network",
+      event: "networks_unavailable",
+    });
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: "UNEXPECTED" });
     expect(reportError).toHaveBeenCalledWith({
       scope: "network",
       event: "networks_unavailable_unexpected",
-      cause: boom,
+      cause: expect.objectContaining({
+        message: expect.stringContaining("[redacted]"),
+      }),
       context: undefined,
     });
+  });
+
+  it("keeps a non-Error cause as-is", async () => {
+    const { handleRouteError } = await import("./handleRouteError");
+    const response = handleRouteError("down", {
+      scope: "network",
+      event: "networks_unavailable",
+    });
+    expect(response.status).toBe(500);
+    expect(reportError).toHaveBeenCalledWith(
+      expect.objectContaining({ cause: "down" }),
+    );
   });
 });

@@ -5,6 +5,7 @@ import type { HealthPort } from "./HealthPort";
 import type { NetworkPort } from "./NetworkPort";
 import type { ObservabilityPort } from "./ObservabilityPort";
 import type { ParametersPort } from "./ParametersPort";
+import type { RateLimitPort } from "./RateLimitPort";
 
 export type ApplicationPorts = {
   analyses: AnalysesPort;
@@ -14,4 +15,5 @@ export type ApplicationPorts = {
   network: NetworkPort;
   observability: ObservabilityPort;
   parameters: ParametersPort;
+  rateLimit: RateLimitPort;
 };

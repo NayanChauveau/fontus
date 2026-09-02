@@ -1,7 +1,7 @@
 import type { CommuneNetworks } from "../../domain/DistributionNetwork";
 import { groupUdiLinks } from "../../domain/groupUdiLinks";
 import { narrowNetworksForAddress } from "../../domain/narrowNetworks";
-import { isFreshSync } from "../../domain/NetworkConfidence";
+import { isFreshEmptyYear, isFreshSync } from "../../domain/NetworkConfidence";
 import { resolveCommuneInsee } from "../../domain/resolveCommuneInsee";
 import { resolveNetworkConfidence } from "../../domain/resolveNetworkConfidence";
 import type { CommunesUdiGatewayPort } from "../ports/CommunesUdiGatewayPort";
@@ -32,8 +32,8 @@ export class ListNetworksForCommune {
 
     if (!cachedCurrent) {
       const remoteCurrent = await this.gateway.listByCommune(communeCode, year);
+      await this.persist(communeCode, year, remoteCurrent, now);
       if (remoteCurrent.length > 0) {
-        await this.persist(communeCode, year, remoteCurrent, now);
         return this.requireNetworks(remoteCurrent, "remote");
       }
     }
@@ -63,7 +63,13 @@ export class ListNetworksForCommune {
   ) {
     try {
       const cached = await this.cache.read(citycode, year);
-      if (!cached || !isFreshSync(cached.fetchedAt, now)) {
+      if (!cached) {
+        return null;
+      }
+      if (cached.links.length === 0) {
+        return isFreshEmptyYear(cached.fetchedAt, now) ? cached : null;
+      }
+      if (!isFreshSync(cached.fetchedAt, now)) {
         return null;
       }
       return cached;
@@ -108,7 +114,9 @@ export class ListNetworksForCommune {
         networks: narrowed.networks,
         hiddenNonResidentialCount: narrowed.hiddenCount,
       },
-      confidence: resolveNetworkConfidence(narrowed.networks.length),
+      confidence: resolveNetworkConfidence(narrowed.networks.length, {
+        becameUniqueAfterFilter: narrowed.hiddenCount > 0,
+      }),
       source,
     };
   }

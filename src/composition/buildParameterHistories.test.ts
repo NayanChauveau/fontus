@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildParameterHistories } from "./buildParameterHistories";
-import type { MeasurementDto } from "./dtos/NetworkWaterQualityDto";
+import type { MeasurementDto } from "@/application/dtos/NetworkWaterQualityDto";
 
 describe("buildParameterHistories", () => {
   it("groups resolved nitrates and ignores other parameters", () => {
@@ -63,9 +63,10 @@ describe("buildParameterHistories", () => {
     expect(histories[0]?.canonicalName).toBe("Plomb");
     expect(histories[0]?.warnings).toEqual(["loq_changed"]);
     expect(histories[0]?.points[0]?.sampledAt).toBeUndefined();
+    expect(histories[0]?.count).toBe(1);
   });
 
-  it("uses a reconstructed PFAS-20 upper bound in the series", () => {
+  it("keeps a reconstructed PFAS-20 series without treating < LQ as exact", () => {
     const histories = buildParameterHistories([
       {
         parameterCode: "8847",
@@ -108,8 +109,8 @@ describe("buildParameterHistories", () => {
 
     expect(histories).toHaveLength(1);
     expect(histories[0]?.canonicalId).toBe("pfas20");
-    expect(histories[0]?.min).toBe(0.034);
-    expect(histories[0]?.count).toBe(1);
+    expect(histories[0]?.min).toBeNull();
+    expect(histories[0]?.count).toBe(0);
   });
 
   it("skips unresolved rows", () => {

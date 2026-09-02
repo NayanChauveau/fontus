@@ -3,35 +3,35 @@ import type { Messages } from "../i18n/messages";
 import type { NetworkMeasurementViewModel } from "../view-models/NetworkAnalysesViewModel";
 
 export const WATCH_PARAMETERS = [
-  { id: "pfas20", name: "Somme PFAS-20", unit: "µg/L", category: "pfas" },
-  { id: "pfoa", name: "PFOA", unit: "µg/L", category: "pfas" },
-  { id: "pfos", name: "PFOS", unit: "µg/L", category: "pfas" },
-  { id: "nitrates", name: "Nitrates", unit: "mg/L", category: "nutrients" },
-  { id: "nitrites", name: "Nitrites", unit: "mg/L", category: "nutrients" },
+  { id: "pfas20", nameKey: "watchPfas20", unit: "µg/L", category: "pfas" },
+  { id: "pfoa", nameKey: "watchPfoa", unit: "µg/L", category: "pfas" },
+  { id: "pfos", nameKey: "watchPfos", unit: "µg/L", category: "pfas" },
+  { id: "nitrates", nameKey: "watchNitrates", unit: "mg/L", category: "nutrients" },
+  { id: "nitrites", nameKey: "watchNitrites", unit: "mg/L", category: "nutrients" },
   {
     id: "pesticides_total",
-    name: "Pesticides (total analysé)",
+    nameKey: "watchPesticidesTotal",
     unit: "µg/L",
     category: "pesticides",
   },
-  { id: "atrazine", name: "Atrazine", unit: "µg/L", category: "pesticides" },
-  { id: "lead", name: "Plomb", unit: "µg/L", category: "metals" },
-  { id: "arsenic", name: "Arsenic", unit: "µg/L", category: "metals" },
+  { id: "atrazine", nameKey: "watchAtrazine", unit: "µg/L", category: "pesticides" },
+  { id: "lead", nameKey: "watchLead", unit: "µg/L", category: "metals" },
+  { id: "arsenic", nameKey: "watchArsenic", unit: "µg/L", category: "metals" },
   {
     id: "ecoli",
-    name: "Escherichia coli",
+    nameKey: "watchEcoli",
     unit: "n/(100mL)",
     category: "microbio",
   },
   {
     id: "enterococci",
-    name: "Entérocoques",
+    nameKey: "watchEnterococci",
     unit: "n/(100mL)",
     category: "microbio",
   },
   {
     id: "hardness",
-    name: "Titre hydrotimétrique",
+    nameKey: "watchHardness",
     unit: "°f",
     category: "organoleptic",
   },
@@ -70,10 +70,11 @@ function emptyWatchRow(
   messages: Messages,
 ): NetworkMeasurementViewModel {
   const emptyKind = input.hasRecentSample ? "not_analysed" : "no_recent";
+  const name = messages.analyses[parameter.nameKey];
   return {
     parameterCode: `missing:${parameter.id}`,
-    parameterLabel: parameter.name,
-    canonicalName: parameter.name,
+    parameterLabel: name,
+    canonicalName: name,
     canonicalId: parameter.id,
     category: parameter.category,
     originalLabel: null,

@@ -94,4 +94,5 @@ export type NetworkWaterQualityDto = {
   latestMeasurements: MeasurementDto[];
   historyMeasurements?: MeasurementDto[];
   parameterHistories?: ParameterHistoryDto[];
+  comparisonFailed?: boolean;
 };

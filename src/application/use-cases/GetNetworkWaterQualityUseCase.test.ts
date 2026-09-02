@@ -182,6 +182,7 @@ describe("GetNetworkWaterQualityUseCase", () => {
     expect(result.latestMeasurements[0]?.resolution?.canonicalId).toBe(
       "nitrites",
     );
+    expect(result.comparisonFailed).toBe(true);
     expect(result.latestMeasurements[0]?.comparisons).toBeUndefined();
     expect(reported).toEqual(["compare_failed"]);
   });

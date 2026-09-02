@@ -2,6 +2,7 @@ import type { NetworkWaterQualityDto } from "@/application/dtos/NetworkWaterQual
 import { ApplicationError } from "@/application/errors/ApplicationError";
 import type { AnalysesPort } from "@/application/ports/AnalysesPort";
 import type { AnalysesModuleFacade } from "@/modules/analyses";
+import { buildParameterHistories } from "../buildParameterHistories";
 import type {
   AnalysisSample,
   ParameterSnapshot,
@@ -28,6 +29,10 @@ export function createAnalysesPortAdapter(
       } catch (error) {
         throw new ApplicationError("ANALYSES_UNAVAILABLE", error);
       }
+    },
+
+    summarizeHistories(measurements) {
+      return buildParameterHistories(measurements);
     },
   };
 }

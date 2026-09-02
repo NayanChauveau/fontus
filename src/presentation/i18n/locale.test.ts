@@ -48,6 +48,7 @@ describe("locale", () => {
     const unsubscribe = subscribeLocale(listener);
     setStoredLocale("en");
     expect(window.localStorage.getItem("eau-robinet-locale")).toBe("en");
+    expect(document.cookie).toContain("eau-robinet-locale=en");
     expect(document.documentElement.lang).toBe("en");
     expect(readLocale()).toBe("en");
     expect(listener).toHaveBeenCalledOnce();

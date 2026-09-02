@@ -9,7 +9,7 @@ describe("createHubeauCommunesUdiGateway", () => {
       if (urls.length === 1) {
         return new Response(
           JSON.stringify({
-            next: "https://hubeau.example/page/2",
+            next: "https://hubeau.eaufrance.fr/api/v1/qualite_eau_potable/communes_udi?page=2",
             data: [
               {
                 code_commune: "33063",
@@ -29,6 +29,20 @@ describe("createHubeauCommunesUdiGateway", () => {
     expect(links[0]?.networkCode).toBe("033001214");
     expect(urls[0]).toContain("code_commune=33063");
     expect(urls).toHaveLength(2);
+  });
+
+  it("rejects a next URL outside the official host", async () => {
+    const gateway = createHubeauCommunesUdiGateway(async () => {
+      return new Response(
+        JSON.stringify({
+          next: "https://evil.test/page/2",
+          data: [],
+        }),
+      );
+    });
+    await expect(gateway.listByCommune("33063", 2026)).rejects.toThrow(
+      "HUBEAU_UNTRUSTED_NEXT",
+    );
   });
 
   it("throws when Hub’Eau is unreachable or not ok", async () => {

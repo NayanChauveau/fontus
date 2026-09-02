@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getDatabaseUrl } from "./env";
+import { getDatabasePoolMax, getDatabaseUrl, shouldRequireDatabaseSsl } from "./env";
 
 describe("getDatabaseUrl", () => {
   const previous = process.env.DATABASE_URL;
@@ -20,5 +20,28 @@ describe("getDatabaseUrl", () => {
   it("throws when unset", () => {
     delete process.env.DATABASE_URL;
     expect(() => getDatabaseUrl()).toThrow("DATABASE_URL is not set");
+  });
+
+  it("reads a positive pool size and falls back otherwise", () => {
+    const previous = process.env.DATABASE_POOL_MAX;
+    process.env.DATABASE_POOL_MAX = "5";
+    expect(getDatabasePoolMax()).toBe(5);
+    process.env.DATABASE_POOL_MAX = "nope";
+    expect(getDatabasePoolMax()).toBe(5);
+    delete process.env.DATABASE_POOL_MAX;
+    expect(getDatabasePoolMax()).toBe(5);
+    if (previous === undefined) {
+      delete process.env.DATABASE_POOL_MAX;
+    } else {
+      process.env.DATABASE_POOL_MAX = previous;
+    }
+  });
+
+  it("requires ssl except on loopback", () => {
+    expect(shouldRequireDatabaseSsl("postgres://db.example:5432/app")).toBe(true);
+    expect(shouldRequireDatabaseSsl("postgres://localhost:54332/app")).toBe(false);
+    expect(shouldRequireDatabaseSsl("postgres://127.0.0.1:54332/app")).toBe(false);
+    expect(shouldRequireDatabaseSsl("not-a-url-but-localhost")).toBe(false);
+    expect(shouldRequireDatabaseSsl("not-a-url")).toBe(true);
   });
 });

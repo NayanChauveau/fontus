@@ -1,11 +1,47 @@
-import { eq, inArray } from "drizzle-orm";
-import { getDb, type AppDatabase } from "@/shared/infrastructure/db/client";
-import { measurements, samples, syncJobs, udis } from "@/shared/infrastructure/db/schema";
+import { eq, inArray, sql } from "drizzle-orm";
+import { getDb, getSql, type AppDatabase } from "@/shared/infrastructure/db/client";
+import {
+  measurements,
+  samples,
+  seenParameterCodes,
+  syncJobs,
+  udis,
+} from "@/shared/infrastructure/db/schema";
 import type { AnalysisSample } from "../../domain/Analysis";
 import type { AnalysesCachePort } from "../../application/ports/AnalysesCachePort";
 
 export function udiSyncScope(networkCode: string): string {
   return `udi:${networkCode}`;
+}
+
+export function udiAdvisoryLockKey(networkCode: string): number {
+  let hash = 0;
+  const scope = udiSyncScope(networkCode);
+  for (let index = 0; index < scope.length; index += 1) {
+    hash = (Math.imul(31, hash) + scope.charCodeAt(index)) | 0;
+  }
+  return hash;
+}
+
+export async function withReservedAdvisoryLock<T>(
+  key: number,
+  work: () => Promise<T>,
+  reserve: () => Promise<{
+    (strings: TemplateStringsArray, ...values: unknown[]): unknown;
+    release(): void;
+  }>,
+): Promise<T> {
+  const reserved = await reserve();
+  try {
+    await reserved`select pg_advisory_lock(${key})`;
+    try {
+      return await work();
+    } finally {
+      await reserved`select pg_advisory_unlock(${key})`;
+    }
+  } finally {
+    reserved.release();
+  }
 }
 
 export function createDrizzleAnalysesCache(
@@ -19,7 +55,7 @@ export function createDrizzleAnalysesCache(
         .where(eq(syncJobs.scope, udiSyncScope(networkCode)))
         .limit(1);
 
-      if (!job || !job.windowFrom) {
+      if (!job || !job.windowFrom || job.status !== "ok") {
         return null;
       }
 
@@ -28,13 +64,15 @@ export function createDrizzleAnalysesCache(
         .from(samples)
         .where(eq(samples.udiCode, networkCode));
 
+      if (sampleRows.length === 0) {
+        return null;
+      }
+
       const sampleCodes = sampleRows.map((row) => row.code);
-      const measurementRows = sampleCodes.length
-        ? await db
-            .select()
-            .from(measurements)
-            .where(inArray(measurements.sampleCode, sampleCodes))
-        : [];
+      const measurementRows = await db
+        .select()
+        .from(measurements)
+        .where(inArray(measurements.sampleCode, sampleCodes));
 
       const bySample = new Map(
         sampleRows.map((row) => [
@@ -77,26 +115,30 @@ export function createDrizzleAnalysesCache(
     },
 
     async write(input) {
-      await db
-        .insert(udis)
-        .values({ code: input.networkCode, name: input.networkCode })
-        .onConflictDoNothing({ target: udis.code });
-
-      const existing = await db
-        .select({ code: samples.code })
-        .from(samples)
-        .where(eq(samples.udiCode, input.networkCode));
-      const existingCodes = existing.map((row) => row.code);
-
-      if (existingCodes.length > 0) {
-        await db
-          .delete(measurements)
-          .where(inArray(measurements.sampleCode, existingCodes));
-        await db.delete(samples).where(eq(samples.udiCode, input.networkCode));
+      if (input.samples.length === 0) {
+        return;
       }
 
-      if (input.samples.length > 0) {
-        await db.insert(samples).values(
+      await db.transaction(async (tx) => {
+        await tx
+          .insert(udis)
+          .values({ code: input.networkCode, name: input.networkCode })
+          .onConflictDoNothing({ target: udis.code });
+
+        const existing = await tx
+          .select({ code: samples.code })
+          .from(samples)
+          .where(eq(samples.udiCode, input.networkCode));
+        const existingCodes = existing.map((row) => row.code);
+
+        if (existingCodes.length > 0) {
+          await tx
+            .delete(measurements)
+            .where(inArray(measurements.sampleCode, existingCodes));
+          await tx.delete(samples).where(eq(samples.udiCode, input.networkCode));
+        }
+
+        await tx.insert(samples).values(
           input.samples.map((sample) => ({
             code: sample.code,
             udiCode: input.networkCode,
@@ -126,28 +168,60 @@ export function createDrizzleAnalysesCache(
 
         const chunkSize = 500;
         for (let index = 0; index < rows.length; index += chunkSize) {
-          await db
+          await tx
             .insert(measurements)
             .values(rows.slice(index, index + chunkSize));
         }
-      }
 
-      await db
-        .insert(syncJobs)
-        .values({
-          scope: udiSyncScope(input.networkCode),
-          fetchedAt: input.fetchedAt,
-          windowFrom: input.windowFrom,
-          status: "ok",
-        })
-        .onConflictDoUpdate({
-          target: syncJobs.scope,
-          set: {
+        const seen = new Map<
+          string,
+          { code: string; label: string; unit: string | null }
+        >();
+        for (const row of rows) {
+          if (!seen.has(row.parameterCode)) {
+            seen.set(row.parameterCode, {
+              code: row.parameterCode,
+              label: row.parameterLabel,
+              unit: row.unit,
+            });
+          }
+        }
+        if (seen.size > 0) {
+          await tx
+            .insert(seenParameterCodes)
+            .values([...seen.values()])
+            .onConflictDoUpdate({
+              target: seenParameterCodes.code,
+              set: {
+                label: sql`excluded.label`,
+                unit: sql`excluded.unit`,
+              },
+            });
+        }
+
+        await tx
+          .insert(syncJobs)
+          .values({
+            scope: udiSyncScope(input.networkCode),
             fetchedAt: input.fetchedAt,
             windowFrom: input.windowFrom,
             status: "ok",
-          },
-        });
+          })
+          .onConflictDoUpdate({
+            target: syncJobs.scope,
+            set: {
+              fetchedAt: input.fetchedAt,
+              windowFrom: input.windowFrom,
+              status: "ok",
+            },
+          });
+      });
+    },
+
+    async withNetworkLock(networkCode, work) {
+      return withReservedAdvisoryLock(udiAdvisoryLockKey(networkCode), work, () =>
+        getSql().reserve(),
+      );
     },
   };
 }

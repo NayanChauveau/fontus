@@ -48,6 +48,9 @@ describe("GetNetworkAnalyses", () => {
           };
         },
         async write() {},
+        async withNetworkLock(_networkCode, work) {
+          return work();
+        },
       },
       () => NOW,
     );
@@ -104,6 +107,9 @@ describe("GetNetworkAnalyses", () => {
           };
         },
         async write() {},
+        async withNetworkLock(_networkCode, work) {
+          return work();
+        },
       },
       () => NOW,
     );
@@ -149,6 +155,9 @@ describe("GetNetworkAnalyses", () => {
           };
         },
         async write() {},
+        async withNetworkLock(_networkCode, work) {
+          return work();
+        },
       },
       () => NOW,
     );
@@ -195,6 +204,9 @@ describe("GetNetworkAnalyses", () => {
         },
         async write(input) {
           written.push(input);
+        },
+        async withNetworkLock(_networkCode, work) {
+          return work();
         },
       },
       () => NOW,
@@ -290,6 +302,9 @@ describe("GetNetworkAnalyses", () => {
         async write() {
           throw new Error("db");
         },
+        async withNetworkLock(_networkCode, work) {
+          return work();
+        },
       },
       () => NOW,
       {
@@ -302,7 +317,11 @@ describe("GetNetworkAnalyses", () => {
     const result = await useCase.execute(PAULIN);
     expect(result.source).toBe("remote");
     expect(result.latestSample?.code).toBe(latest.code);
-    expect(reported).toEqual(["cache_read_failed", "cache_write_failed"]);
+    expect(reported).toEqual([
+      "cache_read_failed",
+      "cache_write_failed",
+      "hubeau_fetch",
+    ]);
   });
 
   it("ignores a stale cache entry", async () => {
@@ -325,6 +344,9 @@ describe("GetNetworkAnalyses", () => {
           };
         },
         async write() {},
+        async withNetworkLock(_networkCode, work) {
+          return work();
+        },
       },
       () => NOW,
     );
@@ -421,6 +443,7 @@ describe("GetNetworkAnalyses", () => {
 
   it("returns the first page when a later Hub’Eau page fails", async () => {
     let page = 0;
+    const written: Parameters<AnalysesCachePort["write"]>[0][] = [];
     const useCase = new GetNetworkAnalyses(
       {
         async count() {
@@ -438,12 +461,23 @@ describe("GetNetworkAnalyses", () => {
           throw new Error("timeout");
         },
       },
-      memoryCache(),
+      {
+        async read() {
+          return null;
+        },
+        async write(input) {
+          written.push(input);
+        },
+        async withNetworkLock(_networkCode, work) {
+          return work();
+        },
+      },
       () => NOW,
     );
 
     const result = await useCase.execute(PAULIN);
     expect(result.latestSample?.code).toBe(latest.code);
+    expect(written).toEqual([]);
   });
 
   it("still fetches six months when every count fails, and rethrows an empty crawl", async () => {
@@ -474,6 +508,36 @@ describe("GetNetworkAnalyses", () => {
       () => NOW,
     );
     await expect(empty.execute(PAULIN)).rejects.toThrow("down");
+  });
+
+  it("does not persist an empty complete crawl", async () => {
+    let wrote = false;
+    const useCase = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 0;
+        },
+        async listPage() {
+          return { count: 0, next: null, samples: [] };
+        },
+      },
+      {
+        async read() {
+          return null;
+        },
+        async write() {
+          wrote = true;
+        },
+        async withNetworkLock(_networkCode, work) {
+          return work();
+        },
+      },
+      () => NOW,
+    );
+
+    const result = await useCase.execute(PAULIN);
+    expect(result.latestSample).toBeNull();
+    expect(wrote).toBe(false);
   });
 
   it("uses Hub’Eau when no DIS importer is configured above the cap", async () => {
@@ -570,7 +634,7 @@ describe("GetNetworkAnalyses", () => {
       },
     );
     expect((await failingImport.execute(PAULIN)).source).toBe("remote");
-    expect(reported).toEqual(["dis_import_failed"]);
+    expect(reported).toEqual(["dis_import_failed", "hubeau_fetch"]);
   });
 });
 
@@ -593,5 +657,8 @@ function memoryCache(): AnalysesCachePort {
       return null;
     },
     async write() {},
+    async withNetworkLock(_networkCode, work) {
+      return work();
+    },
   };
 }

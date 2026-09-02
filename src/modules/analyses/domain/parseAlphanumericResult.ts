@@ -26,7 +26,11 @@ export function parseAlphanumericResult(
   const rawText = (alphanumeric ?? "").trim();
 
   if (rawText.length === 0) {
-    if (typeof numeric === "number" && Number.isFinite(numeric)) {
+    if (
+      typeof numeric === "number" &&
+      Number.isFinite(numeric) &&
+      numeric !== 0
+    ) {
       return { rawText: String(numeric), numericValue: numeric, qualifier: "eq" };
     }
     return { rawText: "", numericValue: null, qualifier: "eq" };

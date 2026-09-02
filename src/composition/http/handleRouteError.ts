@@ -18,14 +18,27 @@ export function handleRouteError(
       cause: error.cause,
       context: input.context,
     });
+    if (error.code === "RATE_LIMITED") {
+      return Response.json({ error: error.code }, { status: 429 });
+    }
+    if (error.code === "UNEXPECTED") {
+      return Response.json({ error: error.code }, { status: 500 });
+    }
     return Response.json({ error: error.code }, { status: 503 });
   }
 
   ensureApplication().reportError({
     scope: input.scope,
     event: `${input.event}_unexpected`,
-    cause: error,
+    cause: redactError(error),
     context: input.context,
   });
-  throw error;
+  return Response.json({ error: "UNEXPECTED" }, { status: 500 });
+}
+
+function redactError(error: unknown): unknown {
+  if (!(error instanceof Error)) {
+    return error;
+  }
+  return new Error(error.message.replace(/[a-z]+:\/\/[^\s]+/gi, "[redacted]"));
 }

@@ -25,7 +25,7 @@ describe("AddressSearch", () => {
     vi.unstubAllGlobals();
   });
 
-  it("searches, selects, resolves and clears an address", async () => {
+  it("searches, selects and clears an address without resolving", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo) => {
       const url = String(input);
       if (url.includes("/suggest")) {
@@ -87,9 +87,15 @@ describe("AddressSearch", () => {
     await waitFor(() => {
       expect(screen.getAllByRole("option").length).toBeGreaterThan(0);
     });
+    fireEvent.keyDown(input, { key: "Escape" });
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.change(input, { target: { value: "12 rue Sainte-Catherine+" } });
+    await waitFor(() => {
+      expect(screen.getAllByRole("option").length).toBeGreaterThan(0);
+    });
     fireEvent.keyDown(input, { key: "ArrowUp" });
     fireEvent.keyDown(input, { key: "ArrowDown" });
-    fireEvent.mouseEnter(screen.getAllByRole("button", { name: /12 Rue Sainte-Catherine/ })[0]!);
+    fireEvent.mouseEnter(screen.getAllByRole("option", { name: /12 Rue Sainte-Catherine/ })[0]!);
     fireEvent.keyDown(input, { key: "Enter" });
     await waitFor(() => {
       expect(screen.getByText("Adresse retenue")).toBeTruthy();
@@ -114,13 +120,13 @@ describe("AddressSearch", () => {
     });
   });
 
-  it("ignores abort errors and keeps the suggestion if resolve fails", async () => {
+  it("selects a suggestion without calling resolve", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo) => {
       const url = String(input);
       if (url.includes("/suggest")) {
         return Response.json({ suggestions: [suggestion] });
       }
-      throw new Error("resolve down");
+      throw new Error("resolve should not be called");
     });
     vi.stubGlobal("fetch", fetchMock);
 
@@ -131,10 +137,14 @@ describe("AddressSearch", () => {
     await waitFor(() => {
       expect(screen.getByRole("option")).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole("button", { name: /12 Rue Sainte-Catherine/ }));
-    await waitFor(() => {
-      expect(screen.getByText("Adresse retenue")).toBeTruthy();
-    });
+    fireEvent.click(screen.getByRole("option", { name: /12 Rue Sainte-Catherine/ }));
+    expect(screen.getByText("Adresse retenue")).toBeTruthy();
+    expect(
+      fetchMock.mock.calls.every(
+        (call) => !String(call[0]).includes("/resolve"),
+      ),
+    ).toBe(true);
+    expect(screen.getByText("networks-33063")).toBeTruthy();
   });
 
   it("ignores an aborted suggest after a first successful search", async () => {
@@ -174,14 +184,10 @@ describe("AddressSearch", () => {
     unmount();
   });
 
-  it("hides networks while resolve is in flight and keeps the suggestion without an address", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo) => {
-      const url = String(input);
-      if (url.includes("/suggest")) {
-        return Response.json({ suggestions: [suggestion] });
-      }
-      return new Promise<Response>(() => {});
-    });
+  it("shows networks as soon as a suggestion is selected", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({ suggestions: [suggestion] }),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     render(<AddressSearch />);
@@ -191,11 +197,9 @@ describe("AddressSearch", () => {
     await waitFor(() => {
       expect(screen.getByRole("option")).toBeTruthy();
     });
-    fireEvent.click(screen.getByRole("button", { name: /12 Rue Sainte-Catherine/ }));
-    await waitFor(() => {
-      expect(screen.getByText("Adresse retenue")).toBeTruthy();
-    });
-    expect(screen.queryByText("networks-33063")).toBeNull();
+    fireEvent.click(screen.getByRole("option", { name: /12 Rue Sainte-Catherine/ }));
+    expect(screen.getByText("Adresse retenue")).toBeTruthy();
+    expect(screen.getByText("networks-33063")).toBeTruthy();
   });
 
   it("moves the highlight up from a middle option", async () => {

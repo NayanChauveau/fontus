@@ -15,6 +15,10 @@ describe("createFakeApplicationPorts", () => {
       "none",
     );
     expect(ports.observability.report({ level: "error", scope: "x", event: "y" })).toBeUndefined();
+    expect(ports.analyses.summarizeHistories([])).toEqual([]);
+    expect(await ports.rateLimit.consume({ key: "x", limit: 1, windowMs: 1 })).toBe(
+      true,
+    );
   });
 });
 

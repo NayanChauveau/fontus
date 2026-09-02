@@ -6,11 +6,14 @@ import type { NetworkConfidence } from "./NetworkConfidence";
  * `probable` is intentionally absent: matching BAN streets to `nom_quartier`
  * is too fragile (plan I2).
  */
-export function resolveNetworkConfidence(udiCount: number): NetworkConfidence {
+export function resolveNetworkConfidence(
+  udiCount: number,
+  options: { becameUniqueAfterFilter?: boolean } = {},
+): NetworkConfidence {
   if (udiCount <= 0) {
     return "none";
   }
-  if (udiCount === 1) {
+  if (udiCount === 1 && !options.becameUniqueAfterFilter) {
     return "exact";
   }
   return "ambiguous";

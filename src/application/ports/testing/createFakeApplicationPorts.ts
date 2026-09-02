@@ -1,11 +1,16 @@
+import { buildParameterHistories } from "@/composition/buildParameterHistories";
 import type { ApplicationPorts } from "../ApplicationPorts";
 
 const FIXED_PING_AT = new Date("2026-09-02T08:00:00.000Z");
 
+type PortOverrides = {
+  [K in keyof ApplicationPorts]?: Partial<ApplicationPorts[K]>;
+};
+
 export function createFakeApplicationPorts(
-  overrides: Partial<ApplicationPorts> = {},
+  overrides: PortOverrides = {},
 ): { ports: ApplicationPorts } {
-  const ports: ApplicationPorts = {
+  const defaults: ApplicationPorts = {
     analyses: {
       async getByNetworkCode() {
         return {
@@ -16,6 +21,9 @@ export function createFakeApplicationPorts(
           latestMeasurements: [],
           parameterHistories: [],
         };
+      },
+      summarizeHistories(measurements) {
+        return buildParameterHistories(measurements);
       },
     },
     geocoding: {
@@ -44,6 +52,11 @@ export function createFakeApplicationPorts(
     observability: {
       report() {},
     },
+    rateLimit: {
+      async consume() {
+        return true;
+      },
+    },
     network: {
       async listByCitycode() {
         return {
@@ -57,8 +70,20 @@ export function createFakeApplicationPorts(
         };
       },
     },
-    ...overrides,
   };
 
-  return { ports };
+  return {
+    ports: {
+      ...defaults,
+      ...overrides,
+      analyses: { ...defaults.analyses, ...overrides.analyses },
+      geocoding: { ...defaults.geocoding, ...overrides.geocoding },
+      health: { ...defaults.health, ...overrides.health },
+      comparison: { ...defaults.comparison, ...overrides.comparison },
+      parameters: { ...defaults.parameters, ...overrides.parameters },
+      observability: { ...defaults.observability, ...overrides.observability },
+      rateLimit: { ...defaults.rateLimit, ...overrides.rateLimit },
+      network: { ...defaults.network, ...overrides.network },
+    },
+  };
 }

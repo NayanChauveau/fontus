@@ -41,11 +41,13 @@ describe("GET /api/networks", () => {
     expect(response.status).toBe(503);
   });
 
-  it("rethrows unexpected errors", async () => {
+  it("returns 500 for unexpected errors", async () => {
     execute.mockRejectedValueOnce(new Error("boom"));
     const { GET } = await import("./route");
-    await expect(
-      GET(new Request("http://localhost/api/networks?citycode=33063")),
-    ).rejects.toThrow("boom");
+    const response = await GET(
+      new Request("http://localhost/api/networks?citycode=33063"),
+    );
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: "UNEXPECTED" });
   });
 });

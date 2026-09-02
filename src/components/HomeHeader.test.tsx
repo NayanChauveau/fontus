@@ -21,7 +21,7 @@ describe("HomeHeader", () => {
       screen.getByRole("heading", { name: "Qualité de l’eau du robinet" }),
     ).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "English" }));
+    fireEvent.click(screen.getByRole("radio", { name: "English" }));
     expect(
       screen.getByRole("heading", { name: "Tap water quality" }),
     ).toBeTruthy();

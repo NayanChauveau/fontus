@@ -20,6 +20,7 @@ export function summarizeHistory(
   points: readonly HistoryPointInput[],
 ): HistorySummary {
   const values = points
+    .filter((point) => point.qualifier === "eq")
     .map((point) => point.value)
     .filter((value): value is number => value !== null && Number.isFinite(value));
 

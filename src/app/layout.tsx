@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
-import { LOCALE_BOOTSTRAP_SCRIPT } from "@/presentation/i18n/locale";
+import {
+  LOCALE_BOOTSTRAP_SCRIPT,
+  LOCALE_COOKIE_NAME,
+  resolveLocale,
+} from "@/presentation/i18n/locale";
+import { getMessages } from "@/presentation/i18n/messages";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/presentation/theme/theme";
 import "./globals.css";
 
@@ -14,16 +20,25 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Qualité de l’eau du robinet",
-  description:
-    "Comparaison des analyses officielles de l’eau du robinet en France.",
-};
+async function requestLocale() {
+  const jar = await cookies();
+  return resolveLocale(jar.get(LOCALE_COOKIE_NAME)?.value);
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await requestLocale();
+  const messages = getMessages(locale);
+  return {
+    title: messages.home.title,
+    description: messages.home.description,
+  };
+}
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await requestLocale();
   return (
     <html
-      lang="fr"
+      lang={locale}
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >

@@ -1,3 +1,4 @@
+import { parseHubeauUrl } from "@/shared/infrastructure/http/assertHubeauUrl";
 import type { ResultatsDisGatewayPort } from "../../application/ports/ResultatsDisGatewayPort";
 import { parseResultatsDisResponse } from "./parseResultatsDisResponse";
 
@@ -21,7 +22,7 @@ export function createHubeauResultatsDisGateway(
 
     async listPage(networkCode, dateMin, pageUrl) {
       const url = pageUrl
-        ? new URL(pageUrl)
+        ? parseHubeauUrl(pageUrl)
         : buildSearchUrl(networkCode, dateMin);
       const payload = await getJson(httpGet, url);
       return parseResultatsDisResponse(payload, networkCode);

@@ -8,6 +8,9 @@ describe("resolveNetworkConfidence", () => {
 
   it("is exact only when a single UDI serves the commune", () => {
     expect(resolveNetworkConfidence(1)).toBe("exact");
+    expect(
+      resolveNetworkConfidence(1, { becameUniqueAfterFilter: true }),
+    ).toBe("ambiguous");
   });
 
   it("is ambiguous for Bordeaux-sized communes — never invents a unique network", () => {

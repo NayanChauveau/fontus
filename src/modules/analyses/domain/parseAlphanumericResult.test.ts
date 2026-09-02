@@ -42,6 +42,11 @@ describe("parseAlphanumericResult", () => {
       numericValue: null,
       qualifier: "eq",
     });
+    expect(parseAlphanumericResult("", 0)).toEqual({
+      rawText: "",
+      numericValue: null,
+      qualifier: "eq",
+    });
   });
 
   it("parses a greater-than limit", () => {

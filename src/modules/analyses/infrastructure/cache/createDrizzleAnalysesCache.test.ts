@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { createFakeDb } from "@/test/fakeDb";
-import { createDrizzleAnalysesCache, udiSyncScope } from "./createDrizzleAnalysesCache";
+import {
+  createDrizzleAnalysesCache,
+  udiAdvisoryLockKey,
+  udiSyncScope,
+  withReservedAdvisoryLock,
+} from "./createDrizzleAnalysesCache";
 
 const sample = {
   code: "s1",
@@ -26,6 +31,9 @@ const sample = {
 describe("createDrizzleAnalysesCache", () => {
   it("builds the udi sync scope", () => {
     expect(udiSyncScope("033001214")).toBe("udi:033001214");
+    expect(udiAdvisoryLockKey("033001214")).toBeTypeOf("number");
+    expect(udiAdvisoryLockKey("033001214")).toBe(udiAdvisoryLockKey("033001214"));
+    expect(udiAdvisoryLockKey("033001214")).not.toBe(udiAdvisoryLockKey("013000577"));
   });
 
   it("returns null without a fresh job", async () => {
@@ -34,29 +42,43 @@ describe("createDrizzleAnalysesCache", () => {
 
     const noWindow = createDrizzleAnalysesCache(
       createFakeDb({
-        selectResults: [[{ fetchedAt: new Date(), windowFrom: null }]],
+        selectResults: [[{ fetchedAt: new Date(), windowFrom: null, status: "ok" }]],
       }) as never,
     );
     expect(await noWindow.read("033001214")).toBeNull();
   });
 
-  it("reads a job with no samples", async () => {
-    const cache = createDrizzleAnalysesCache(
+  it("returns null for a job without samples or without ok status", async () => {
+    const empty = createDrizzleAnalysesCache(
       createFakeDb({
         selectResults: [
           [
             {
               fetchedAt: new Date("2026-09-01T00:00:00.000Z"),
               windowFrom: "2025-09-02",
+              status: "ok",
             },
           ],
           [],
         ],
       }) as never,
     );
+    expect(await empty.read("033001214")).toBeNull();
 
-    const cached = await cache.read("033001214");
-    expect(cached?.samples).toEqual([]);
+    const pending = createDrizzleAnalysesCache(
+      createFakeDb({
+        selectResults: [
+          [
+            {
+              fetchedAt: new Date("2026-09-01T00:00:00.000Z"),
+              windowFrom: "2025-09-02",
+              status: "pending",
+            },
+          ],
+        ],
+      }) as never,
+    );
+    expect(await pending.read("033001214")).toBeNull();
   });
 
   it("reads samples and skips orphan measurements", async () => {
@@ -67,6 +89,7 @@ describe("createDrizzleAnalysesCache", () => {
             {
               fetchedAt: new Date("2026-09-01T00:00:00.000Z"),
               windowFrom: "2025-09-02",
+              status: "ok",
             },
           ],
           [
@@ -142,5 +165,20 @@ describe("createDrizzleAnalysesCache", () => {
       fetchedAt: new Date(),
       windowFrom: "2025-09-02",
     });
+  });
+
+  it("holds an advisory lock around work", async () => {
+    const calls: string[] = [];
+    const reserved = Object.assign(
+      async (strings: TemplateStringsArray) => {
+        calls.push(String(strings[0]));
+      },
+      { release: () => calls.push("release") },
+    );
+    const result = await withReservedAdvisoryLock(1, async () => "ok", async () => reserved);
+    expect(result).toBe("ok");
+    expect(calls.some((call) => call.includes("pg_advisory_lock"))).toBe(true);
+    expect(calls.some((call) => call.includes("pg_advisory_unlock"))).toBe(true);
+    expect(calls).toContain("release");
   });
 });

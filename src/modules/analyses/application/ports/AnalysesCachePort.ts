@@ -15,4 +15,8 @@ export type AnalysesCachePort = {
     fetchedAt: Date;
     windowFrom: string;
   }): Promise<void>;
+  withNetworkLock<T>(
+    networkCode: string,
+    work: () => Promise<T>,
+  ): Promise<T>;
 };

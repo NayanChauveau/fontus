@@ -33,6 +33,7 @@ export function collectSources(
   measurements: NetworkMeasurementViewModel[],
   measurementSourceLabel: string,
   messages: Messages = fr,
+  dateLocale = "fr",
 ): SourceRefViewModel[] {
   const byId = new Map<string, SourceRefViewModel>();
   byId.set("measurement", {
@@ -49,7 +50,7 @@ export function collectSources(
   }
 
   return [...byId.values()].sort((left, right) =>
-    compareSources(left, right, messages),
+    compareSources(left, right, messages, dateLocale),
   );
 }
 
@@ -98,13 +99,14 @@ function compareSources(
   left: SourceRefViewModel,
   right: SourceRefViewModel,
   messages: Messages,
+  dateLocale: string,
 ): number {
   const leftRank = kindRank(left.kindLabel, messages);
   const rightRank = kindRank(right.kindLabel, messages);
   if (leftRank !== rightRank) {
     return leftRank - rightRank;
   }
-  return left.label.localeCompare(right.label, "fr");
+  return left.label.localeCompare(right.label, dateLocale);
 }
 
 function kindRank(kindLabel: string, messages: Messages): number {

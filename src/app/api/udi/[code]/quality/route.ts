@@ -1,6 +1,8 @@
 import { isNetworkCode, normalizeNetworkCode } from "@/application/networkCode";
 import { ensureApplication } from "@/composition/bootstrap";
+import { enforceRateLimit } from "@/composition/http/enforceRateLimit";
 import { handleRouteError } from "@/composition/http/handleRouteError";
+import { toPublicQualityDto } from "@/composition/http/toPublicQualityDto";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -17,11 +19,12 @@ export async function GET(
   }
 
   try {
+    await enforceRateLimit(_request, "quality");
     const dto =
       await ensureApplication().getNetworkWaterQualityUseCase.execute(
         networkCode,
       );
-    return Response.json(dto);
+    return Response.json(toPublicQualityDto(dto));
   } catch (error) {
     return handleRouteError(error, {
       scope: "analyses",

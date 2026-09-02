@@ -79,6 +79,8 @@ export type NetworkAnalysesViewModel = {
   limitesBactLabel: string | null;
   limitesPcLabel: string | null;
   officialNote: string;
+  cardsCampaignNote: string;
+  comparisonFailed: boolean;
   perParameterDateNote: string;
   reconstructedSumNote: string | null;
   disclaimer: string;

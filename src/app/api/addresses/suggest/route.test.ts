@@ -3,17 +3,21 @@ import { ApplicationError } from "@/application/errors/ApplicationError";
 
 const execute = vi.fn();
 const reportError = vi.fn();
+const consumeRateLimit = vi.fn(async () => true);
 
 vi.mock("@/composition/bootstrap", () => ({
   ensureApplication: () => ({
     suggestAddressesUseCase: { execute },
     reportError,
+    consumeRateLimit,
   }),
 }));
 
 describe("GET /api/addresses/suggest", () => {
   beforeEach(() => {
     execute.mockReset();
+    consumeRateLimit.mockReset();
+    consumeRateLimit.mockResolvedValue(true);
   });
 
   it("returns suggestions", async () => {
@@ -35,11 +39,13 @@ describe("GET /api/addresses/suggest", () => {
     expect(response.status).toBe(503);
   });
 
-  it("rethrows unexpected errors", async () => {
+  it("returns 500 for unexpected errors", async () => {
     execute.mockRejectedValueOnce(new Error("boom"));
     const { GET } = await import("./route");
-    await expect(
-      GET(new Request("http://localhost/api/addresses/suggest?q=x")),
-    ).rejects.toThrow("boom");
+    const response = await GET(
+      new Request("http://localhost/api/addresses/suggest?q=x"),
+    );
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({ error: "UNEXPECTED" });
   });
 });

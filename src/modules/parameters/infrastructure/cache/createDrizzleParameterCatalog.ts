@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
 import { getDb, type AppDatabase } from "@/shared/infrastructure/db/client";
-import { measurements, parameterAliases, parameters } from "@/shared/infrastructure/db/schema";
+import { parameterAliases, parameters, seenParameterCodes } from "@/shared/infrastructure/db/schema";
 import type { ParameterCatalogPort } from "../../application/ports/ParameterCatalogPort";
 import type { CanonicalParameter, ParameterAlias } from "../../domain/Parameter";
 import type { SeenParameterCode } from "../../domain/createParameterCatalog";
@@ -88,18 +88,15 @@ export function createDrizzleParameterCatalog(
     },
 
     async listSeenCodes() {
-      const rows = await db
-        .select({
-          code: measurements.parameterCode,
-          label: measurements.parameterLabel,
-          unit: measurements.unit,
-        })
-        .from(measurements);
-
+      const rows = await db.select().from(seenParameterCodes);
       const unique = new Map<string, SeenParameterCode>();
       for (const row of rows) {
         if (!unique.has(row.code)) {
-          unique.set(row.code, row);
+          unique.set(row.code, {
+            code: row.code,
+            label: row.label,
+            unit: row.unit,
+          });
         }
       }
       return [...unique.values()];

@@ -3,6 +3,8 @@ import type { Messages } from "./en";
 export const fr = {
   home: {
     title: "Qualité de l’eau du robinet",
+    description:
+      "Comparaison des analyses officielles de l’eau du robinet en France.",
     stackOk: "stack OK",
     stackKo: "stack KO",
     postgresOk: "PostgreSQL joignable",
@@ -64,7 +66,12 @@ export const fr = {
     empty: "Aucune analyse récente pour ce réseau.",
     conclusionTitle: "Conclusion ARS",
     noConclusion: "Conclusion ARS non renseignée pour ce prélèvement.",
-    officialNote: "Verdict officiel de l’ARS, non recalculé.",
+    officialNote:
+      "Conclusion officielle de l’ARS pour le prélèvement du {{date}}, non recalculée.",
+    cardsCampaignNote:
+      "Les cartes de vigilance peuvent dater d’une autre campagne que cette conclusion.",
+    compareFailed:
+      "Les comparaisons sont temporairement indisponibles. Les mesures sont affichées sans tableau de conformité.",
     limitesBact: "Limites bactériologiques",
     limitesPc: "Limites physico-chimiques",
     conformeCode: "conformes",
@@ -135,6 +142,18 @@ export const fr = {
     historyLoqChanged:
       "La limite de quantification a changé sur la période : les points ne sont pas tous comparables.",
     historyChart: "Évolution",
+    watchPfas20: "Somme PFAS-20",
+    watchPfoa: "PFOA",
+    watchPfos: "PFOS",
+    watchNitrates: "Nitrates",
+    watchNitrites: "Nitrites",
+    watchPesticidesTotal: "Pesticides (total analysé)",
+    watchAtrazine: "Atrazine",
+    watchLead: "Plomb",
+    watchArsenic: "Arsenic",
+    watchEcoli: "Escherichia coli",
+    watchEnterococci: "Entérocoques",
+    watchHardness: "Titre hydrotimétrique",
   },
   errors: {
     unexpected: "Une erreur inattendue s’est produite.",

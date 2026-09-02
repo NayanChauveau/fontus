@@ -1,6 +1,7 @@
 export const en = {
   home: {
     title: "Tap water quality",
+    description: "Compare official tap water analyses in France.",
     stackOk: "stack OK",
     stackKo: "stack KO",
     postgresOk: "PostgreSQL reachable",
@@ -60,7 +61,12 @@ export const en = {
     empty: "No recent analysis for this network.",
     conclusionTitle: "ARS conclusion",
     noConclusion: "No ARS conclusion recorded for this sample.",
-    officialNote: "Official ARS verdict, not recalculated.",
+    officialNote:
+      "Official ARS conclusion for the sample of {{date}}, not recalculated.",
+    cardsCampaignNote:
+      "Watch cards may come from another sampling campaign than this conclusion.",
+    compareFailed:
+      "Comparisons are temporarily unavailable. Measurements are shown without a compliance table.",
     limitesBact: "Bacteriological limits",
     limitesPc: "Physico-chemical limits",
     conformeCode: "compliant",
@@ -132,6 +138,18 @@ export const en = {
     historyLoqChanged:
       "The limit of quantification changed over the period: points are not all comparable.",
     historyChart: "Trend",
+    watchPfas20: "PFAS-20 sum",
+    watchPfoa: "PFOA",
+    watchPfos: "PFOS",
+    watchNitrates: "Nitrates",
+    watchNitrites: "Nitrites",
+    watchPesticidesTotal: "Pesticides (total analysed)",
+    watchAtrazine: "Atrazine",
+    watchLead: "Lead",
+    watchArsenic: "Arsenic",
+    watchEcoli: "Escherichia coli",
+    watchEnterococci: "Enterococci",
+    watchHardness: "Hydrometric title",
   },
   errors: {
     unexpected: "An unexpected error occurred.",

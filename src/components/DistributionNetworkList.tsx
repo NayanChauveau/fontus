@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ListDistributionNetworksResultDto } from "@/application/dtos/DistributionNetworkDto";
 import { NetworkAnalyses } from "@/components/NetworkAnalyses";
 import { mapDistributionNetworksDto } from "@/presentation/mappers/mapDistributionNetworksDto";
@@ -18,7 +18,10 @@ export function DistributionNetworkList({ citycode }: { citycode: string }) {
   const [dto, setDto] = useState<ListDistributionNetworksResultDto | null>(
     null,
   );
-  const viewModel = dto ? mapDistributionNetworksDto(dto, messages) : null;
+  const viewModel = useMemo(
+    () => (dto ? mapDistributionNetworksDto(dto, messages) : null),
+    [dto, messages],
+  );
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
 
   useEffect(() => {

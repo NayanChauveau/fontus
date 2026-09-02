@@ -74,7 +74,12 @@ export function mapNetworkWaterQualityDto(
       messages,
     ),
     limitesPcLabel: limiteLabel(sample?.conformiteLimitesPc ?? null, messages),
-    officialNote: messages.analyses.officialNote,
+    officialNote: messages.analyses.officialNote.replace(
+      "{{date}}",
+      sampledAtLabel ?? "—",
+    ),
+    cardsCampaignNote: messages.analyses.cardsCampaignNote,
+    comparisonFailed: dto.comparisonFailed === true,
     perParameterDateNote: messages.analyses.perParameterDateNote,
     disclaimer: messages.analyses.disclaimer,
     sourceLabel: pageSourceLabel,
@@ -84,7 +89,11 @@ export function mapNetworkWaterQualityDto(
     parameterHistories: (dto.parameterHistories ?? []).map((history) =>
       toHistoryViewModel(history, i18n),
     ),
-    priorityCards: buildPriorityCards(priorityMeasurements, messages),
+    priorityCards: buildPriorityCards(
+      priorityMeasurements,
+      messages,
+      dateLocale,
+    ),
     priorityMeasurements,
     otherMeasurements: measurements.filter((row) => !row.priority),
     exhaustiveMeasurements: buildExhaustiveRows(
@@ -98,7 +107,12 @@ export function mapNetworkWaterQualityDto(
     reconstructedSumNote: measurements.some((row) => row.reconstructed)
       ? messages.analyses.reconstructedSumNote
       : null,
-    sources: collectSources(measurements, pageSourceLabel, messages),
+    sources: collectSources(
+      measurements,
+      pageSourceLabel,
+      messages,
+      dateLocale,
+    ),
   };
 }
 
@@ -295,7 +309,10 @@ function toHistoryViewModel(
         ? formatSampledAt(point.sampledAt, i18n.dateLocale)
         : "",
       valueLabel: formatHistoryPoint(point, unit, i18n.dateLocale),
-      y: point.resolution?.canonicalNumericValue ?? point.numericValue,
+      y:
+        point.qualifier === "eq"
+          ? (point.resolution?.canonicalNumericValue ?? point.numericValue)
+          : null,
     })),
   };
 }

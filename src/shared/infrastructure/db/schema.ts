@@ -104,6 +104,18 @@ export const jurisdictions = pgTable("jurisdictions", {
   name: text("name").notNull(),
 });
 
+export const rateBuckets = pgTable("rate_buckets", {
+  key: text("key").primaryKey(),
+  count: integer("count").notNull(),
+  resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
+});
+
+export const seenParameterCodes = pgTable("seen_parameter_codes", {
+  code: text("code").primaryKey(),
+  label: text("label").notNull(),
+  unit: text("unit"),
+});
+
 export const thresholdVersions = pgTable("threshold_versions", {
   id: text("id").primaryKey(),
   parameterId: text("parameter_id").notNull(),

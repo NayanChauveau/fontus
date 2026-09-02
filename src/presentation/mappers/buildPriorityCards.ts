@@ -42,6 +42,7 @@ function cardTitle(id: PriorityCardId, messages: Messages): string {
 export function buildPriorityCards(
   measurements: NetworkMeasurementViewModel[],
   messages: Messages = fr,
+  dateLocale = "fr",
 ): PriorityCardViewModel[] {
   const grouped = new Map<PriorityCardId, NetworkMeasurementViewModel[]>();
   for (const id of CARD_ORDER) {
@@ -56,7 +57,7 @@ export function buildPriorityCards(
   }
 
   return CARD_ORDER.map((id) => {
-    const rows = sortCardMeasurements(id, grouped.get(id) ?? []);
+    const rows = sortCardMeasurements(id, grouped.get(id) ?? [], dateLocale);
     return {
       id,
       title: cardTitle(id, messages),
@@ -96,6 +97,7 @@ export function cardIdFor(
 function sortCardMeasurements(
   cardId: PriorityCardId,
   measurements: NetworkMeasurementViewModel[],
+  dateLocale: string,
 ): NetworkMeasurementViewModel[] {
   const order = HERO_IDS[cardId];
   return [...measurements].sort((left, right) => {
@@ -106,6 +108,6 @@ function sortCardMeasurements(
     if (leftRank !== rightRank) {
       return leftRank - rightRank;
     }
-    return left.parameterLabel.localeCompare(right.parameterLabel, "fr");
+    return left.parameterLabel.localeCompare(right.parameterLabel, dateLocale);
   });
 }

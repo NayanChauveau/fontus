@@ -32,11 +32,23 @@ export function createFakeDb(options: {
     };
   }
 
-  return {
+  type FakeDb = {
+    select: () => ReturnType<typeof thenable>;
+    insert: () => ReturnType<typeof insertable>;
+    delete: () => { where: () => Promise<undefined> };
+    execute: () => Promise<undefined>;
+    transaction: <T>(fn: (tx: FakeDb) => Promise<T>) => Promise<T>;
+  };
+
+  const api: FakeDb = {
     select: () => thenable(),
     insert: () => insertable(),
     delete: () => ({
       where: async () => undefined,
     }),
+    execute: async () => undefined,
+    transaction: async (fn) => fn(api),
   };
+
+  return api;
 }

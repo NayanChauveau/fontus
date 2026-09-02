@@ -1,7 +1,8 @@
 /** @vitest-environment happy-dom */
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { setStoredLocale } from "@/presentation/i18n/locale";
 import { DistributionNetworkList } from "./DistributionNetworkList";
 
 vi.mock("./NetworkAnalyses", () => ({
@@ -34,6 +35,8 @@ describe("DistributionNetworkList", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    window.localStorage.clear();
+    document.documentElement.lang = "fr";
   });
 
   it("auto-selects the only network when confidence is exact", async () => {
@@ -128,5 +131,19 @@ describe("DistributionNetworkList", () => {
       expect(screen.getByText(/Recherche des réseaux/)).toBeTruthy();
     });
     vi.unstubAllGlobals();
+  });
+
+  it("remaps copy on locale switch without refetch", async () => {
+    const fetchMock = vi.fn(async () => Response.json(ambiguous));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<DistributionNetworkList citycode="33063" />);
+    await waitFor(() => {
+      expect(screen.getByText("Réseaux de distribution")).toBeTruthy();
+    });
+    act(() => {
+      setStoredLocale("en");
+    });
+    expect(screen.getByText("Distribution networks")).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

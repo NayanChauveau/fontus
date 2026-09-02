@@ -96,6 +96,33 @@ describe("ListNetworksForCommune", () => {
     ]);
   });
 
+  it("ignores a stale populated cache and refetches", async () => {
+    let gatewayCalls = 0;
+    const { cache } = createMemoryCache([
+      {
+        citycode: "33063",
+        city: "Bordeaux",
+        year: 2026,
+        links: bordeaux,
+        fetchedAt: new Date("2026-08-01T10:00:00.000Z"),
+      },
+    ]);
+    const useCase = new ListNetworksForCommune(
+      {
+        async listByCommune() {
+          gatewayCalls += 1;
+          return bordeaux;
+        },
+      },
+      cache,
+      now,
+    );
+
+    const result = await useCase.execute("33063");
+    expect(gatewayCalls).toBe(1);
+    expect(result.source).toBe("remote");
+  });
+
   it("serves a fresh cache without calling Hub’Eau", async () => {
     let gatewayCalls = 0;
     const { cache } = createMemoryCache([
@@ -141,7 +168,7 @@ describe("ListNetworksForCommune", () => {
 
     expect(result.commune.year).toBe(2025);
     expect(result.source).toBe("remote");
-    expect(store.has("33063:2026")).toBe(false);
+    expect(store.get("33063:2026")?.links).toEqual([]);
     expect(store.has("33063:2025")).toBe(true);
   });
 
@@ -183,6 +210,42 @@ describe("ListNetworksForCommune", () => {
     expect(requested).toEqual(["13055"]);
     expect(result.confidence).toBe("ambiguous");
     expect(result.commune.networks.length).toBeGreaterThan(1);
+  });
+
+  it("stays ambiguous when a single UDI remains only after hiding ports", async () => {
+    const { cache } = createMemoryCache();
+    const useCase = new ListNetworksForCommune(
+      {
+        async listByCommune() {
+          return [
+            {
+              citycode: "13055",
+              city: "Marseille",
+              networkCode: "013006573",
+              networkName: "GRAND PORT MARITIME MARSEILLE EST SEM 11",
+              neighborhood: "port maritime",
+              year: 2026,
+              supplyStartedOn: null,
+            },
+            {
+              citycode: "13055",
+              city: "Marseille",
+              networkCode: "013000577",
+              networkName: "MARSEILLE SAINTE-MARTHE",
+              neighborhood: "MARSEILLE CENTRE ET SUD",
+              year: 2026,
+              supplyStartedOn: null,
+            },
+          ];
+        },
+      },
+      cache,
+      now,
+    );
+
+    const result = await useCase.execute("13204");
+    expect(result.commune.networks).toHaveLength(1);
+    expect(result.confidence).toBe("ambiguous");
   });
 
   it("hides Grand Port Maritime UDIs for a household address", async () => {
@@ -243,7 +306,7 @@ describe("ListNetworksForCommune", () => {
         city: "Bordeaux",
         year: 2026,
         links: [],
-        fetchedAt: new Date("2026-09-01T10:00:00.000Z"),
+        fetchedAt: new Date("2026-09-02T08:00:00.000Z"),
       },
     ]);
     const useCase = new ListNetworksForCommune(
@@ -260,6 +323,33 @@ describe("ListNetworksForCommune", () => {
     const result = await useCase.execute("33063");
     expect(requested).toEqual([2025]);
     expect(result.commune.year).toBe(2025);
+  });
+
+  it("refetches the current year when an empty cache is older than 24h", async () => {
+    const requested: number[] = [];
+    const { cache } = createMemoryCache([
+      {
+        citycode: "33063",
+        city: "Bordeaux",
+        year: 2026,
+        links: [],
+        fetchedAt: new Date("2026-09-01T09:00:00.000Z"),
+      },
+    ]);
+    const useCase = new ListNetworksForCommune(
+      {
+        async listByCommune(_citycode, year) {
+          requested.push(year);
+          return year === 2026 ? bordeaux : [];
+        },
+      },
+      cache,
+      now,
+    );
+
+    const result = await useCase.execute("33063");
+    expect(requested).toEqual([2026]);
+    expect(result.commune.year).toBe(2026);
   });
 
   it("uses a fresh previous-year cache when the current year is empty", async () => {

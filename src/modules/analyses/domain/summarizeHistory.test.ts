@@ -47,8 +47,8 @@ describe("summarizeHistory", () => {
       { value: null, qualifier: "lt" },
     ]);
     expect(summary.loqChanged).toBe(true);
-    expect(summary.count).toBe(2);
-    expect(summary.median).toBe(6.005);
+    expect(summary.count).toBe(1);
+    expect(summary.median).toBe(12);
   });
 
   it("flags a changing LQ numeric value", () => {

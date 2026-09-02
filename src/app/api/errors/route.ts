@@ -1,8 +1,19 @@
 import { ensureApplication } from "@/composition/bootstrap";
+import { enforceRateLimit } from "@/composition/http/enforceRateLimit";
+import { handleRouteError } from "@/composition/http/handleRouteError";
 
 export const dynamic = "force-dynamic";
 
+const SCOPES = new Set(["ui"]);
+const EVENTS = new Set(["app_error", "client_error"]);
+
 export async function POST(request: Request) {
+  try {
+    await enforceRateLimit(request, "errors");
+  } catch (error) {
+    return handleRouteError(error, { scope: "ui", event: "errors_rate_limited" });
+  }
+
   let body: unknown = null;
   try {
     body = await request.json();
@@ -17,9 +28,15 @@ export async function POST(request: Request) {
     return Response.json({ error: "INVALID_BODY" }, { status: 400 });
   }
 
+  const scope = typeof record.scope === "string" ? record.scope : "ui";
+  const event = typeof record.event === "string" ? record.event : "client_error";
+  if (!SCOPES.has(scope) || !EVENTS.has(event)) {
+    return Response.json({ error: "INVALID_BODY" }, { status: 400 });
+  }
+
   ensureApplication().reportError({
-    scope: typeof record.scope === "string" ? record.scope.slice(0, 40) : "ui",
-    event: typeof record.event === "string" ? record.event.slice(0, 80) : "client_error",
+    scope,
+    event,
     cause: message,
     context: {
       digest: typeof record.digest === "string" ? record.digest.slice(0, 80) : null,
