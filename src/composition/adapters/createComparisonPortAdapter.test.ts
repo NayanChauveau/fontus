@@ -83,8 +83,14 @@ describe("createComparisonPortAdapter", () => {
   it("falls back to the raw numeric value when resolution is missing", async () => {
     const adapter = createComparisonPortAdapter({
       compareMeasurements: {
-        async execute(measurements: Array<{ parameterId: string | null }>) {
+        async execute(
+          measurements: Array<{
+            parameterId: string | null;
+            canonicalUnit?: string | null;
+          }>,
+        ) {
           expect(measurements[0]?.parameterId).toBeNull();
+          expect(measurements[0]?.canonicalUnit).toBe("mg/L");
           return measurements.map((measurement) => ({
             ...measurement,
             comparisons: {

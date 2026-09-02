@@ -421,10 +421,12 @@ describe("ListNetworksForCommune", () => {
   });
 
   it("throws instead of returning an empty network list", async () => {
-    const { cache } = createMemoryCache();
+    const requested: number[] = [];
+    const { cache, store } = createMemoryCache();
     const useCase = new ListNetworksForCommune(
       {
-        async listByCommune() {
+        async listByCommune(_citycode, year) {
+          requested.push(year);
           return [];
         },
       },
@@ -435,6 +437,13 @@ describe("ListNetworksForCommune", () => {
     await expect(useCase.execute("99999")).rejects.toThrow(
       "NO_DISTRIBUTION_NETWORK",
     );
+    expect(store.get("99999:2026")?.links).toEqual([]);
+    expect(store.get("99999:2025")?.links).toEqual([]);
+
+    await expect(useCase.execute("99999")).rejects.toThrow(
+      "NO_DISTRIBUTION_NETWORK",
+    );
+    expect(requested).toEqual([2026, 2025]);
   });
 
   it("throws when a cache hit cannot be grouped into a commune", async () => {

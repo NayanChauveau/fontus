@@ -1,4 +1,5 @@
 import type { ThresholdVersion } from "@/modules/norms";
+import { convertUnit } from "@/modules/parameters";
 
 export type ComparisonStatus =
   | "compliant"
@@ -10,6 +11,7 @@ export type ComparisonStatus =
 export type MeasurementToCompare = {
   parameterId: string | null;
   canonicalNumericValue: number | null;
+  canonicalUnit?: string | null;
   qualifier: "eq" | "lt" | "gt";
   conversion: "identity" | "converted" | "not_convertible" | "not_numeric" | null;
 };
@@ -38,19 +40,46 @@ export function compareMeasurement(
     return { status: "not_comparable", threshold };
   }
 
+  const scaled = scaleThreshold(threshold, measurement.canonicalUnit);
+  if (!scaled) {
+    return { status: "not_comparable", threshold };
+  }
+
   const value = measurement.canonicalNumericValue;
 
   if (measurement.qualifier === "lt") {
-    return { status: statusForLessThan(value, threshold), threshold };
+    return { status: statusForLessThan(value, scaled), threshold };
   }
   if (measurement.qualifier === "gt") {
-    return { status: statusForGreaterThan(value, threshold), threshold };
+    return { status: statusForGreaterThan(value, scaled), threshold };
   }
 
   return {
-    status: position(value, threshold) === "within" ? "compliant" : "exceedance",
+    status: position(value, scaled) === "within" ? "compliant" : "exceedance",
     threshold,
   };
+}
+
+function scaleThreshold(
+  threshold: ThresholdVersion,
+  canonicalUnit: string | null | undefined,
+): ThresholdVersion | null {
+  if (!canonicalUnit) {
+    return threshold;
+  }
+  const value = convertUnit(threshold.value, threshold.unit, canonicalUnit);
+  if (value.value === null) {
+    return null;
+  }
+  let valueMax = threshold.valueMax;
+  if (valueMax !== null) {
+    const max = convertUnit(valueMax, threshold.unit, canonicalUnit);
+    if (max.value === null) {
+      return null;
+    }
+    valueMax = max.value;
+  }
+  return { ...threshold, value: value.value, valueMax };
 }
 
 function statusForLessThan(

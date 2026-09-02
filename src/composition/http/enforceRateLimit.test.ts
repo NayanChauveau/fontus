@@ -27,6 +27,13 @@ describe("enforceRateLimit", () => {
     await expect(
       enforceRateLimit(new Request("http://localhost/api"), "errors"),
     ).rejects.toBeInstanceOf(ApplicationError);
+    consumeRateLimit.mockResolvedValueOnce(true);
+    await enforceRateLimit(new Request("http://localhost/api"), "networks");
+    expect(consumeRateLimit).toHaveBeenLastCalledWith({
+      key: "networks:unknown",
+      limit: 30,
+      windowMs: 60_000,
+    });
     expect(clientIpFrom(new Request("http://localhost/api"))).toBe("unknown");
   });
 });

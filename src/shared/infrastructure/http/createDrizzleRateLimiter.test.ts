@@ -7,23 +7,7 @@ describe("createDrizzleRateLimiter", () => {
     const now = new Date("2026-09-02T08:00:00.000Z");
     const limiter = createDrizzleRateLimiter(
       createFakeDb({
-        selectResults: [
-          [],
-          [
-            {
-              key: "ip:quality",
-              count: 20,
-              resetAt: new Date("2026-09-02T09:00:00.000Z"),
-            },
-          ],
-          [
-            {
-              key: "ip:quality",
-              count: 1,
-              resetAt: new Date("2026-09-02T07:00:00.000Z"),
-            },
-          ],
-        ],
+        selectResults: [[{ count: 1 }], [{ count: 21 }], [{ count: 1 }]],
       }) as never,
       () => now,
     );
@@ -39,10 +23,19 @@ describe("createDrizzleRateLimiter", () => {
     ).toBe(true);
   });
 
+  it("treats a missing returning row as the first hit", async () => {
+    const limiter = createDrizzleRateLimiter(
+      createFakeDb({ selectResults: [[]] }) as never,
+    );
+    expect(
+      await limiter.consume({ key: "ip:quality", limit: 20, windowMs: 60_000 }),
+    ).toBe(true);
+  });
+
   it("fails open when Postgres cannot increment the bucket", async () => {
     const limiter = createDrizzleRateLimiter(
       {
-        transaction: async () => {
+        insert: () => {
           throw new Error("relation rate_buckets does not exist");
         },
       } as never,

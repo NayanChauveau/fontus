@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { getDb, type AppDatabase } from "@/shared/infrastructure/db/client";
 import { rateBuckets } from "@/shared/infrastructure/db/schema";
 
@@ -24,31 +24,22 @@ async function incrementBucket(
   input: { key: string; limit: number; windowMs: number },
 ): Promise<boolean> {
   const current = now();
-  return db.transaction(async (tx) => {
-    const [row] = await tx
-      .select()
-      .from(rateBuckets)
-      .where(eq(rateBuckets.key, input.key))
-      .limit(1);
+  const resetAt = new Date(current.getTime() + input.windowMs);
+  const [row] = await db
+    .insert(rateBuckets)
+    .values({
+      key: input.key,
+      count: 1,
+      resetAt,
+    })
+    .onConflictDoUpdate({
+      target: rateBuckets.key,
+      set: {
+        count: sql`case when ${rateBuckets.resetAt} <= ${current} then 1 else ${rateBuckets.count} + 1 end`,
+        resetAt: sql`case when ${rateBuckets.resetAt} <= ${current} then ${resetAt} else ${rateBuckets.resetAt} end`,
+      },
+    })
+    .returning({ count: rateBuckets.count });
 
-    const expired = !row || row.resetAt.getTime() <= current.getTime();
-    const nextCount = expired ? 1 : row.count + 1;
-    const resetAt = expired
-      ? new Date(current.getTime() + input.windowMs)
-      : row.resetAt;
-
-    await tx
-      .insert(rateBuckets)
-      .values({
-        key: input.key,
-        count: nextCount,
-        resetAt,
-      })
-      .onConflictDoUpdate({
-        target: rateBuckets.key,
-        set: { count: nextCount, resetAt },
-      });
-
-    return nextCount <= input.limit;
-  });
+  return (row?.count ?? 1) <= input.limit;
 }

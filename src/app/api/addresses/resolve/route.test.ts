@@ -3,17 +3,21 @@ import { ApplicationError } from "@/application/errors/ApplicationError";
 
 const execute = vi.fn();
 const reportError = vi.fn();
+const consumeRateLimit = vi.fn(async () => true);
 
 vi.mock("@/composition/bootstrap", () => ({
   ensureApplication: () => ({
     resolveAddressUseCase: { execute },
     reportError,
+    consumeRateLimit,
   }),
 }));
 
 describe("POST /api/addresses/resolve", () => {
   beforeEach(() => {
     execute.mockReset();
+    consumeRateLimit.mockReset();
+    consumeRateLimit.mockResolvedValue(true);
   });
 
   it("resolves a valid body", async () => {

@@ -3,17 +3,21 @@ import { ApplicationError } from "@/application/errors/ApplicationError";
 
 const execute = vi.fn();
 const reportError = vi.fn();
+const consumeRateLimit = vi.fn(async () => true);
 
 vi.mock("@/composition/bootstrap", () => ({
   ensureApplication: () => ({
     listDistributionNetworksUseCase: { execute },
     reportError,
+    consumeRateLimit,
   }),
 }));
 
 describe("GET /api/networks", () => {
   beforeEach(() => {
     execute.mockReset();
+    consumeRateLimit.mockReset();
+    consumeRateLimit.mockResolvedValue(true);
   });
 
   it("rejects an invalid citycode", async () => {

@@ -540,6 +540,43 @@ describe("GetNetworkAnalyses", () => {
     expect(wrote).toBe(false);
   });
 
+  it("does not persist a crawl that stops at the page cap", async () => {
+    let pages = 0;
+    let wrote = false;
+    const useCase = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 25_000;
+        },
+        async listPage() {
+          pages += 1;
+          return {
+            count: 25_000,
+            next: `https://hubeau.example/page/${pages + 1}`,
+            samples: pages === 1 ? [latest] : [],
+          };
+        },
+      },
+      {
+        async read() {
+          return null;
+        },
+        async write() {
+          wrote = true;
+        },
+        async withNetworkLock(_networkCode, work) {
+          return work();
+        },
+      },
+      () => NOW,
+    );
+
+    const result = await useCase.execute(PAULIN);
+    expect(pages).toBe(20);
+    expect(result.latestSample?.code).toBe(latest.code);
+    expect(wrote).toBe(false);
+  });
+
   it("uses Hub’Eau when no DIS importer is configured above the cap", async () => {
     const useCase = new GetNetworkAnalyses(
       {

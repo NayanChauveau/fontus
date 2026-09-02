@@ -309,4 +309,75 @@ describe("compareMeasurement", () => {
       ).status,
     ).toBe("not_comparable");
   });
+
+  it("converts the threshold into the measurement unit before comparing", () => {
+    const twoNg: ThresholdVersion = {
+      ...nitrates,
+      id: "pfoa:ng",
+      parameterId: "pfoa",
+      unit: "ng/L",
+      value: 2,
+    };
+
+    expect(
+      compareMeasurement(
+        {
+          parameterId: "pfoa",
+          canonicalNumericValue: 0.003,
+          canonicalUnit: "µg/L",
+          qualifier: "eq",
+          conversion: "identity",
+        },
+        twoNg,
+      ).status,
+    ).toBe("exceedance");
+    expect(
+      compareMeasurement(
+        {
+          parameterId: "pfoa",
+          canonicalNumericValue: 0.001,
+          canonicalUnit: "µg/L",
+          qualifier: "eq",
+          conversion: "identity",
+        },
+        twoNg,
+      ).status,
+    ).toBe("compliant");
+    expect(
+      compareMeasurement(
+        {
+          parameterId: "pfoa",
+          canonicalNumericValue: 0.003,
+          canonicalUnit: "µg/L",
+          qualifier: "eq",
+          conversion: "identity",
+        },
+        { ...twoNg, unit: "pH", value: 2 },
+      ).status,
+    ).toBe("not_comparable");
+    expect(
+      compareMeasurement(
+        {
+          parameterId: "pfoa",
+          canonicalNumericValue: 0.005,
+          canonicalUnit: "µg/L",
+          qualifier: "eq",
+          conversion: "identity",
+        },
+        { ...twoNg, operator: "range", value: 2, valueMax: 8 },
+      ).status,
+    ).toBe("compliant");
+    expect(
+      compareMeasurement(
+        {
+          parameterId: "pfoa",
+          canonicalNumericValue: 0.003,
+          canonicalUnit: "µg/L",
+          qualifier: "eq",
+          conversion: "identity",
+        },
+        { ...twoNg, operator: "range", value: 2, valueMax: Number.NaN },
+      ).status,
+    ).toBe("not_comparable");
+  });
 });

@@ -16,6 +16,8 @@ export function createComparisonPortAdapter(
             canonicalNumericValue:
               measurement.resolution?.canonicalNumericValue ??
               measurement.numericValue,
+            canonicalUnit:
+              measurement.resolution?.canonicalUnit ?? measurement.unit,
             conversion: measurement.resolution?.conversion ?? null,
           })),
         );

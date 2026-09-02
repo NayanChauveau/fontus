@@ -44,13 +44,15 @@ export class ListNetworksForCommune {
       return this.requireNetworks(cachedPrevious.links, "cache");
     }
 
-    const remotePrevious = await this.gateway.listByCommune(
-      communeCode,
-      previousYear,
-    );
-    if (remotePrevious.length > 0) {
+    if (!cachedPrevious) {
+      const remotePrevious = await this.gateway.listByCommune(
+        communeCode,
+        previousYear,
+      );
       await this.persist(communeCode, previousYear, remotePrevious, now);
-      return this.requireNetworks(remotePrevious, "remote");
+      if (remotePrevious.length > 0) {
+        return this.requireNetworks(remotePrevious, "remote");
+      }
     }
 
     throw new Error("NO_DISTRIBUTION_NETWORK");

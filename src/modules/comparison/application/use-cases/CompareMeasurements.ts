@@ -1,3 +1,4 @@
+import { convertUnit } from "@/modules/parameters";
 import { compareMeasurement } from "../../domain/compareMeasurement";
 import type { ComparisonStatus } from "../../domain/compareMeasurement";
 import {
@@ -11,6 +12,7 @@ import type { NormCatalogPort } from "../../../norms/application/ports/NormCatal
 export type ComparisonInput = {
   parameterId: string | null;
   canonicalNumericValue: number | null;
+  canonicalUnit?: string | null;
   qualifier: "eq" | "lt" | "gt";
   conversion: "identity" | "converted" | "not_convertible" | "not_numeric" | null;
   sampledAt?: string;
@@ -167,24 +169,33 @@ function formatComparison(
   },
 ): string {
   const limit = formatLimit(threshold);
-  const measured = formatMeasured(measurement);
+  const measured = formatMeasured(measurement, threshold.unit);
   return measured ? `${measured} / ${limit}` : limit;
 }
 
-function formatMeasured(measurement: ComparisonInput): string | null {
+function formatMeasured(
+  measurement: ComparisonInput,
+  thresholdUnit: string,
+): string | null {
   if (
     measurement.canonicalNumericValue === null ||
     !Number.isFinite(measurement.canonicalNumericValue)
   ) {
     return null;
   }
+  const converted = convertUnit(
+    measurement.canonicalNumericValue,
+    measurement.canonicalUnit,
+    thresholdUnit,
+  );
+  const value = converted.value ?? measurement.canonicalNumericValue;
   const prefix =
     measurement.qualifier === "lt"
       ? "< "
       : measurement.qualifier === "gt"
         ? "> "
         : "";
-  return `${prefix}${formatNumber(measurement.canonicalNumericValue)}`;
+  return `${prefix}${formatNumber(value)}`;
 }
 
 function formatLimit(threshold: {

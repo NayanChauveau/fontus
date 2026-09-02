@@ -225,7 +225,7 @@ export class GetNetworkAnalyses {
         }
         next = result.next;
       }
-      return { samples: [...merged.values()], complete: true };
+      return { samples: [...merged.values()], complete: false };
     } catch (error) {
       if (merged.size === 0) {
         throw error;

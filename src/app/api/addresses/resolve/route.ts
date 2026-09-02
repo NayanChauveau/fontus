@@ -1,4 +1,5 @@
 import { ensureApplication } from "@/composition/bootstrap";
+import { enforceRateLimit } from "@/composition/http/enforceRateLimit";
 import { handleRouteError } from "@/composition/http/handleRouteError";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,7 @@ export async function POST(request: Request) {
   const label = typeof body.label === "string" ? body.label : "";
 
   try {
+    await enforceRateLimit(request, "resolve");
     const dto = await ensureApplication().resolveAddressUseCase.execute({
       id,
       label,

@@ -23,10 +23,20 @@ export function createFakeDb(options: {
 
   function insertable() {
     const done = Promise.resolve();
+    function conflict() {
+      const settled = Promise.resolve(undefined);
+      return {
+        returning: async () => nextSelect(),
+        then: settled.then.bind(settled),
+        catch: settled.catch.bind(settled),
+        finally: settled.finally.bind(settled),
+      };
+    }
     return {
       values: () => ({
-        onConflictDoNothing: async () => undefined,
-        onConflictDoUpdate: async () => undefined,
+        onConflictDoNothing: () => conflict(),
+        onConflictDoUpdate: () => conflict(),
+        returning: async () => nextSelect(),
         then: done.then.bind(done),
       }),
     };

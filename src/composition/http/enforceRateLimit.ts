@@ -4,6 +4,8 @@ import { ensureApplication } from "@/composition/bootstrap";
 const WINDOWS = {
   quality: { limit: 20, windowMs: 60_000 },
   suggest: { limit: 60, windowMs: 60_000 },
+  networks: { limit: 30, windowMs: 60_000 },
+  resolve: { limit: 30, windowMs: 60_000 },
   errors: { limit: 10, windowMs: 60_000 },
 } as const;
 

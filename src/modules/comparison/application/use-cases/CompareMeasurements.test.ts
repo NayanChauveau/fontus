@@ -283,6 +283,77 @@ describe("CompareMeasurements", () => {
     expect(result[0]?.comparisons.strict?.binding).toBe(false);
     expect(result[0]?.comparisons.strict?.status).toBe("exceedance");
   });
+
+  it("compares a strict pick across units and labels in the threshold unit", async () => {
+    const us = {
+      id: "pfoa:us",
+      parameterId: "pfoa",
+      jurisdiction: "us" as const,
+      unit: "µg/L",
+      value: 0.004,
+      valueMax: null,
+      operator: "lte" as const,
+      kind: "legal_limit" as const,
+      binding: true,
+      validFrom: new Date("2024-06-25T00:00:00.000Z"),
+      validTo: null,
+      citation: "EPA",
+      sourceUrl: "https://example.test",
+    };
+    const ng = {
+      ...us,
+      id: "pfoa:ng",
+      jurisdiction: "ch" as const,
+      unit: "ng/L",
+      value: 2,
+    };
+    const useCase = new CompareMeasurements(createNormCatalog([us, ng]), {
+      async persist() {},
+      async list() {
+        return [];
+      },
+    });
+
+    const result = await useCase.execute([
+      {
+        parameterId: "pfoa",
+        canonicalNumericValue: 0.003,
+        canonicalUnit: "µg/L",
+        qualifier: "eq",
+        conversion: "identity",
+        sampledAt: "2026-09-02T00:00:00.000Z",
+      },
+    ]);
+
+    expect(result[0]?.comparisons.strict?.status).toBe("exceedance");
+    expect(result[0]?.comparisons.strict?.thresholdLabel).toBe("3 / 2 ng/L");
+    expect(result[0]?.comparisons.us?.status).toBe("compliant");
+  });
+
+  it("keeps the measured figure when it cannot be converted to the threshold unit", async () => {
+    const useCase = new CompareMeasurements(
+      createNormCatalog(SEEDED_THRESHOLDS),
+      {
+        async persist() {},
+        async list() {
+          return [];
+        },
+      },
+    );
+
+    const result = await useCase.execute([
+      {
+        parameterId: "nitrates",
+        canonicalNumericValue: 12.3,
+        canonicalUnit: "°f",
+        qualifier: "eq",
+        conversion: "identity",
+        sampledAt: "2026-09-02T00:00:00.000Z",
+      },
+    ]);
+
+    expect(result[0]?.comparisons.fr?.thresholdLabel).toBe("12,3 / 50 mg/L");
+  });
 });
 
 function memoryStore(persisted: string[]): NormCatalogPort {
