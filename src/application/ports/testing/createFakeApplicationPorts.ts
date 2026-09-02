@@ -6,6 +6,14 @@ export function createFakeApplicationPorts(
   overrides: Partial<ApplicationPorts> = {},
 ): { ports: ApplicationPorts } {
   const ports: ApplicationPorts = {
+    geocoding: {
+      async suggest() {
+        return [];
+      },
+      async resolve() {
+        return null;
+      },
+    },
     health: {
       async ping() {
         return { ok: true, at: FIXED_PING_AT };

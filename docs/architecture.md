@@ -24,7 +24,7 @@ Presentation → Application (DTOs)
 Shared → jamais Application
 ```
 
-`src/app` n’importe jamais `drizzle-orm`, `postgres`, ni un client HTTP Hub’Eau.
+`src/app` n’importe jamais `drizzle-orm`, `postgres`, ni un client HTTP Hub’Eau / GeoPF.
 
 ## Bootstrap Next.js
 
@@ -34,6 +34,15 @@ Les tests unitaires instancient les use cases avec `createFakeApplicationPorts()
 
 ## I0
 
-Un seul port : `HealthPort.ping()` (`select 1` via Drizzle). Use case : `HealthCheckUseCase`.
+Un seul port santé : `HealthPort.ping()` (`select 1` via Drizzle). Use case : `HealthCheckUseCase`.
 
-Modules métier prévus ensuite : `geocoding`, `network`, `analyses`, `parameters`, `norms`, `comparison`.
+## I1
+
+Module `geocoding` : Géoplateforme `/search` (pas `/completion`, qui n’expose pas `citycode`).
+
+- Ports : `GeocodingPort.suggest` / `resolve`
+- Use cases : `SuggestAddressesUseCase`, `ResolveAddressUseCase`
+- HTTP : `GET /api/addresses/suggest?q=`, `POST /api/addresses/resolve`
+- L’UI n’appelle jamais GeoPF ; le navigateur passe par les route handlers
+
+Modules suivants : `network`, `analyses`, `parameters`, `norms`, `comparison`.

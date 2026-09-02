@@ -18,7 +18,9 @@ pnpm dev
 
 App sur **http://localhost:3100** (pas 3000).
 
-- `/` : « stack OK » si Postgres répond
+- `/` : autocomplete d’adresse (Géoplateforme) → commune + code INSEE
+- `/api/addresses/suggest?q=` : suggestions
+- `/api/addresses/resolve` : confirmation d’une suggestion
 - `/api/health` : `{ status, postgres, checkedAt }`
 
 ## Quality gate
