@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ListDistributionNetworksResultDto } from "@/application/dtos/DistributionNetworkDto";
+import { NetworkAnalyses } from "@/components/NetworkAnalyses";
 import { mapDistributionNetworksDto } from "@/presentation/mappers/mapDistributionNetworksDto";
 import { fr } from "@/presentation/i18n/fr";
 import type {
@@ -59,33 +60,39 @@ export function DistributionNetworkList({ citycode }: { citycode: string }) {
   }, [citycode]);
 
   return (
-    <section
-      aria-live="polite"
-      className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900"
-    >
-      <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-        {fr.networks.title}
-      </h3>
+    <>
+      <section
+        aria-live="polite"
+        className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+          {fr.networks.title}
+        </h3>
 
-      {status === "loading" && (
-        <p className="mt-3 text-sm text-zinc-500">{fr.networks.loading}</p>
-      )}
+        {status === "loading" && (
+          <p className="mt-3 text-sm text-zinc-500">{fr.networks.loading}</p>
+        )}
 
-      {status === "unavailable" && (
-        <p className="mt-3 text-sm text-red-700 dark:text-red-400">
-          {fr.networks.unavailable}
-        </p>
-      )}
+        {status === "unavailable" && (
+          <p className="mt-3 text-sm text-red-700 dark:text-red-400">
+            {fr.networks.unavailable}
+          </p>
+        )}
 
-      {status === "ready" && viewModel && (
-        <NetworkResults
-          viewModel={viewModel}
-          selectedCode={selectedCode}
-          onSelect={setSelectedCode}
-          onClear={() => setSelectedCode(null)}
-        />
+        {status === "ready" && viewModel && (
+          <NetworkResults
+            viewModel={viewModel}
+            selectedCode={selectedCode}
+            onSelect={setSelectedCode}
+            onClear={() => setSelectedCode(null)}
+          />
+        )}
+      </section>
+
+      {status === "ready" && selectedCode && (
+        <NetworkAnalyses key={selectedCode} networkCode={selectedCode} />
       )}
-    </section>
+    </>
   );
 }
 

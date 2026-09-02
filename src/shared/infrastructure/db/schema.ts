@@ -43,3 +43,34 @@ export const syncJobs = pgTable("sync_jobs", {
   windowFrom: date("window_from"),
   status: text("status").notNull(),
 });
+
+export const samples = pgTable("samples", {
+  code: text("code").primaryKey(),
+  udiCode: text("udi_code")
+    .notNull()
+    .references(() => udis.code),
+  sampledAt: timestamp("sampled_at", { withTimezone: true }).notNull(),
+  conclusion: text("conclusion"),
+  conformiteLimitesBact: text("conformite_limites_bact"),
+  conformiteLimitesPc: text("conformite_limites_pc"),
+  communeInsee: text("commune_insee"),
+  source: text("source").notNull(),
+});
+
+export const measurements = pgTable(
+  "measurements",
+  {
+    sampleCode: text("sample_code")
+      .notNull()
+      .references(() => samples.code),
+    parameterCode: text("parameter_code").notNull(),
+    parameterLabel: text("parameter_label").notNull(),
+    rawText: text("raw_text").notNull(),
+    numericValue: text("numeric_value"),
+    qualifier: text("qualifier").notNull(),
+    unit: text("unit"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.sampleCode, table.parameterCode] }),
+  ],
+);

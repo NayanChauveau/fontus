@@ -57,4 +57,15 @@ Module `network` : Hub’Eau `communes_udi` + cache Postgres 7 jours + confidenc
 - Use case : `ListDistributionNetworksUseCase`
 - HTTP : `GET /api/networks?citycode=`
 
-Modules suivants : `analyses`, `parameters`, `norms`, `comparison`.
+## I3
+
+Module `analyses` : Hub’Eau `resultats_dis` + cache Postgres 7 jours + parse LQ.
+
+- Toujours `code_reseau` + fenêtre de dates ; jamais paginer une commune entière
+- Fenêtre : plus longue parmi 36 / 24 / 18 / 12 / 6 mois sous le plafond souple 10k (dur 20k)
+- `< LQ` reste du texte (`<0,01`) : `resultat_numerique: 0.0` n’est pas un zéro
+- On affiche la conclusion ARS du dernier prélèvement, on ne la recalcule pas
+- Use case : `GetNetworkWaterQualityUseCase`
+- HTTP : `GET /api/udi/:code/quality`
+
+Modules suivants : `parameters`, `norms`, `comparison`.

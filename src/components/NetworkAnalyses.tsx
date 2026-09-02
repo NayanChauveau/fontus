@@ -1,0 +1,142 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import type { NetworkWaterQualityDto } from "@/application/dtos/NetworkWaterQualityDto";
+import { mapNetworkWaterQualityDto } from "@/presentation/mappers/mapNetworkWaterQualityDto";
+import { fr } from "@/presentation/i18n/fr";
+import type { NetworkAnalysesViewModel } from "@/presentation/view-models/NetworkAnalysesViewModel";
+
+type LoadStatus = "loading" | "ready" | "unavailable";
+
+export function NetworkAnalyses({ networkCode }: { networkCode: string }) {
+  const [status, setStatus] = useState<LoadStatus>("loading");
+  const [viewModel, setViewModel] = useState<NetworkAnalysesViewModel | null>(
+    null,
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    void (async () => {
+      try {
+        const response = await fetch(
+          `/api/udi/${encodeURIComponent(networkCode)}/quality`,
+          { signal: controller.signal },
+        );
+        const payload = (await response.json()) as
+          | NetworkWaterQualityDto
+          | { error: string };
+
+        if (!response.ok || "error" in payload) {
+          setStatus("unavailable");
+          return;
+        }
+
+        setViewModel(mapNetworkWaterQualityDto(payload));
+        setStatus("ready");
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        setStatus("unavailable");
+      }
+    })();
+
+    return () => {
+      controller.abort();
+    };
+  }, [networkCode]);
+
+  return (
+    <section
+      aria-live="polite"
+      className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900"
+    >
+      <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+        {fr.analyses.title}
+      </h3>
+
+      {status === "loading" && (
+        <p className="mt-3 text-sm text-zinc-500">{fr.analyses.loading}</p>
+      )}
+
+      {status === "unavailable" && (
+        <p className="mt-3 text-sm text-red-700 dark:text-red-400">
+          {fr.analyses.unavailable}
+        </p>
+      )}
+
+      {status === "ready" && viewModel && (
+        <AnalysesResults viewModel={viewModel} />
+      )}
+    </section>
+  );
+}
+
+function AnalysesResults({
+  viewModel,
+}: {
+  viewModel: NetworkAnalysesViewModel;
+}) {
+  return (
+    <div className="mt-3 flex flex-col gap-4">
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900 dark:bg-emerald-950/40">
+        <p className="text-xs font-medium uppercase tracking-wide text-emerald-800 dark:text-emerald-300">
+          {fr.analyses.conclusionTitle}
+        </p>
+        <p className="mt-1 text-sm font-medium text-zinc-950 dark:text-zinc-50">
+          {viewModel.conclusion ?? fr.analyses.noConclusion}
+        </p>
+        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+          {viewModel.officialNote}
+        </p>
+        {viewModel.sampledAtLabel && (
+          <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+            {fr.analyses.sampledAt} {viewModel.sampledAtLabel}
+          </p>
+        )}
+        <p className="mt-1 text-xs text-zinc-500">
+          {fr.analyses.source} : {viewModel.sourceLabel}
+        </p>
+      </div>
+
+      {viewModel.measurements.length === 0 ? (
+        <p className="text-sm text-zinc-500">{fr.analyses.empty}</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[28rem] text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800">
+                <th className="py-2 pr-3 font-medium">{fr.analyses.parameter}</th>
+                <th className="py-2 pr-3 font-medium">{fr.analyses.value}</th>
+                <th className="py-2 pr-3 font-medium">{fr.analyses.date}</th>
+                <th className="py-2 font-medium">{fr.analyses.source}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {viewModel.measurements.map((measurement) => (
+                <tr
+                  key={measurement.parameterCode}
+                  className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
+                >
+                  <td className="py-2 pr-3 text-zinc-950 dark:text-zinc-50">
+                    {measurement.parameterLabel}
+                  </td>
+                  <td className="py-2 pr-3 font-mono text-zinc-800 dark:text-zinc-200">
+                    {measurement.valueLabel}
+                  </td>
+                  <td className="py-2 pr-3 text-xs text-zinc-500">
+                    {measurement.sampledAtLabel}
+                  </td>
+                  <td className="py-2 text-xs text-zinc-500">
+                    {measurement.sourceLabel}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}

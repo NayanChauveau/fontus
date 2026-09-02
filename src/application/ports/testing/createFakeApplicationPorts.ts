@@ -6,6 +6,16 @@ export function createFakeApplicationPorts(
   overrides: Partial<ApplicationPorts> = {},
 ): { ports: ApplicationPorts } {
   const ports: ApplicationPorts = {
+    analyses: {
+      async getByNetworkCode() {
+        return {
+          networkCode: "",
+          windowFrom: "",
+          source: "cache",
+          latestSample: null,
+        };
+      },
+    },
     geocoding: {
       async suggest() {
         return [];

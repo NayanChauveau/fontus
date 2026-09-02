@@ -54,4 +54,22 @@ export const fr = {
     year: "Année",
     code: "Code réseau",
   },
+  analyses: {
+    title: "Dernières analyses",
+    loading: "Chargement des analyses officielles…",
+    unavailable:
+      "Impossible de charger les analyses. Réessayez dans un instant.",
+    empty: "Aucune analyse récente pour ce réseau.",
+    conclusionTitle: "Conclusion ARS",
+    noConclusion: "Conclusion ARS non renseignée pour ce prélèvement.",
+    officialNote: "Verdict officiel de l’ARS, non recalculé.",
+    sampledAt: "Prélèvement du",
+    source: "Source",
+    sourceRemote: "Hub’Eau (SISE-Eaux)",
+    sourceCache: "Hub’Eau (SISE-Eaux), cache local",
+    sourceHubEau: "Hub’Eau",
+    parameter: "Paramètre",
+    value: "Résultat",
+    date: "Date",
+  },
 } as const;
