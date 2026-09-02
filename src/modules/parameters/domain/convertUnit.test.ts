@@ -55,6 +55,7 @@ describe("convertUnit", () => {
       unit: "µg/L",
     });
     expect(convertUnit(Number.NaN, "mg/L", "µg/L").status).toBe("not_numeric");
+    expect(convertUnit(1, undefined, undefined).status).toBe("identity");
   });
 
   it("refuses a conversion between incompatible units", () => {

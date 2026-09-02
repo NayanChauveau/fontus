@@ -262,6 +262,113 @@ describe("GetNetworkAnalyses", () => {
     const result = await useCase.execute(PAULIN);
     expect(result.latestSample?.measurements).toHaveLength(2);
   });
+
+  it("shares one Hub’Eau crawl across concurrent calls", async () => {
+    let pages = 0;
+    const useCase = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 1;
+        },
+        async listPage() {
+          pages += 1;
+          return { count: 1, next: null, samples: [latest] };
+        },
+      },
+      memoryCache(),
+      () => NOW,
+    );
+
+    const [first, second] = await Promise.all([
+      useCase.execute(PAULIN),
+      useCase.execute(PAULIN),
+    ]);
+
+    expect(first.latestSample?.code).toBe(latest.code);
+    expect(second.latestSample?.code).toBe(latest.code);
+    expect(pages).toBe(1);
+  });
+
+  it("keeps a shorter window when a longer count fails", async () => {
+    const pages: string[] = [];
+    const useCase = new GetNetworkAnalyses(
+      {
+        async count(_networkCode, dateMin) {
+          if (dateMin <= "2025-09-02") {
+            throw new Error("timeout");
+          }
+          return 4000;
+        },
+        async listPage(networkCode, dateMin) {
+          pages.push(`${networkCode}:${dateMin}`);
+          return { count: 4000, next: null, samples: [latest] };
+        },
+      },
+      memoryCache(),
+      () => NOW,
+    );
+
+    const result = await useCase.execute(PAULIN);
+    expect(result.windowFrom).toBe("2026-03-02");
+    expect(pages).toEqual(["033001214:2026-03-02"]);
+  });
+
+  it("returns the first page when a later Hub’Eau page fails", async () => {
+    let page = 0;
+    const useCase = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 2;
+        },
+        async listPage(): Promise<ResultatsDisPage> {
+          page += 1;
+          if (page === 1) {
+            return {
+              count: 2,
+              next: "https://hubeau.example/page/2",
+              samples: [latest],
+            };
+          }
+          throw new Error("timeout");
+        },
+      },
+      memoryCache(),
+      () => NOW,
+    );
+
+    const result = await useCase.execute(PAULIN);
+    expect(result.latestSample?.code).toBe(latest.code);
+  });
+
+  it("still fetches six months when every count fails, and rethrows an empty crawl", async () => {
+    const ok = new GetNetworkAnalyses(
+      {
+        async count() {
+          throw new Error("timeout");
+        },
+        async listPage() {
+          return { count: 0, next: null, samples: [latest] };
+        },
+      },
+      memoryCache(),
+      () => NOW,
+    );
+    expect((await ok.execute(PAULIN)).windowFrom).toBe("2026-03-02");
+
+    const empty = new GetNetworkAnalyses(
+      {
+        async count() {
+          return 1;
+        },
+        async listPage() {
+          throw new Error("down");
+        },
+      },
+      memoryCache(),
+      () => NOW,
+    );
+    await expect(empty.execute(PAULIN)).rejects.toThrow("down");
+  });
 });
 
 function trackingGateway(onCall: () => void): ResultatsDisGatewayPort {

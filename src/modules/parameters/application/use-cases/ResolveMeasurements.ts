@@ -6,6 +6,10 @@ import {
 } from "../../domain/createParameterCatalog";
 import type { ParameterCategory } from "../../domain/Parameter";
 import {
+  reconstructPfas20,
+  type Pfas20Derivation,
+} from "../../domain/reconstructPfas20";
+import {
   compareResolvedPriority,
   resolveMeasurement,
 } from "../../domain/resolveMeasurement";
@@ -31,6 +35,7 @@ export type MeasurementResolution = {
   canonicalUnit: string | null;
   canonicalNumericValue: number | null;
   conversion: UnitConversionStatus;
+  derived?: Pfas20Derivation | null;
 };
 
 export type ResolvedMeasurementOutput = MeasurementInput & {
@@ -71,7 +76,7 @@ export class ResolveMeasurements {
       };
     });
 
-    return resolved.sort((left, right) =>
+    return reconstructPfas20(resolved).sort((left, right) =>
       compareResolvedPriority(
         {
           displayPriority: left.resolution?.displayPriority ?? 9999,

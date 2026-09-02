@@ -7,5 +7,7 @@ describe("db schema", () => {
     expect(schema.measurements).toBeDefined();
     expect(schema.samples).toBeDefined();
     expect(schema.udis).toBeDefined();
+    expect(schema.jurisdictions).toBeDefined();
+    expect(schema.thresholdVersions).toBeDefined();
   });
 });

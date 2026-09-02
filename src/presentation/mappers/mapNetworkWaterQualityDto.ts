@@ -1,9 +1,11 @@
 import type {
+  ComparisonDto,
   MeasurementDto,
   NetworkWaterQualityDto,
 } from "@/application/dtos/NetworkWaterQualityDto";
 import { fr } from "../i18n/fr";
 import type {
+  ComparisonViewModel,
   NetworkAnalysesViewModel,
   NetworkMeasurementViewModel,
 } from "../view-models/NetworkAnalysesViewModel";
@@ -39,6 +41,9 @@ export function mapNetworkWaterQualityDto(
         : fr.analyses.sourceRemote,
     priorityMeasurements: measurements.filter((row) => row.priority),
     otherMeasurements: measurements.filter((row) => !row.priority),
+    reconstructedSumNote: measurements.some((row) => row.reconstructed)
+      ? fr.analyses.reconstructedSumNote
+      : null,
   };
 }
 
@@ -63,10 +68,58 @@ function toMeasurementViewModel(
       : measurement.rawText,
     canonicalValueLabel: formatCanonicalValue(measurement),
     converted: resolution?.conversion === "converted",
+    reconstructed: resolution?.derived === "reconstructed_sum",
     sampledAtLabel,
     sourceLabel,
     priority: (resolution?.displayPriority ?? 9999) < 1000,
+    fr: toComparisonViewModel(measurement.comparisons?.fr ?? null),
+    eu: toComparisonViewModel(measurement.comparisons?.eu ?? null),
   };
+}
+
+function toComparisonViewModel(
+  comparison: ComparisonDto | null,
+): ComparisonViewModel | null {
+  if (!comparison) {
+    return null;
+  }
+  return {
+    status: comparison.status,
+    statusLabel: statusLabel(comparison.status),
+    thresholdLabel: comparison.thresholdLabel,
+    kindLabel: kindLabel(comparison.kind),
+    citation: comparison.citation,
+    sourceUrl: comparison.sourceUrl,
+    binding: comparison.binding,
+  };
+}
+
+function statusLabel(status: ComparisonDto["status"]): string {
+  if (status === "compliant") {
+    return fr.analyses.compliant;
+  }
+  if (status === "exceedance") {
+    return fr.analyses.exceedance;
+  }
+  if (status === "below_loq") {
+    return fr.analyses.belowLoq;
+  }
+  if (status === "not_comparable") {
+    return fr.analyses.notComparable;
+  }
+  return fr.analyses.noThreshold;
+}
+
+function kindLabel(
+  kind: ComparisonDto["kind"],
+): string | null {
+  if (kind === "legal_limit") {
+    return fr.analyses.legalLimit;
+  }
+  if (kind === "quality_reference") {
+    return fr.analyses.qualityReference;
+  }
+  return null;
 }
 
 function formatCanonicalValue(measurement: MeasurementDto): string | null {

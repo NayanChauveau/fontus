@@ -6,6 +6,27 @@ export type MeasurementConversionDto =
   | "not_convertible"
   | "not_numeric";
 
+export type ComparisonStatusDto =
+  | "compliant"
+  | "exceedance"
+  | "below_loq"
+  | "not_comparable"
+  | "no_threshold";
+
+export type ComparisonDto = {
+  status: ComparisonStatusDto;
+  kind: "legal_limit" | "quality_reference" | null;
+  binding: boolean;
+  thresholdLabel: string | null;
+  citation: string | null;
+  sourceUrl: string | null;
+};
+
+export type MeasurementComparisonsDto = {
+  fr: ComparisonDto | null;
+  eu: ComparisonDto | null;
+};
+
 export type MeasurementResolutionDto = {
   canonicalId: string;
   canonicalName: string;
@@ -14,6 +35,7 @@ export type MeasurementResolutionDto = {
   canonicalUnit: string | null;
   canonicalNumericValue: number | null;
   conversion: MeasurementConversionDto;
+  derived?: "reconstructed_sum" | null;
 };
 
 export type MeasurementDto = {
@@ -27,6 +49,7 @@ export type MeasurementDto = {
   unit: string | null;
   sampledAt?: string;
   resolution: MeasurementResolutionDto | null;
+  comparisons?: MeasurementComparisonsDto;
 };
 
 export type AnalysisSampleDto = {

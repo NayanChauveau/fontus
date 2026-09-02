@@ -234,6 +234,45 @@ describe("ResolveMeasurements", () => {
     expect(result.every((row) => row.resolution === null)).toBe(true);
     expect(result.map((row) => row.parameterLabel)).toEqual(["Nitrates", "Zêta"]);
   });
+
+  it("reconstructs a qualitative PFAS-20 sum after resolving the 20 members", async () => {
+    const useCase = new ResolveMeasurements(
+      createParameterCatalog(PRIORITY_PARAMETERS),
+      memoryStore([]),
+    );
+    const sampledAt = "2026-06-30T11:59:00.000Z";
+    const members = PRIORITY_PARAMETERS.filter(
+      (parameter) => parameter.category === "pfas" && parameter.id !== "pfas20",
+    ).map((parameter) => ({
+      parameterCode: parameter.aliases[0]!.externalCode,
+      parameterLabel: parameter.name,
+      rawText: "<0,001",
+      numericValue: 0.001,
+      qualifier: "lt" as const,
+      unit: "µg/L",
+      sampledAt,
+    }));
+
+    const result = await useCase.execute([
+      {
+        parameterCode: "8847",
+        parameterLabel: "Somme de 20 substances perfluoroalkylées (PFAS)",
+        rawText: "<SEUIL",
+        numericValue: null,
+        qualifier: "lt",
+        unit: "µg/L",
+        sampledAt,
+      },
+      ...members,
+    ]);
+
+    const sum = result.find((row) => row.resolution?.canonicalId === "pfas20");
+    expect(sum?.rawText).toBe("<0,02");
+    expect(sum?.numericValue).toBe(0.02);
+    expect(sum?.qualifier).toBe("lt");
+    expect(sum?.resolution?.canonicalNumericValue).toBe(0.02);
+    expect(sum?.resolution?.derived).toBe("reconstructed_sum");
+  });
 });
 
 function memoryStore(persisted: string[]): ParameterCatalogPort {

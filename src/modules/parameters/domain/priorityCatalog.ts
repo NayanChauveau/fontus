@@ -454,3 +454,9 @@ export const PRIORITY_PARAMETERS: CanonicalParameter[] = [
     ],
   }),
 ];
+
+export const PFAS20_ID = "pfas20";
+
+export const PFAS20_MEMBER_IDS = PRIORITY_PARAMETERS.filter(
+  (parameter) => parameter.category === "pfas" && parameter.id !== PFAS20_ID,
+).map((parameter) => parameter.id);

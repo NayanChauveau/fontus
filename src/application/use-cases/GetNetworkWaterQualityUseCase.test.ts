@@ -136,6 +136,84 @@ describe("GetNetworkWaterQualityUseCase", () => {
     expect(result.latestMeasurements[0]?.resolution).toBeNull();
   });
 
+  it("keeps resolved measurements when comparison fails", async () => {
+    const { ports } = createFakeApplicationPorts({
+      analyses: {
+        async getByNetworkCode() {
+          return {
+            ...paulin,
+            latestMeasurements: paulin.latestMeasurements.map(
+              (measurement) => ({ ...measurement, resolution: null }),
+            ),
+          };
+        },
+      },
+      parameters: {
+        async resolve(measurements) {
+          return measurements.map((measurement) => ({
+            ...measurement,
+            resolution: paulin.latestMeasurements[0]?.resolution ?? null,
+          }));
+        },
+      },
+      comparison: {
+        async compare() {
+          throw new Error("norms down");
+        },
+      },
+    });
+
+    const result = await new GetNetworkWaterQualityUseCase(ports).execute(
+      "033001214",
+    );
+    expect(result.latestMeasurements[0]?.resolution?.canonicalId).toBe(
+      "nitrites",
+    );
+    expect(result.latestMeasurements[0]?.comparisons).toBeUndefined();
+  });
+
+  it("attaches FR/UE comparisons after resolving", async () => {
+    const { ports } = createFakeApplicationPorts({
+      analyses: {
+        async getByNetworkCode() {
+          return paulin;
+        },
+      },
+      comparison: {
+        async compare(measurements) {
+          return measurements.map((measurement) => ({
+            ...measurement,
+            comparisons: {
+              fr: {
+                status: "compliant",
+                kind: "legal_limit",
+                binding: true,
+                thresholdLabel: "≤ 0,5 mg/L",
+                citation: "arrêté",
+                sourceUrl: "https://example.test",
+              },
+              eu: {
+                status: "compliant",
+                kind: "legal_limit",
+                binding: true,
+                thresholdLabel: "≤ 0,5 mg/L",
+                citation: "directive",
+                sourceUrl: "https://example.test",
+              },
+            },
+          }));
+        },
+      },
+    });
+
+    const result = await new GetNetworkWaterQualityUseCase(ports).execute(
+      "033001214",
+    );
+    expect(result.latestMeasurements[0]?.comparisons?.fr?.status).toBe(
+      "compliant",
+    );
+  });
+
   it("propagates ANALYSES_UNAVAILABLE", async () => {
     const { ports } = createFakeApplicationPorts({
       analyses: {

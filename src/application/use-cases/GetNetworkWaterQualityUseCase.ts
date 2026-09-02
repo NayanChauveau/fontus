@@ -21,12 +21,17 @@ export class GetNetworkWaterQualityUseCase {
     );
 
     try {
-      return {
-        ...dto,
-        latestMeasurements: await this.ports.parameters.resolve(
-          dto.latestMeasurements,
-        ),
-      };
+      const resolved = await this.ports.parameters.resolve(
+        dto.latestMeasurements,
+      );
+      try {
+        return {
+          ...dto,
+          latestMeasurements: await this.ports.comparison.compare(resolved),
+        };
+      } catch {
+        return { ...dto, latestMeasurements: resolved };
+      }
     } catch {
       return dto;
     }

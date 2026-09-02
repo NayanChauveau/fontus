@@ -30,6 +30,11 @@ export function createFakeApplicationPorts(
         return { ok: true, at: FIXED_PING_AT };
       },
     },
+    comparison: {
+      async compare(measurements) {
+        return measurements;
+      },
+    },
     parameters: {
       async resolve(measurements) {
         return measurements;

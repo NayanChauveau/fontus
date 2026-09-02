@@ -2,6 +2,7 @@ import {
   latestMeasurementsByParameter,
   latestSample,
   isFreshAnalysisSync,
+  HUBEAU_ROW_SOFT_CAP,
   type AnalysisSample,
   type ParameterSnapshot,
 } from "../../domain/Analysis";
@@ -24,6 +25,8 @@ export type GetNetworkAnalysesResult = {
 };
 
 export class GetNetworkAnalyses {
+  private readonly inflight = new Map<string, Promise<GetNetworkAnalysesResult>>();
+
   constructor(
     private readonly gateway: ResultatsDisGatewayPort,
     private readonly cache: AnalysesCachePort,
@@ -31,6 +34,19 @@ export class GetNetworkAnalyses {
   ) {}
 
   async execute(networkCode: string): Promise<GetNetworkAnalysesResult> {
+    const running = this.inflight.get(networkCode);
+    if (running) {
+      return running;
+    }
+
+    const pending = this.load(networkCode).finally(() => {
+      this.inflight.delete(networkCode);
+    });
+    this.inflight.set(networkCode, pending);
+    return pending;
+  }
+
+  private async load(networkCode: string): Promise<GetNetworkAnalysesResult> {
     const now = this.now();
     const cached = await this.readFresh(networkCode, now);
     if (cached) {
@@ -97,11 +113,21 @@ export class GetNetworkAnalyses {
   }
 
   private async resolveWindow(networkCode: string, now: Date) {
-    const counts = [];
-    for (const months of ANALYSIS_WINDOW_MONTHS) {
-      const dateMin = windowFromDate(now, months);
-      const count = await this.gateway.count(networkCode, dateMin);
-      counts.push({ months, count });
+    const counts: Array<{ months: number; count: number }> = [];
+    for (const months of [...ANALYSIS_WINDOW_MONTHS].reverse()) {
+      try {
+        const count = await this.gateway.count(
+          networkCode,
+          windowFromDate(now, months),
+        );
+        counts.push({ months, count });
+        if (count > HUBEAU_ROW_SOFT_CAP) {
+          break;
+        }
+      } catch {
+        // A timed-out long window must not hide a shorter one we can fetch.
+        break;
+      }
     }
     const chosen = chooseAnalysisWindow(counts);
     return {
@@ -113,13 +139,19 @@ export class GetNetworkAnalyses {
   private async fetchAllPages(networkCode: string, dateMin: string) {
     const merged = new Map<string, AnalysisSample>();
     let next: string | undefined;
-    for (let page = 0; page < MAX_PAGES; page += 1) {
-      const result = await this.gateway.listPage(networkCode, dateMin, next);
-      mergeSamples(merged, result.samples);
-      if (!result.next) {
-        break;
+    try {
+      for (let page = 0; page < MAX_PAGES; page += 1) {
+        const result = await this.gateway.listPage(networkCode, dateMin, next);
+        mergeSamples(merged, result.samples);
+        if (!result.next) {
+          break;
+        }
+        next = result.next;
       }
-      next = result.next;
+    } catch (error) {
+      if (merged.size === 0) {
+        throw error;
+      }
     }
     return [...merged.values()];
   }

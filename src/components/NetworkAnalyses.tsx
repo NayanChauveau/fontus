@@ -5,6 +5,7 @@ import type { NetworkWaterQualityDto } from "@/application/dtos/NetworkWaterQual
 import { mapNetworkWaterQualityDto } from "@/presentation/mappers/mapNetworkWaterQualityDto";
 import { fr } from "@/presentation/i18n/fr";
 import type {
+  ComparisonViewModel,
   NetworkAnalysesViewModel,
   NetworkMeasurementViewModel,
 } from "@/presentation/view-models/NetworkAnalysesViewModel";
@@ -126,6 +127,12 @@ function AnalysesResults({
               measurements={viewModel.otherMeasurements}
             />
           )}
+          {viewModel.reconstructedSumNote && (
+            <p className="text-xs text-zinc-500">
+              {viewModel.reconstructedSumNote}
+            </p>
+          )}
+          <p className="text-xs text-zinc-500">{fr.analyses.noThresholdNote}</p>
         </>
       )}
     </div>
@@ -144,15 +151,14 @@ function MeasurementTable({
       <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
         {title}
       </h4>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[32rem] text-left text-sm">
+      <div className="overflow-x-auto md:overflow-visible">
+        <table className="w-full min-w-[40rem] text-left text-sm md:min-w-0">
           <thead>
             <tr className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800">
               <th className="py-2 pr-3 font-medium">{fr.analyses.parameter}</th>
               <th className="py-2 pr-3 font-medium">{fr.analyses.value}</th>
-              <th className="py-2 pr-3 font-medium">
-                {fr.analyses.canonicalValue}
-              </th>
+              <th className="py-2 pr-3 font-medium">{fr.analyses.compareFr}</th>
+              <th className="py-2 pr-3 font-medium">{fr.analyses.compareEu}</th>
               <th className="py-2 pr-3 font-medium">{fr.analyses.date}</th>
               <th className="py-2 font-medium">{fr.analyses.source}</th>
             </tr>
@@ -177,15 +183,21 @@ function MeasurementTable({
                   )}
                 </td>
                 <td className="py-2 pr-3 font-mono text-zinc-800 dark:text-zinc-200">
-                  {measurement.valueLabel}
-                </td>
-                <td className="py-2 pr-3 font-mono text-zinc-800 dark:text-zinc-200">
-                  {measurement.canonicalValueLabel ?? "—"}
-                  {measurement.converted && (
-                    <span className="ml-1 text-xs font-sans text-emerald-700 dark:text-emerald-400">
-                      {fr.analyses.converted}
-                    </span>
+                  <p>{measurement.valueLabel}</p>
+                  {measurement.reconstructed && (
+                    <p
+                      className="font-sans text-[11px] text-zinc-500"
+                      title={fr.analyses.reconstructedSumNote}
+                    >
+                      {fr.analyses.reconstructed}
+                    </p>
                   )}
+                </td>
+                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+                  <ComparisonCell comparison={measurement.fr} />
+                </td>
+                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+                  <ComparisonCell comparison={measurement.eu} />
                 </td>
                 <td className="py-2 pr-3 text-xs text-zinc-500">
                   {measurement.sampledAtLabel}
@@ -198,6 +210,42 @@ function MeasurementTable({
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function ComparisonCell({
+  comparison,
+}: {
+  comparison: ComparisonViewModel | null;
+}) {
+  if (!comparison || comparison.status === "no_threshold") {
+    return (
+      <span title={comparison?.citation ?? fr.analyses.noThreshold}>—</span>
+    );
+  }
+
+  return (
+    <div title={comparison.citation ?? undefined}>
+      <p
+        className={
+          comparison.status === "exceedance"
+            ? "font-medium text-red-700 dark:text-red-400"
+            : comparison.status === "compliant"
+              ? "font-medium text-emerald-700 dark:text-emerald-400"
+              : "text-zinc-600 dark:text-zinc-400"
+        }
+      >
+        {comparison.statusLabel}
+      </p>
+      {comparison.thresholdLabel && (
+        <p className="font-mono text-[11px] text-zinc-500">
+          {comparison.thresholdLabel}
+        </p>
+      )}
+      {comparison.kindLabel && (
+        <p className="text-[11px] text-zinc-500">{comparison.kindLabel}</p>
+      )}
     </div>
   );
 }

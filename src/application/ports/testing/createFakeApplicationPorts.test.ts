@@ -10,6 +10,7 @@ describe("createFakeApplicationPorts", () => {
     expect(await ports.geocoding.suggest("abc")).toEqual([]);
     expect(await ports.geocoding.resolve({ id: "1", label: "abc" })).toBeNull();
     expect(await ports.parameters.resolve([])).toEqual([]);
+    expect(await ports.comparison.compare([])).toEqual([]);
     expect((await ports.network.listByCitycode("33063")).confidence).toBe(
       "none",
     );

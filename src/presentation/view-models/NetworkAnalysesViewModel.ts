@@ -1,3 +1,13 @@
+export type ComparisonViewModel = {
+  status: string;
+  statusLabel: string;
+  thresholdLabel: string | null;
+  kindLabel: string | null;
+  citation: string | null;
+  sourceUrl: string | null;
+  binding: boolean;
+};
+
 export type NetworkMeasurementViewModel = {
   parameterCode: string;
   parameterLabel: string;
@@ -7,9 +17,12 @@ export type NetworkMeasurementViewModel = {
   valueLabel: string;
   canonicalValueLabel: string | null;
   converted: boolean;
+  reconstructed: boolean;
   sampledAtLabel: string;
   sourceLabel: string;
   priority: boolean;
+  fr: ComparisonViewModel | null;
+  eu: ComparisonViewModel | null;
 };
 
 export type NetworkAnalysesViewModel = {
@@ -18,6 +31,7 @@ export type NetworkAnalysesViewModel = {
   conclusion: string | null;
   officialNote: string;
   perParameterDateNote: string;
+  reconstructedSumNote: string | null;
   sourceLabel: string;
   priorityMeasurements: NetworkMeasurementViewModel[];
   otherMeasurements: NetworkMeasurementViewModel[];

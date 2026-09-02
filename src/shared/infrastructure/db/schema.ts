@@ -1,4 +1,5 @@
 import {
+  boolean,
   date,
   integer,
   pgTable,
@@ -97,3 +98,26 @@ export const measurements = pgTable(
     primaryKey({ columns: [table.sampleCode, table.parameterCode] }),
   ],
 );
+
+export const jurisdictions = pgTable("jurisdictions", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+});
+
+export const thresholdVersions = pgTable("threshold_versions", {
+  id: text("id").primaryKey(),
+  parameterId: text("parameter_id").notNull(),
+  jurisdiction: text("jurisdiction")
+    .notNull()
+    .references(() => jurisdictions.id),
+  unit: text("unit").notNull(),
+  value: text("value").notNull(),
+  valueMax: text("value_max"),
+  operator: text("operator").notNull(),
+  kind: text("kind").notNull(),
+  binding: boolean("binding").notNull(),
+  validFrom: date("valid_from").notNull(),
+  validTo: date("valid_to"),
+  citation: text("citation").notNull(),
+  sourceUrl: text("source_url").notNull(),
+});

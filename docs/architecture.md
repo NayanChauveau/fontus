@@ -62,7 +62,7 @@ Module `network` : Hub’Eau `communes_udi` + cache Postgres 7 jours + confidenc
 Module `analyses` : Hub’Eau `resultats_dis` + cache Postgres 7 jours + parse LQ.
 
 - Toujours `code_reseau` + fenêtre de dates ; jamais paginer une commune entière
-- Fenêtre : plus longue parmi 36 / 24 / 18 / 12 / 6 mois sous le plafond souple 10k (dur 20k)
+- Fenêtre : on sonde 6 → 36 mois et on garde la plus longue sous 10k (dur 20k) ; un timeout Hub’Eau ne masque pas une fenêtre plus courte
 - `< LQ` reste du texte (`<0,01`) : `resultat_numerique: 0.0` n’est pas un zéro
 - On affiche la conclusion ARS du dernier prélèvement, on ne la recalcule pas
 - Use case : `GetNetworkWaterQualityUseCase`
@@ -76,7 +76,18 @@ Module `parameters` : dictionnaire canonique + alias SANDRE / SISE / CAS + conve
 - Priorité d’affichage ≠ périmètre d’import
 - Deux libellés / codes de la même substance → un `canonical_id` (`1340` et `NO3` → `nitrates`)
 - Conversion mg/L ↔ µg/L avant tout seuil ; `< LQ` reste une limite, pas zéro
+- `<SEUIL` PFAS-20 n’est pas un chiffre : borne haute reconstruite à partir des 20 substances du même prélèvement
 - Tableau = dernière valeur **par paramètre** (les campagnes PFAS ont souvent une autre date que le dernier contrôle courant)
 - Use case : `GetNetworkWaterQualityUseCase` enrichit les mesures via `ParametersPort.resolve`
 
-Modules suivants : `norms`, `comparison`.
+## I5
+
+Modules `norms` + `comparison` : seuils FR/UE versionnés + moteur à la date du prélèvement.
+
+- Seed cité (directive (UE) 2020/2184, arrêté du 30 décembre 2022) ; jamais de seuil dans React
+- Statuts : `compliant` | `exceedance` | `below_loq` | `not_comparable` | `no_threshold`
+- `< LQ` sous le seuil = conforme ; LQ au-dessus du seuil = `below_loq`
+- `quality_reference` n’est jamais une `legal_limit` ; le bandeau ARS n’est pas recalculé
+- Use case : `GetNetworkWaterQualityUseCase` enchaîne `ParametersPort.resolve` puis `ComparisonPort.compare`
+
+Modules suivants : I6 (CH/US + référence stricte), I7 (cartes).

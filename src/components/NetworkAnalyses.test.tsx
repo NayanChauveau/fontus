@@ -31,9 +31,9 @@ describe("NetworkAnalyses", () => {
             {
               parameterCode: "8847",
               parameterLabel: "Somme PFAS-20",
-              rawText: "0,016",
-              numericValue: 0.016,
-              qualifier: "eq",
+              rawText: "<0,034",
+              numericValue: 0.034,
+              qualifier: "lt",
               unit: "µg/L",
               sampledAt: "2026-05-18T11:55:00.000Z",
               resolution: {
@@ -42,8 +42,27 @@ describe("NetworkAnalyses", () => {
                 category: "pfas",
                 displayPriority: 12,
                 canonicalUnit: "µg/L",
-                canonicalNumericValue: 0.016,
+                canonicalNumericValue: 0.034,
                 conversion: "identity",
+                derived: "reconstructed_sum",
+              },
+              comparisons: {
+                fr: {
+                  status: "compliant",
+                  kind: "legal_limit",
+                  binding: true,
+                  thresholdLabel: "< 0,034 / 0,1 µg/L",
+                  citation: "Arrêté du 30 décembre 2022",
+                  sourceUrl: "https://www.legifrance.gouv.fr",
+                },
+                eu: {
+                  status: "compliant",
+                  kind: "legal_limit",
+                  binding: true,
+                  thresholdLabel: "< 0,034 / 0,1 µg/L",
+                  citation: "Directive (UE) 2020/2184",
+                  sourceUrl: "https://eur-lex.europa.eu",
+                },
               },
             },
             {
@@ -63,6 +82,17 @@ describe("NetworkAnalyses", () => {
                 canonicalNumericValue: 5,
                 conversion: "converted",
               },
+              comparisons: {
+                fr: {
+                  status: "exceedance",
+                  kind: "quality_reference",
+                  binding: false,
+                  thresholdLabel: "≤ 200 µg/L",
+                  citation: "arrêté",
+                  sourceUrl: "https://example.test",
+                },
+                eu: null,
+              },
             },
             {
               parameterCode: "9999",
@@ -81,6 +111,24 @@ describe("NetworkAnalyses", () => {
                 canonicalNumericValue: 1,
                 conversion: "identity",
               },
+              comparisons: {
+                fr: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+                eu: {
+                  status: "no_threshold",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+              },
             },
             {
               parameterCode: "aspect",
@@ -91,6 +139,24 @@ describe("NetworkAnalyses", () => {
               unit: null,
               sampledAt: "2026-06-18T11:40:00.000Z",
               resolution: null,
+              comparisons: {
+                fr: {
+                  status: "not_comparable",
+                  kind: null,
+                  binding: false,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+                eu: {
+                  status: "below_loq",
+                  kind: "legal_limit",
+                  binding: true,
+                  thresholdLabel: null,
+                  citation: null,
+                  sourceUrl: null,
+                },
+              },
             },
           ],
         }),
@@ -103,11 +169,20 @@ describe("NetworkAnalyses", () => {
       expect(screen.getByText("Eau conforme")).toBeTruthy();
     });
     expect(screen.getByText("Somme PFAS-20")).toBeTruthy();
+    expect(screen.getByText("<0,034 µg/L")).toBeTruthy();
+    expect(screen.getByText("reconstruit")).toBeTruthy();
+    expect(screen.getAllByText("< 0,034 / 0,1 µg/L").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("conforme").length).toBeGreaterThan(0);
+    expect(screen.getByText("dépassement")).toBeTruthy();
+    expect(screen.getByText("non comparable")).toBeTruthy();
+    expect(screen.getByText("LQ > seuil")).toBeTruthy();
+    expect(screen.getAllByText("FR").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("UE").length).toBeGreaterThan(0);
     expect(screen.getByText("Aluminium")).toBeTruthy();
     expect(screen.getByText("Inconnu")).toBeTruthy();
     expect(screen.getByText("Aspect")).toBeTruthy();
-    expect(screen.getByText("—")).toBeTruthy();
-    expect(screen.getByText("converti")).toBeTruthy();
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/somme PFAS-20/).length).toBeGreaterThan(1);
     vi.unstubAllGlobals();
   });
 

@@ -39,13 +39,25 @@ describe("GET /api/udi/:code/quality", () => {
   });
 
   it("maps application errors to 503", async () => {
-    execute.mockRejectedValueOnce(new ApplicationError("ANALYSES_UNAVAILABLE"));
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    execute.mockRejectedValueOnce(
+      new ApplicationError("ANALYSES_UNAVAILABLE", new Error("timeout")),
+    );
     const { GET } = await import("./route");
     const response = await GET(
       new Request("http://localhost/api/udi/033001214/quality"),
       { params: Promise.resolve({ code: "033001214" }) },
     );
     expect(response.status).toBe(503);
+    expect(logged).toHaveBeenCalled();
+
+    execute.mockRejectedValueOnce(new ApplicationError("ANALYSES_UNAVAILABLE"));
+    const again = await GET(
+      new Request("http://localhost/api/udi/033001214/quality"),
+      { params: Promise.resolve({ code: "033001214" }) },
+    );
+    expect(again.status).toBe(503);
+    logged.mockRestore();
   });
 
   it("rethrows unexpected errors", async () => {
