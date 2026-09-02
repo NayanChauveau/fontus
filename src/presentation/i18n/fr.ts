@@ -138,4 +138,8 @@ export const fr = {
     unexpected: "Une erreur inattendue s’est produite.",
     retry: "Réessayer",
   },
+  theme: {
+    toggleToDark: "Passer en mode sombre",
+    toggleToLight: "Passer en mode clair",
+  },
 } as const;

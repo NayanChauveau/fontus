@@ -18,5 +18,6 @@ describe("RootLayout", () => {
     );
     expect(screen.getByText("child")).toBeTruthy();
     expect(document.documentElement.lang).toBe("fr");
+    expect(document.head.textContent).toContain("eau-robinet-theme");
   });
 });
