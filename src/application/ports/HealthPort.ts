@@ -1,5 +1,8 @@
 export type HealthPing = {
   ok: boolean;
+  postgres: boolean;
+  schema: boolean;
+  detail: string | null;
   at: Date;
 };
 

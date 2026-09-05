@@ -36,7 +36,13 @@ export function createFakeApplicationPorts(
     },
     health: {
       async ping() {
-        return { ok: true, at: FIXED_PING_AT };
+        return {
+          ok: true,
+          postgres: true,
+          schema: true,
+          detail: null,
+          at: FIXED_PING_AT,
+        };
       },
     },
     comparison: {

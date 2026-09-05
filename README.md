@@ -24,7 +24,7 @@ App sur **http://localhost:3100** (pas 3000).
 - `/api/addresses/resolve` : confirmation d’une suggestion
 - `/api/networks?citycode=` : UDI de la commune (cache 7 jours)
 - `/api/udi/:code/quality` : dernier prélèvement, comparaison FR/UE/CH/US + stricte, et historique nitrates / PFAS-20 / plomb (min / médiane / max, tendance)
-- `/api/health` : `{ status, postgres, checkedAt }`
+- `/api/health` : `{ status, postgres, schema, detail, checkedAt }`
 
 ## Quality gate
 

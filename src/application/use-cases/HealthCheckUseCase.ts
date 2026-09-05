@@ -11,12 +11,20 @@ export class HealthCheckUseCase {
         this.ports.observability.report({
           level: "error",
           scope: "health",
-          event: "postgres_unhealthy",
+          event: ping.postgres ? "schema_missing" : "postgres_unhealthy",
+          code: ping.postgres ? "schema_missing" : "postgres_unhealthy",
+          context: {
+            postgres: ping.postgres,
+            schema: ping.schema,
+            detail: ping.detail,
+          },
         });
       }
       return {
         status: ping.ok ? "ok" : "error",
-        postgres: ping.ok,
+        postgres: ping.postgres,
+        schema: ping.schema,
+        detail: ping.detail,
         checkedAt: ping.at.toISOString(),
       };
     } catch (error) {
@@ -29,6 +37,9 @@ export class HealthCheckUseCase {
       return {
         status: "error",
         postgres: false,
+        schema: false,
+        detail:
+          error instanceof Error ? error.message : "Postgres did not answer.",
         checkedAt: new Date().toISOString(),
       };
     }

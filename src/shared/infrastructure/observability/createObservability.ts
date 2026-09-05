@@ -1,3 +1,4 @@
+import { describeDatabaseFailure } from "../db/describeDatabaseFailure";
 import { serializeCause } from "./serializeCause";
 
 type ObservabilityLevel = "info" | "warn" | "error";
@@ -28,14 +29,19 @@ export function createObservability(deps: {
     report(event) {
       const createdAt = now();
       const cause = event.cause ? serializeCause(event.cause) : null;
-      const message = event.code ?? cause?.message ?? event.event;
+      const described = event.cause
+        ? describeDatabaseFailure(event.cause)
+        : null;
+      const code = event.code ?? described?.code ?? null;
+      const message =
+        described?.detail ?? event.code ?? cause?.message ?? event.event;
       const context = compactContext(event.context);
       const payload = {
         ts: createdAt.toISOString(),
         level: event.level,
         scope: event.scope,
         event: event.event,
-        code: event.code ?? null,
+        code,
         message,
         cause: cause
           ? { name: cause.name, message: cause.message, chain: cause.chain }
@@ -74,6 +80,7 @@ function formatPretty(
     scope: string;
     event: string;
     code: string | null;
+    message: string;
     cause: { chain: string[] } | null;
     context: Record<string, string | number | boolean | null> | null;
   },
@@ -83,6 +90,9 @@ function formatPretty(
     payload.code ? ` ${payload.code}` : ""
   }`;
   const lines = [header];
+  if (payload.message && payload.message !== payload.event) {
+    lines.push(`  ${payload.message}`);
+  }
   for (const item of payload.cause?.chain ?? []) {
     lines.push(`  ${item}`);
   }

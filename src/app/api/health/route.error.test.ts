@@ -4,7 +4,13 @@ vi.mock("@/composition/bootstrap", () => ({
   ensureApplication: () => ({
     healthCheckUseCase: {
       async execute() {
-        return { status: "error", postgres: false, checkedAt: "t" };
+        return {
+          status: "error",
+          postgres: false,
+          schema: false,
+          detail: "Postgres refused the connection. Is the postgres service up?",
+          checkedAt: "t",
+        };
       },
     },
   }),

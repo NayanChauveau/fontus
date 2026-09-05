@@ -5,7 +5,7 @@ export function mapHealthDtoToStackStatus(
   dto: HealthDto,
 ): StackStatusViewModel {
   return {
-    stackOk: dto.status === "ok" && dto.postgres,
+    stackOk: dto.status === "ok" && dto.postgres && dto.schema,
     postgresOk: dto.postgres,
     checkedAt: dto.checkedAt,
   };
