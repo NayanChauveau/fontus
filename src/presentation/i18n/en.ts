@@ -191,6 +191,7 @@ export const en = {
   },
   a11y: {
     skipToContent: "Skip to content",
+    breadcrumb: "Breadcrumb",
   },
   notFound: {
     title: "Page not found",
@@ -207,6 +208,12 @@ export const en = {
   },
   nav: {
     home: "Home",
+    howToRead: "How to read an analysis",
+    faq: "FAQ",
+    glossary: "Glossary",
+    pfas: "PFAS",
+    nitrates: "Nitrates",
+    lead: "Lead",
   },
   legal: {
     mentions: "Legal notice",
@@ -235,6 +242,133 @@ export const en = {
       "Technical errors may be sent to Sentry (message, URL, no water-quality payload). Container logs may go to Datadog if that agent runs on the VPS.",
     privacyContact:
       "To ask for deletion of server-side data that might concern you, contact the site publisher.",
+  },
+  pages: {
+    cta: "See the analyses for your municipality",
+    limitCurrent: "French legal limit in force: {{value}}.",
+    limitSource: "Source: {{citation}}.",
+    limitUpcoming:
+      "From {{date}}, the same texts provide for a limit of {{value}}.",
+    how: {
+      title: "How to read a tap water analysis",
+      description:
+        "Understand an official ARS analysis: legal conclusion, LOQ, compliance, PFAS-20 and the FR, EU, CH, US and WHO columns.",
+      arsTitle: "The ARS conclusion: the legal verdict",
+      arsBody:
+        "The ARS banner is the official conclusion for that sample. Fontus reproduces it and does not recalculate it. A green or red comparison table on this site does not replace that verdict.",
+      limitsTitle: "Bacteriological and physico-chemical limits",
+      limitsBody:
+        "The sanitary control distinguishes bacteriological limits (for example Escherichia coli and enterococci) from physico-chemical limits (nitrates, metals, pesticides, PFAS, and so on). A non-compliant result on either side is reported in the official conclusion.",
+      valueTitle: "Value, LOQ and compliance",
+      valueBody:
+        "The published result may be a number or “below the limit of quantification” (LOQ): the laboratory cannot quantify the substance below that threshold. Compliance is judged against the French standard applicable on the sampling date, not against a later change of the law.",
+      pfasTitle: "PFAS-20 versus individual PFAS",
+      pfasBody:
+        "In France and the EU, individual PFAS such as PFOA or PFOS have no legal limit: only the PFAS-20 sum is regulated. Switzerland and the United States set some individual limits. WHO has no adopted PFAS guideline value yet.",
+      datesTitle: "Why dates differ by parameter",
+      datesBody:
+        "Each parameter keeps the date of its latest measurement. PFAS campaigns are often separate from the latest routine check. Watch cards may therefore come from another sampling campaign than the ARS conclusion at the top of the page.",
+      compareTitle: "FR, EU, CH, US and WHO columns",
+      compareBody:
+        "The French column is the legal reference for a network in France. EU, Swiss and US columns are foreign legal comparisons. The WHO column uses guideline values, not legal limits. The “Strictest” column is a Fontus metric, not an official standard.",
+      contactTitle: "When to contact your town hall or ARS",
+      contactBody:
+        "For a restriction, a non-compliant conclusion, or a health question, contact your ARS or your drinking-water operator. Fontus does not give medical advice and does not say whether the water is “good”.",
+    },
+    faq: {
+      title: "Frequently asked questions about tap water",
+      description:
+        "UDI, official analyses, PFAS, nitrates, lead, and what Fontus does not replace.",
+      potableQ: "Is tap water potable?",
+      potableA:
+        "Fontus does not answer that in place of the ARS. Open your municipality, read the official conclusion for your distribution unit (UDI), and follow the instructions of your ARS or operator if a restriction is in force.",
+      udiQ: "How do I know which network (UDI) is mine?",
+      udiA:
+        "The simplest way is the annual ARS sheet on your water bill: it names the distribution unit. You can also compare the 9-digit code or the network name with the ministry website, then select the matching network on Fontus.",
+      whereQ: "Where can I find analyses for my municipality?",
+      whereA:
+        "Enter your address on Fontus to open the official Hub’Eau / SISE-Eaux analyses. The ministry website remains the official public entry point.",
+      paramsQ: "What do nitrates, PFAS and lead mean?",
+      paramsA:
+        "They are among the parameters of the sanitary control of drinking water. Fontus shows the latest measurement and the French standard, plus foreign comparisons. Dedicated pages explain each topic without replacing the ARS conclusion.",
+      officialQ: "Does Fontus replace the ministry or ARS website?",
+      officialA:
+        "No. Fontus is a personal comparison layer on open data. The legal verdict remains the ARS conclusion. In a doubt, use the official sites and contact your ARS.",
+      freshQ: "Are the data up to date?",
+      freshA:
+        "Fontus displays the latest campaigns published by Hub’Eau (SISE-Eaux). The date shown is the sampling date of each parameter, which can differ from one substance to another.",
+      drinkQ: "Can I drink the water if a parameter exceeds the standard?",
+      drinkA:
+        "Fontus does not give that advice. Read the ARS conclusion for the sample and, if needed, ask your ARS, your operator or a health professional.",
+    },
+    glossary: {
+      title: "Tap water glossary",
+      description:
+        "UDI, INSEE, LOQ, PFAS-20, hydrometric title, SISE-Eaux, Hub’Eau, legal limit and quality reference.",
+      udiTerm: "UDI",
+      udiDef:
+        "Internal distribution unit: the network that serves your tap. It has a 9-digit code. A municipality may have several UDIs (districts, successive years).",
+      inseeTerm: "INSEE code",
+      inseeDef:
+        "Official identifier of a French municipality. Fontus uses it to list the distribution networks attached to that commune.",
+      lqTerm: "LOQ",
+      lqDef:
+        "Limit of quantification: below this threshold the laboratory reports a non-quantified result (often written “< LOQ”). That is not the same as a zero.",
+      pfas20Term: "PFAS-20",
+      pfas20Def:
+        "Regulated sum of twenty per- and polyfluoroalkyl substances. In France and the EU, this sum is the legal PFAS limit; individual PFAS have no French legal limit.",
+      thTerm: "TH (hydrometric title)",
+      thDef:
+        "Measure of water hardness (calcium and magnesium). France has no legal limit for TH; it is an indicator of scale, not a potability verdict.",
+      siseTerm: "SISE-Eaux",
+      siseDef:
+        "National information system for the sanitary control of water intended for human consumption, used by the ARS.",
+      hubeauTerm: "Hub’Eau",
+      hubeauDef:
+        "Public API that publishes SISE-Eaux data. It is the source of the measurements shown on Fontus.",
+      legalTerm: "Legal limit",
+      legalDef:
+        "Binding maximum (or range) in the applicable regulation. A result above that limit is non-compliant.",
+      qualityTerm: "Quality reference",
+      qualityDef:
+        "Non-binding indicator (for example aluminium or iron). An exceedance is not by itself a legal non-compliance.",
+    },
+    pfas: {
+      title: "PFAS in tap water in France",
+      description:
+        "What PFAS and the PFAS-20 sum are, the French legal limit taken from the official catalog, and how to check your municipality.",
+      whatTitle: "What are PFAS?",
+      whatBody:
+        "PFAS are per- and polyfluoroalkyl substances, sometimes called “forever chemicals”. The sanitary control can report individual substances (PFOA, PFOS, and others) and a regulated sum of twenty of them (PFAS-20).",
+      limitTitle: "French regulation",
+      compareTitle: "International comparisons on Fontus",
+      compareBody:
+        "The tool also shows Swiss and US individual limits when they exist, and the WHO column when a guideline value exists. Those columns do not replace the ARS conclusion in France.",
+    },
+    nitrates: {
+      title: "Nitrates in tap water",
+      description:
+        "Nitrates in drinking water, the French legal limit taken from the official catalog, and how to check your municipality.",
+      whatTitle: "What are nitrates?",
+      whatBody:
+        "Nitrates are nitrogen compounds often linked to agriculture and sanitation. They are a routine parameter of the sanitary control of drinking water.",
+      limitTitle: "French regulation",
+      compareTitle: "See the level in your municipality",
+      compareBody:
+        "Fontus shows the latest official measurement for your UDI and compares it with the French standard and foreign references. The ARS banner remains the legal verdict.",
+    },
+    lead: {
+      title: "Lead in tap water",
+      description:
+        "Lead at the tap, the French legal limit taken from the official catalog, including the later tightening already versioned, and how to check your municipality.",
+      whatTitle: "Where does lead come from?",
+      whatBody:
+        "Lead in tap water often comes from old service pipes or indoor plumbing, not from the resource. The sanitary control reports the concentration measured at the tap or at a representative point of the network.",
+      limitTitle: "French regulation",
+      compareTitle: "See the level in your municipality",
+      compareBody:
+        "Fontus shows the latest official lead measurement for your UDI. A result below the legal limit is not a medical opinion. For a health question, contact your ARS or a health professional.",
+    },
   },
 } as const;
 

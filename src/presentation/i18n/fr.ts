@@ -195,6 +195,7 @@ export const fr = {
   },
   a11y: {
     skipToContent: "Aller au contenu",
+    breadcrumb: "Fil d’Ariane",
   },
   notFound: {
     title: "Page introuvable",
@@ -211,6 +212,12 @@ export const fr = {
   },
   nav: {
     home: "Accueil",
+    howToRead: "Comment lire une analyse",
+    faq: "FAQ",
+    glossary: "Glossaire",
+    pfas: "PFAS",
+    nitrates: "Nitrates",
+    lead: "Plomb",
   },
   legal: {
     mentions: "Mentions légales",
@@ -239,5 +246,132 @@ export const fr = {
       "Les erreurs techniques peuvent partir vers Sentry (message, URL, pas le détail des analyses). Les logs de conteneurs peuvent aller vers Datadog si l’agent tourne sur le VPS.",
     privacyContact:
       "Pour une demande d’effacement de données côté serveur qui vous concerneraient, contactez l’éditeur du site.",
+  },
+  pages: {
+    cta: "Voir les analyses de votre commune",
+    limitCurrent: "Limite légale française en vigueur : {{value}}.",
+    limitSource: "Source : {{citation}}.",
+    limitUpcoming:
+      "À partir du {{date}}, les mêmes textes prévoient une limite de {{value}}.",
+    how: {
+      title: "Comment lire une analyse de l’eau du robinet",
+      description:
+        "Comprendre une analyse officielle ARS : conclusion légale, LQ, conformité, PFAS-20 et les colonnes FR, UE, CH, US et OMS.",
+      arsTitle: "La conclusion ARS : le verdict légal",
+      arsBody:
+        "Le bandeau ARS est la conclusion officielle de ce prélèvement. Fontus la reproduit, sans la recalculer. Un tableau de comparaison vert ou rouge sur ce site ne remplace pas ce verdict.",
+      limitsTitle: "Limites bactériologiques et physico-chimiques",
+      limitsBody:
+        "Le contrôle sanitaire distingue les limites bactériologiques (par exemple Escherichia coli et entérocoques) des limites physico-chimiques (nitrates, métaux, pesticides, PFAS, etc.). Un résultat non conforme d’un côté comme de l’autre figure dans la conclusion officielle.",
+      valueTitle: "Valeur, LQ et conformité",
+      valueBody:
+        "Le résultat publié peut être un nombre ou « inférieur à la limite de quantification » (LQ) : le laboratoire ne quantifie pas la substance en dessous de ce seuil. La conformité se juge à la norme française applicable à la date du prélèvement, pas à une évolution ultérieure du texte.",
+      pfasTitle: "PFAS-20 et PFAS individuels",
+      pfasBody:
+        "En France et dans l’UE, les PFAS individuels (PFOA, PFOS, etc.) n’ont pas de limite légale : seule la somme PFAS-20 est réglementée. La Suisse et les États-Unis fixent certaines limites individuelles. L’OMS n’a pas encore de valeur guide PFAS adoptée.",
+      datesTitle: "Pourquoi les dates diffèrent selon les paramètres",
+      datesBody:
+        "Chaque paramètre garde la date de sa dernière mesure. Les campagnes PFAS sont souvent distinctes du dernier contrôle courant. Les cartes de vigilance peuvent donc dater d’une autre campagne que la conclusion ARS en haut de page.",
+      compareTitle: "Colonnes FR, UE, CH, US et OMS",
+      compareBody:
+        "La colonne française est la référence légale pour un réseau en France. Les colonnes UE, Suisse et États-Unis sont des comparaisons juridiques étrangères. La colonne OMS reprend des valeurs guides, pas des limites légales. La colonne « Stricte » est une métrique Fontus, pas une norme officielle.",
+      contactTitle: "Quand contacter la mairie ou l’ARS",
+      contactBody:
+        "En cas de restriction, de conclusion non conforme ou de question de santé, contactez votre ARS ou votre exploitant. Fontus ne donne pas de conseil médical et ne dit pas si l’eau est « bonne ».",
+    },
+    faq: {
+      title: "Questions fréquentes sur l’eau du robinet",
+      description:
+        "UDI, analyses officielles, PFAS, nitrates, plomb, et ce que Fontus ne remplace pas.",
+      potableQ: "L’eau du robinet est-elle potable ?",
+      potableA:
+        "Fontus ne répond pas à la place de l’ARS. Ouvrez votre commune, lisez la conclusion officielle de votre unité de distribution (UDI), et suivez les consignes de votre ARS ou de votre exploitant si une restriction est en vigueur.",
+      udiQ: "Comment savoir quel est mon réseau (UDI) ?",
+      udiA:
+        "Le plus simple : sur votre facture d’eau, la fiche ARS annuelle indique le nom de l’unité de distribution. Vous pouvez aussi comparer le code à 9 chiffres ou le nom du réseau avec le site du ministère, puis choisir le réseau correspondant sur Fontus.",
+      whereQ: "Où trouver les analyses de ma commune ?",
+      whereA:
+        "Saisissez votre adresse sur Fontus pour ouvrir les analyses officielles Hub’Eau / SISE-Eaux. Le site du ministère reste le point d’entrée public officiel.",
+      paramsQ: "Que signifient les nitrates, les PFAS et le plomb ?",
+      paramsA:
+        "Ce sont des paramètres du contrôle sanitaire de l’eau potable. Fontus montre la dernière mesure et la norme française, plus des comparaisons étrangères. Des pages dédiées détaillent chaque sujet, sans remplacer la conclusion ARS.",
+      officialQ: "Fontus remplace-t-il le site du ministère ou de l’ARS ?",
+      officialA:
+        "Non. Fontus est une couche de comparaison personnelle sur des données ouvertes. Le verdict légal reste la conclusion ARS. En cas de doute, passez par les sites officiels et contactez votre ARS.",
+      freshQ: "Les données sont-elles à jour ?",
+      freshA:
+        "Fontus affiche les dernières campagnes publiées par Hub’Eau (SISE-Eaux). La date indiquée est celle du prélèvement de chaque paramètre, qui peut différer d’une substance à l’autre.",
+      drinkQ: "Puis-je boire l’eau si un paramètre dépasse la norme ?",
+      drinkA:
+        "Fontus ne donne pas cet avis. Lisez la conclusion ARS du prélèvement et, si besoin, interrogez votre ARS, votre exploitant ou un professionnel de santé.",
+    },
+    glossary: {
+      title: "Glossaire de l’eau du robinet",
+      description:
+        "UDI, INSEE, LQ, PFAS-20, titre hydrotimétrique, SISE-Eaux, Hub’Eau, limite légale et référence de qualité.",
+      udiTerm: "UDI",
+      udiDef:
+        "Unité de distribution interne : le réseau qui alimente votre robinet. Elle a un code à 9 chiffres. Une commune peut avoir plusieurs UDI (quartiers, années successives).",
+      inseeTerm: "Code INSEE",
+      inseeDef:
+        "Identifiant officiel d’une commune française. Fontus s’en sert pour lister les réseaux de distribution rattachés à cette commune.",
+      lqTerm: "LQ",
+      lqDef:
+        "Limite de quantification : en dessous de ce seuil, le laboratoire publie un résultat non quantifié (souvent « < LQ »). Ce n’est pas un zéro.",
+      pfas20Term: "PFAS-20",
+      pfas20Def:
+        "Somme réglementée de vingt substances per- et polyfluoroalkylées. En France et dans l’UE, cette somme est la limite légale PFAS ; les PFAS individuels n’ont pas de limite légale française.",
+      thTerm: "TH (titre hydrotimétrique)",
+      thDef:
+        "Mesure de la dureté de l’eau (calcium et magnésium). La France n’a pas de limite légale pour le TH : c’est un indicateur de calcaire, pas un verdict de potabilité.",
+      siseTerm: "SISE-Eaux",
+      siseDef:
+        "Système d’information national du contrôle sanitaire des eaux destinées à la consommation humaine, utilisé par les ARS.",
+      hubeauTerm: "Hub’Eau",
+      hubeauDef:
+        "API publique qui diffuse les données SISE-Eaux. C’est la source des mesures affichées sur Fontus.",
+      legalTerm: "Limite légale",
+      legalDef:
+        "Maximum (ou intervalle) opposable dans la réglementation applicable. Un résultat au-dessus de cette limite est non conforme.",
+      qualityTerm: "Référence de qualité",
+      qualityDef:
+        "Indicateur non contraignant (par exemple aluminium ou fer). Un dépassement n’est pas à lui seul une non-conformité légale.",
+    },
+    pfas: {
+      title: "PFAS dans l’eau du robinet en France",
+      description:
+        "Ce que sont les PFAS et la somme PFAS-20, la limite légale française lue dans le catalogue officiel, et comment consulter votre commune.",
+      whatTitle: "Que sont les PFAS ?",
+      whatBody:
+        "Les PFAS sont des substances per- et polyfluoroalkylées, parfois appelées « polluants éternels ». Le contrôle sanitaire peut publier des substances individuelles (PFOA, PFOS, etc.) et une somme réglementée de vingt d’entre elles (PFAS-20).",
+      limitTitle: "Réglementation française",
+      compareTitle: "Comparaisons internationales sur Fontus",
+      compareBody:
+        "L’outil montre aussi des limites individuelles suisses ou américaines quand elles existent, et la colonne OMS quand une valeur guide existe. Ces colonnes ne remplacent pas la conclusion ARS en France.",
+    },
+    nitrates: {
+      title: "Nitrates dans l’eau du robinet",
+      description:
+        "Nitrates dans l’eau potable, limite légale française lue dans le catalogue officiel, et comment consulter votre commune.",
+      whatTitle: "Que sont les nitrates ?",
+      whatBody:
+        "Les nitrates sont des composés azotés, souvent liés à l’agriculture et à l’assainissement. C’est un paramètre courant du contrôle sanitaire de l’eau potable.",
+      limitTitle: "Réglementation française",
+      compareTitle: "Voir le niveau dans votre commune",
+      compareBody:
+        "Fontus affiche la dernière mesure officielle de votre UDI et la compare à la norme française et à des références étrangères. Le bandeau ARS reste le verdict légal.",
+    },
+    lead: {
+      title: "Plomb dans l’eau du robinet",
+      description:
+        "Plomb au robinet, limite légale française lue dans le catalogue officiel, y compris le resserrement déjà versionné, et comment consulter votre commune.",
+      whatTitle: "D’où vient le plomb ?",
+      whatBody:
+        "Le plomb dans l’eau du robinet vient souvent des branchements ou de la plomberie intérieure, pas de la ressource. Le contrôle sanitaire publie la concentration mesurée au robinet ou en un point représentatif du réseau.",
+      limitTitle: "Réglementation française",
+      compareTitle: "Voir le niveau dans votre commune",
+      compareBody:
+        "Fontus affiche la dernière mesure officielle de plomb pour votre UDI. Un résultat sous la limite légale n’est pas un avis médical. Pour une question de santé, contactez votre ARS ou un professionnel de santé.",
+    },
   },
 } as const satisfies Messages;

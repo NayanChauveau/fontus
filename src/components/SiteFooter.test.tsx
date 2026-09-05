@@ -16,5 +16,14 @@ describe("SiteFooter", () => {
     expect(
       screen.getByRole("link", { name: "Confidentialité" }).getAttribute("href"),
     ).toBe("/confidentialite");
+    expect(
+      screen.getByRole("link", { name: "FAQ" }).getAttribute("href"),
+    ).toBe("/faq");
+    expect(
+      screen.getByRole("link", { name: "Glossaire" }).getAttribute("href"),
+    ).toBe("/glossaire");
+    expect(
+      screen.getByRole("link", { name: "PFAS" }).getAttribute("href"),
+    ).toBe("/parametres/pfas");
   });
 });

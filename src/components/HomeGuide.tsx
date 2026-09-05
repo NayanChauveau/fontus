@@ -1,3 +1,9 @@
+import Link from "next/link";
+import {
+  LEAD_PATH,
+  NITRATES_PATH,
+  PFAS_PATH,
+} from "@/presentation/editorial/paths";
 import type { Messages } from "@/presentation/i18n/messages";
 
 export function HomeGuide({ messages }: { messages: Messages }) {
@@ -27,9 +33,24 @@ export function HomeGuide({ messages }: { messages: Messages }) {
         </h2>
         <p className="mt-2">{guide.paramsIntro}</p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>{guide.paramPfas}</li>
-          <li>{guide.paramNitrates}</li>
-          <li>{guide.paramLead}</li>
+          <li>
+            <Link href={PFAS_PATH} className="underline-offset-2 hover:underline">
+              {guide.paramPfas}
+            </Link>
+          </li>
+          <li>
+            <Link
+              href={NITRATES_PATH}
+              className="underline-offset-2 hover:underline"
+            >
+              {guide.paramNitrates}
+            </Link>
+          </li>
+          <li>
+            <Link href={LEAD_PATH} className="underline-offset-2 hover:underline">
+              {guide.paramLead}
+            </Link>
+          </li>
           <li>{guide.paramPesticides}</li>
           <li>{guide.paramMicrobio}</li>
           <li>{guide.paramHardness}</li>
