@@ -27,6 +27,7 @@ export type MeasurementComparisonsDto = {
   eu: ComparisonDto | null;
   ch: ComparisonDto | null;
   us: ComparisonDto | null;
+  who: ComparisonDto | null;
   strict: ComparisonDto | null;
 };
 

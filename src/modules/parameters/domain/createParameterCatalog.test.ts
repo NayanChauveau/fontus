@@ -18,6 +18,8 @@ describe("createParameterCatalog", () => {
 
     expect(catalog.findByExternalCode("1340")?.origin).toBe("seed");
     expect(catalog.findByExternalCode("1340")?.id).toBe("nitrates");
+    expect(catalog.findByExternalCode("1391")?.id).toBe("fluoride");
+    expect(catalog.findByExternalCode("1371")?.id).toBe("chromium6");
     expect(catalog.list().some((parameter) => parameter.id === imported.id)).toBe(
       true,
     );

@@ -114,5 +114,13 @@ describe("CH / US versions", () => {
     expect(pfoaUs?.kind).toBe("legal_limit");
     expect(leadUs?.kind).toBe("quality_reference");
     expect(leadUs?.binding).toBe(false);
+    expect(
+      findActiveThreshold(
+        SEEDED_THRESHOLDS,
+        "lead",
+        "who",
+        new Date("2026-06-18T00:00:00.000Z"),
+      )?.value,
+    ).toBe(10);
   });
 });

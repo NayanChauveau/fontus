@@ -44,6 +44,9 @@ describe("CompareMeasurements", () => {
     expect(first[0]?.comparisons.eu?.status).toBe("compliant");
     expect(first[0]?.comparisons.ch?.thresholdLabel).toBe("12,3 / 40 mg/L");
     expect(first[0]?.comparisons.us?.thresholdLabel).toBe("12,3 / 44,3 mg/L");
+    expect(first[0]?.comparisons.who?.thresholdLabel).toBe("12,3 / 50 mg/L");
+    expect(first[0]?.comparisons.who?.kind).toBe("quality_reference");
+    expect(first[0]?.comparisons.who?.binding).toBe(false);
     expect(first[0]?.comparisons.strict?.thresholdLabel).toBe("12,3 / 40 mg/L");
     expect(first[0]?.comparisons.strict?.kind).toBe("site_metric");
     expect(first[1]?.comparisons.fr?.status).toBe("no_threshold");
@@ -51,6 +54,7 @@ describe("CompareMeasurements", () => {
     expect(first[1]?.comparisons.ch?.status).toBe("compliant");
     expect(first[1]?.comparisons.ch?.thresholdLabel).toBe("0,001 / 0,5 µg/L");
     expect(first[1]?.comparisons.us?.status).toBe("compliant");
+    expect(first[1]?.comparisons.who?.status).toBe("no_threshold");
     expect(first[1]?.comparisons.us?.thresholdLabel).toBe("0,001 / 0,004 µg/L");
     expect(first[1]?.comparisons.us?.kind).toBe("legal_limit");
     expect(first[1]?.comparisons.strict?.status).toBe("compliant");

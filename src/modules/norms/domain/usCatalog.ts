@@ -99,4 +99,13 @@ export const US_THRESHOLDS: ThresholdVersion[] = [
   us("mercury", "µg/L", 2),
   us("ecoli", "n/(100mL)", 0, { validFrom: RTCR_FROM }),
   us("atrazine", "µg/L", 3),
+  us("antimony", "µg/L", 6),
+  us("selenium", "µg/L", 50),
+  us("fluoride", "mg/L", 4),
+  us("uranium", "µg/L", 30),
+  us("barium", "mg/L", 2),
+  us("manganese", "µg/L", 50, { kind: "quality_reference", binding: false }),
+  us("chloride", "mg/L", 250, { kind: "quality_reference", binding: false }),
+  us("sulfate", "mg/L", 250, { kind: "quality_reference", binding: false }),
+  us("iron", "µg/L", 300, { kind: "quality_reference", binding: false }),
 ];

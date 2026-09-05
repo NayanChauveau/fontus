@@ -81,4 +81,11 @@ export const CH_THRESHOLDS: ThresholdVersion[] = [
   ch("pesticides_total", "µg/L", 0.5),
   ch("aluminium", "µg/L", 200),
   ch("iron", "µg/L", 200),
+  ch("fluoride", "mg/L", 1.5),
+  ch("boron", "mg/L", 1),
+  ch("selenium", "µg/L", 10),
+  ch("antimony", "µg/L", 5),
+  ch("manganese", "µg/L", 50),
+  ch("uranium", "µg/L", 30),
+  ch("sodium", "mg/L", 200),
 ];

@@ -213,6 +213,7 @@ describe("NetworkAnalyses", () => {
                   citation: null,
                   sourceUrl: null,
                 },
+                who: null,
                 strict: {
                   status: "compliant",
                   kind: "site_metric",
@@ -273,6 +274,7 @@ describe("NetworkAnalyses", () => {
                   citation: "NPDWR",
                   sourceUrl: "https://www.epa.gov",
                 },
+                who: null,
                 strict: {
                   status: "compliant",
                   kind: "site_metric",
@@ -319,6 +321,7 @@ describe("NetworkAnalyses", () => {
                   sourceUrl: "https://example.test",
                 },
                 us: null,
+                who: null,
                 strict: {
                   status: "exceedance",
                   kind: "site_metric",
@@ -379,6 +382,7 @@ describe("NetworkAnalyses", () => {
                   citation: null,
                   sourceUrl: null,
                 },
+                who: null,
                 strict: {
                   status: "no_threshold",
                   kind: null,
@@ -431,6 +435,7 @@ describe("NetworkAnalyses", () => {
                   citation: null,
                   sourceUrl: null,
                 },
+                who: null,
                 strict: {
                   status: "no_threshold",
                   kind: null,
@@ -484,6 +489,7 @@ describe("NetworkAnalyses", () => {
     expect(screen.getAllByText("UE").length).toBeGreaterThan(0);
     expect(screen.getAllByText("CH").length).toBeGreaterThan(0);
     expect(screen.getAllByText("US").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("OMS").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Stricte").length).toBeGreaterThan(0);
     expect(screen.getByText(/métrique du site/)).toBeTruthy();
     expect(screen.getAllByText("référence stricte (site)").length).toBeGreaterThan(

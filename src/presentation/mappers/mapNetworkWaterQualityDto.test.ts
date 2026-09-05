@@ -537,6 +537,7 @@ describe("mapNetworkWaterQualityDto", () => {
               citation: "NPDWR",
               sourceUrl: "https://example.test",
             },
+            who: null,
             strict: {
               status: "compliant",
               kind: "site_metric",
@@ -597,6 +598,7 @@ describe("mapNetworkWaterQualityDto", () => {
               citation: "NPDWR",
               sourceUrl: "https://example.test",
             },
+            who: null,
             strict: {
               status: "compliant",
               kind: "site_metric",
@@ -643,6 +645,7 @@ describe("mapNetworkWaterQualityDto", () => {
               sourceUrl: "https://example.test",
             },
             us: null,
+            who: null,
             strict: {
               status: "exceedance",
               kind: "site_metric",

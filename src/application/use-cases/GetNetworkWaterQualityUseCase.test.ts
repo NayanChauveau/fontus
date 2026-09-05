@@ -231,6 +231,7 @@ describe("GetNetworkWaterQualityUseCase", () => {
                 citation: "NPDWR",
                 sourceUrl: "https://example.test",
               },
+              who: null,
               strict: {
                 status: "compliant",
                 kind: "site_metric",

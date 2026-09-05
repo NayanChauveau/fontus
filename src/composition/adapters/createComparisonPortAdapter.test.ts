@@ -42,6 +42,7 @@ describe("createComparisonPortAdapter", () => {
                 citation: "NPDWR",
                 sourceUrl: "https://example.test",
               },
+              who: null,
               strict: {
                 status: "compliant",
                 kind: "site_metric",
@@ -126,6 +127,7 @@ describe("createComparisonPortAdapter", () => {
                 citation: null,
                 sourceUrl: null,
               },
+              who: null,
               strict: {
                 status: "no_threshold",
                 kind: null,

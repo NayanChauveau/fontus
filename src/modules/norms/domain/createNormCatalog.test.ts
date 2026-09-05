@@ -36,6 +36,19 @@ describe("createNormCatalog", () => {
     expect(catalog.findActive("pfoa", "ch", at)?.value).toBe(0.5);
     expect(catalog.findActive("pfoa", "us", at)?.value).toBe(0.004);
     expect(catalog.findActive("nitrates", "us", at)?.value).toBe(44.3);
+    expect(catalog.findActive("nitrates", "who", at)?.value).toBe(50);
+    expect(catalog.findActive("nitrates", "who", at)?.kind).toBe(
+      "quality_reference",
+    );
+    expect(catalog.findActive("pfoa", "who", at)).toBeNull();
     expect(catalog.findActive("cadmium", "ch", at)?.value).toBe(3);
+    expect(catalog.findActive("fluoride", "fr", at)?.value).toBe(1.5);
+    expect(catalog.findActive("fluoride", "who", at)?.value).toBe(1.5);
+    expect(catalog.findActive("boron", "ch", at)?.value).toBe(1);
+    expect(catalog.findActive("antimony", "us", at)?.value).toBe(6);
+    expect(catalog.findActive("chromium6", "fr", at)?.value).toBe(6);
+    expect(catalog.findActive("chromium6", "eu", at)).toBeNull();
+    expect(catalog.findActive("ammonium", "fr", at)?.value).toBe(0.1);
+    expect(catalog.findActive("ammonium", "eu", at)?.value).toBe(0.5);
   });
 });

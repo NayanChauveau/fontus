@@ -73,6 +73,7 @@ export function NetworkAnalysesResults({
         </p>
       )}
       <p className="text-xs text-zinc-500">{messages.analyses.noThresholdNote}</p>
+      <p className="text-xs text-zinc-500">{messages.analyses.whoNote}</p>
       <p className="text-xs text-zinc-500">{messages.analyses.strictNote}</p>
       <p className="text-xs text-zinc-500">{viewModel.disclaimer}</p>
       <SourcesList sources={viewModel.sources} />
@@ -296,7 +297,7 @@ function MeasurementTable({
         {title}
       </h4>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[56rem] text-left text-sm">
+        <table className="w-full min-w-[64rem] text-left text-sm">
           <thead>
             <tr className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800">
               <th className="py-2 pr-3 font-medium">{messages.analyses.parameter}</th>
@@ -308,6 +309,12 @@ function MeasurementTable({
               <th className="py-2 pr-3 font-medium">{messages.analyses.compareEu}</th>
               <th className="py-2 pr-3 font-medium">{messages.analyses.compareCh}</th>
               <th className="py-2 pr-3 font-medium">{messages.analyses.compareUs}</th>
+              <th
+                className="py-2 pr-3 font-medium"
+                title={messages.analyses.whoNote}
+              >
+                {messages.analyses.compareWho}
+              </th>
               <th
                 className="py-2 pr-3 font-medium"
                 title={messages.analyses.strictNote}
@@ -375,6 +382,9 @@ function MeasurementTable({
                 </td>
                 <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
                   <ComparisonCell comparison={measurement.us} />
+                </td>
+                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+                  <ComparisonCell comparison={measurement.who} />
                 </td>
                 <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
                   <ComparisonCell comparison={measurement.strict} />

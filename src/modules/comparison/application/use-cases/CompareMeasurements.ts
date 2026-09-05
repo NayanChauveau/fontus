@@ -33,6 +33,7 @@ export type ComparedMeasurement<T extends ComparisonInput> = T & {
     eu: ComparisonDto | null;
     ch: ComparisonDto | null;
     us: ComparisonDto | null;
+    who: ComparisonDto | null;
     strict: ComparisonDto | null;
   };
 };
@@ -69,6 +70,10 @@ export class CompareMeasurements {
         parameterId && at
           ? this.catalog.findActive(parameterId, "us", at)
           : null;
+      const who =
+        parameterId && at
+          ? this.catalog.findActive(parameterId, "who", at)
+          : null;
       const strict = pickStrictThreshold([fr, eu, ch, us]);
 
       return {
@@ -78,6 +83,7 @@ export class CompareMeasurements {
           eu: toDto(compareMeasurement(measurement, eu), measurement),
           ch: toDto(compareMeasurement(measurement, ch), measurement),
           us: toDto(compareMeasurement(measurement, us), measurement),
+          who: toDto(compareMeasurement(measurement, who), measurement),
           strict: toStrictDto(
             compareMeasurement(measurement, strict),
             measurement,

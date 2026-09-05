@@ -37,6 +37,7 @@ export type NetworkMeasurementViewModel = {
   eu: ComparisonViewModel | null;
   ch: ComparisonViewModel | null;
   us: ComparisonViewModel | null;
+  who: ComparisonViewModel | null;
   strict: ComparisonViewModel | null;
 };
 

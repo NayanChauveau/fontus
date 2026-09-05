@@ -103,9 +103,11 @@ export const en = {
     value: "Result",
     canonicalValue: "Canonical value",
     noThresholdNote:
-      "In FR/EU, individual PFAS (PFOA, PFOS, etc.) have no legal limit: only the PFAS-20 sum (0.10 µg/L) is regulated. Switzerland and the United States set individual limits.",
+      "In FR/EU, individual PFAS (PFOA, PFOS, etc.) have no legal limit: only the PFAS-20 sum (0.10 µg/L) is regulated. Switzerland and the United States set individual limits. WHO has no adopted PFAS guideline value yet.",
+    whoNote:
+      "The WHO column uses guideline values from the Guidelines for drinking-water quality. They are not legal limits; the ARS banner remains the legal verdict in France.",
     strictNote:
-      "The “Strictest” column is a site metric: the lowest comparable legal limit among FR, EU, CH and US. It is not an official standard.",
+      "The “Strictest” column is a site metric: the lowest comparable legal limit among FR, EU, CH and US. WHO is excluded. It is not an official standard.",
     reconstructed: "reconstructed",
     reconstructedSumNote:
       "When Hub’Eau publishes “<SEUIL” for the PFAS-20 sum, we compute an upper bound from the 20 substances in the same sample (LOQ if not detected).",
@@ -117,6 +119,7 @@ export const en = {
     compareEu: "EU",
     compareCh: "CH",
     compareUs: "US",
+    compareWho: "WHO",
     compareStrict: "Strictest",
     compliant: "compliant",
     exceedance: "exceedance",

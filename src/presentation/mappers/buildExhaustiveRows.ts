@@ -95,6 +95,7 @@ function emptyWatchRow(
     eu: null,
     ch: null,
     us: null,
+    who: null,
     strict: null,
   };
 }

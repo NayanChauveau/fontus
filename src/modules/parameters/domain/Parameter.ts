@@ -2,6 +2,7 @@ export type ParameterCategory =
   | "pfas"
   | "nutrients"
   | "metals"
+  | "chemicals"
   | "microbio"
   | "pesticides"
   | "organoleptic"

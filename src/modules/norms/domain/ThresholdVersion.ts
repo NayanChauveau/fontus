@@ -1,4 +1,4 @@
-export type Jurisdiction = "fr" | "eu" | "ch" | "us";
+export type Jurisdiction = "fr" | "eu" | "ch" | "us" | "who";
 
 export type ThresholdKind = "legal_limit" | "quality_reference";
 

@@ -151,6 +151,7 @@ function toMeasurementViewModel(
     eu: toComparisonViewModel(measurement.comparisons?.eu ?? null, i18n.messages),
     ch: toComparisonViewModel(measurement.comparisons?.ch ?? null, i18n.messages),
     us: toComparisonViewModel(measurement.comparisons?.us ?? null, i18n.messages),
+    who: toComparisonViewModel(measurement.comparisons?.who ?? null, i18n.messages),
     strict: toComparisonViewModel(
       measurement.comparisons?.strict ?? null,
       i18n.messages,

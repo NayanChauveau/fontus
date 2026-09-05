@@ -14,6 +14,7 @@ function jurisdictions(messages: Messages) {
     ["eu", messages.analyses.compareEu],
     ["ch", messages.analyses.compareCh],
     ["us", messages.analyses.compareUs],
+    ["who", messages.analyses.compareWho],
     ["strict", messages.analyses.compareStrict],
   ] as const;
 }
@@ -25,6 +26,7 @@ function kindOrder(messages: Messages): string[] {
     messages.analyses.compareEu,
     messages.analyses.compareCh,
     messages.analyses.compareUs,
+    messages.analyses.compareWho,
     messages.analyses.compareStrict,
   ];
 }
