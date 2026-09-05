@@ -24,7 +24,7 @@ jobs:
     outputs:
       web_image: ${{ steps.meta.outputs.web_image }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: docker/login-action@v3
         with:
