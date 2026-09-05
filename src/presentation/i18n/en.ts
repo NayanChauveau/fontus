@@ -10,6 +10,30 @@ export const en = {
     postgresOk: "PostgreSQL reachable",
     postgresKo: "PostgreSQL unreachable",
     checkedAt: "Checked at",
+    guide: {
+      howTitle: "How to check tap water quality",
+      howStep1:
+        "Enter a French address: we identify the municipality and its INSEE code.",
+      howStep2:
+        "If several networks exist, choose your distribution unit (UDI), often named on the water bill.",
+      howStep3:
+        "Read the latest official analyses and compare them with the standards (France, European Union, Switzerland, United States, WHO).",
+      sourcesTitle: "Where does the data come from?",
+      sourcesBody:
+        "Measurements come from Hub’Eau (the SISE-Eaux sanitary-control database). The ARS conclusion for the sample is reproduced, not recalculated. Fontus is not an ARS or ministry service.",
+      paramsTitle: "Parameters people look up",
+      paramsIntro:
+        "The tool shows substances used to assess drinking-water compliance, including PFAS, nitrates, lead, pesticides, microbiology and hardness.",
+      paramPfas: "PFAS",
+      paramNitrates: "Nitrates",
+      paramLead: "Lead",
+      paramPesticides: "Pesticides",
+      paramMicrobio: "Microbiology",
+      paramHardness: "Hardness",
+      limitsTitle: "What Fontus does not say",
+      limitsBody:
+        "We do not say whether the water is “good”. We show the measurement, the French standard, and foreign comparisons. The ARS banner remains the legal verdict.",
+    },
   },
   address: {
     title: "What is your address?",
@@ -180,6 +204,9 @@ export const en = {
     label: "Language",
     french: "Français",
     english: "English",
+  },
+  nav: {
+    home: "Home",
   },
   legal: {
     mentions: "Legal notice",

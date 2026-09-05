@@ -24,6 +24,12 @@ describe("Home page", () => {
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.queryByRole("heading", { name: "Fontus" })).toBeNull();
     expect(screen.getByText("address-search")).toBeTruthy();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Comment consulter la qualité de l’eau du robinet",
+      }),
+    ).toBeTruthy();
     expect(document.getElementById("contenu")).toBeTruthy();
     await expect(
       generateMetadata({ searchParams: Promise.resolve({}) }),

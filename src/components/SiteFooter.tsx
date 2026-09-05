@@ -8,7 +8,10 @@ export function SiteFooter() {
 
   return (
     <footer className="mt-auto border-t border-zinc-200 px-4 py-4 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-      <nav className="flex justify-center gap-4">
+      <nav className="flex flex-wrap justify-center gap-4">
+        <Link href="/" className="underline-offset-2 hover:underline">
+          {messages.nav.home}
+        </Link>
         <Link
           href="/mentions-legales"
           className="underline-offset-2 hover:underline"

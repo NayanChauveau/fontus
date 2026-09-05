@@ -13,6 +13,30 @@ export const fr = {
     postgresOk: "PostgreSQL joignable",
     postgresKo: "PostgreSQL injoignable",
     checkedAt: "Vérifié à",
+    guide: {
+      howTitle: "Comment consulter la qualité de l’eau du robinet",
+      howStep1:
+        "Saisissez une adresse française : on identifie la commune et son code INSEE.",
+      howStep2:
+        "S’il y a plusieurs réseaux, choisissez votre unité de distribution (UDI), souvent indiquée sur la facture d’eau.",
+      howStep3:
+        "Consultez les dernières analyses officielles et comparez-les aux normes (France, Union européenne, Suisse, États-Unis, OMS).",
+      sourcesTitle: "D’où viennent les données ?",
+      sourcesBody:
+        "Les mesures viennent de Hub’Eau (base SISE-Eaux du contrôle sanitaire). La conclusion ARS du prélèvement est reproduite, non recalculée. Fontus n’est pas un service de l’ARS ni du ministère.",
+      paramsTitle: "Paramètres souvent consultés",
+      paramsIntro:
+        "L’outil affiche notamment les substances suivies pour la conformité de l’eau potable : PFAS, nitrates, plomb, pesticides, microbiologie et calcaire.",
+      paramPfas: "PFAS",
+      paramNitrates: "Nitrates",
+      paramLead: "Plomb",
+      paramPesticides: "Pesticides",
+      paramMicrobio: "Microbiologie",
+      paramHardness: "Calcaire",
+      limitsTitle: "Ce que Fontus ne dit pas",
+      limitsBody:
+        "On ne dit pas si l’eau est « bonne ». On montre la mesure, la norme française, et des comparaisons étrangères. Le bandeau ARS reste le verdict légal.",
+    },
   },
   address: {
     title: "Quelle est votre adresse ?",
@@ -184,6 +208,9 @@ export const fr = {
     label: "Langue",
     french: "Français",
     english: "English",
+  },
+  nav: {
+    home: "Accueil",
   },
   legal: {
     mentions: "Mentions légales",

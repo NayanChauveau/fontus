@@ -7,6 +7,9 @@ import { SiteFooter } from "./SiteFooter";
 describe("SiteFooter", () => {
   it("links to the legal pages", () => {
     render(<SiteFooter />);
+    expect(screen.getByRole("link", { name: "Accueil" }).getAttribute("href")).toBe(
+      "/",
+    );
     expect(
       screen.getByRole("link", { name: "Mentions légales" }).getAttribute("href"),
     ).toBe("/mentions-legales");

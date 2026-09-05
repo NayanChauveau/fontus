@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AddressSearch } from "@/components/AddressSearch";
+import { HomeGuide } from "@/components/HomeGuide";
 import { requestMessages } from "@/presentation/i18n/requestLocale";
 import { hasShareQueryParams } from "@/presentation/shareSearch";
 
@@ -42,6 +43,7 @@ export default async function Home() {
         <Suspense>
           <AddressSearch />
         </Suspense>
+        <HomeGuide messages={messages} />
       </main>
     </div>
   );
