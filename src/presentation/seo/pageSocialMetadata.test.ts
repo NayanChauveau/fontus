@@ -26,4 +26,15 @@ describe("pageSocialMetadata", () => {
       },
     });
   });
+
+  it("uses the English Open Graph locale", () => {
+    expect(
+      pageSocialMetadata({
+        title: "Tap water quality in Toulouse",
+        description: "Official analyses in Toulouse.",
+        path: "/eau-robinet/toulouse",
+        locale: "en",
+      }).openGraph?.locale,
+    ).toBe("en_GB");
+  });
 });

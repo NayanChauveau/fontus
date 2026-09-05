@@ -73,6 +73,13 @@ describe("city page", () => {
     expect(page.generateStaticParams()).toHaveLength(50);
   });
 
+  it("returns empty metadata for an unknown slug", async () => {
+    const page = await import("./page");
+    await expect(
+      page.generateMetadata({ params: Promise.resolve({ slug: "unknown" }) }),
+    ).resolves.toEqual({});
+  });
+
   it("calls notFound for an unknown slug", async () => {
     const page = await import("./page");
     await expect(

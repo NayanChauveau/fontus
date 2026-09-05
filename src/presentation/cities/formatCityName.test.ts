@@ -8,6 +8,8 @@ describe("formatCityName", () => {
     expect(formatCityName("NÎMES")).toBe("Nîmes");
     expect(formatCityName("SAINT-ÉTIENNE")).toBe("Saint-étienne");
     expect(formatCityName("  béziers ")).toBe("Béziers");
+    expect(formatCityName("")).toBe("");
+    expect(formatCityName("   ")).toBe("");
   });
 });
 
@@ -20,5 +22,7 @@ describe("displayCityName", () => {
 
   it("formats the fallback when the commune is not in the catalog", () => {
     expect(displayCityName("81004", "ALBI")).toBe("Albi");
+    expect(displayCityName("81004")).toBe("");
+    expect(displayCityName("81004", null)).toBe("");
   });
 });

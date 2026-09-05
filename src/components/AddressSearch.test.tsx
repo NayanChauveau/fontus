@@ -270,6 +270,19 @@ describe("AddressSearch", () => {
     );
   });
 
+  it("falls back to the INSEE code when the commune name is unknown", () => {
+    share.citycode = "99999";
+    render(<AddressSearch />);
+    expect((screen.getByRole("combobox") as HTMLInputElement).value).toBe(
+      "99999",
+    );
+  });
+
+  it("keeps an unshared initial commune name in state without filling the field", () => {
+    render(<AddressSearch initialCommuneName="ALBI" />);
+    expect((screen.getByRole("combobox") as HTMLInputElement).value).toBe("");
+  });
+
   it("restores a commune and network from the share url", () => {
     share.citycode = "33063";
     share.networkCode = "033001214";
@@ -346,6 +359,10 @@ describe("AddressSearch", () => {
     await waitFor(() => {
       expect(screen.getAllByRole("option")).toHaveLength(2);
     });
+    fireEvent.keyDown(input, { key: "ArrowUp" });
+    expect(screen.getAllByRole("option")[1]?.getAttribute("aria-selected")).toBe(
+      "true",
+    );
     fireEvent.keyDown(input, { key: "ArrowDown" });
     fireEvent.keyDown(input, { key: "ArrowDown" });
     fireEvent.keyDown(input, { key: "ArrowUp" });

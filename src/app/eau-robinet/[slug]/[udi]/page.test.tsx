@@ -70,6 +70,20 @@ describe("city UDI page", () => {
     ).toBeTruthy();
   });
 
+  it("returns empty metadata when the city or UDI is unknown", async () => {
+    const page = await import("./page");
+    await expect(
+      page.generateMetadata({
+        params: Promise.resolve({ slug: "unknown", udi: "031000123" }),
+      }),
+    ).resolves.toEqual({});
+    await expect(
+      page.generateMetadata({
+        params: Promise.resolve({ slug: "toulouse", udi: "not-a-udi" }),
+      }),
+    ).resolves.toEqual({});
+  });
+
   it("calls notFound for an invalid UDI code", async () => {
     const page = await import("./page");
     await expect(

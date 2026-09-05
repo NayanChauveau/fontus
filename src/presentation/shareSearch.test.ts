@@ -44,6 +44,13 @@ describe("shareSearch", () => {
     expect(
       buildShareSearch({ citycode: "33063", networkCode: "033001214" }),
     ).toBe("insee=33063&udi=033001214");
+    expect(
+      buildShareSearch({
+        citycode: "81004",
+        networkCode: null,
+        addressLabel: "12 rue de l Ecole",
+      }),
+    ).toBe("insee=81004&adresse=12+rue+de+l+Ecole");
     expect(buildShareSearch({ citycode: "2a004", networkCode: null })).toBe(
       "insee=2A004",
     );
@@ -67,6 +74,18 @@ describe("shareSearch", () => {
       networkCode: null,
       addressLabel: "55 Avenue Pierre Molette 31100 Toulouse",
     });
+    expect(parseShareSearch("?insee=81004&adresse=+++")).toEqual({
+      citycode: "81004",
+      networkCode: null,
+      addressLabel: null,
+    });
+    expect(
+      buildShareSearch({
+        citycode: "81004",
+        networkCode: null,
+        addressLabel: "   ",
+      }),
+    ).toBe("insee=81004");
   });
 
   it("detects share query params even when they are invalid", () => {
@@ -79,6 +98,7 @@ describe("shareSearch", () => {
     expect(hasShareQueryParams({ insee: "81004" })).toBe(true);
     expect(hasShareQueryParams({ udi: "081004110" })).toBe(true);
     expect(hasShareQueryParams({ insee: "xx" })).toBe(true);
+    expect(hasShareQueryParams({ adresse: "55 Avenue" })).toBe(true);
   });
 
   it("reuses city pages for catalog communes", () => {
@@ -91,6 +111,13 @@ describe("shareSearch", () => {
     expect(pathForShare({ citycode: "81004", networkCode: null })).toBe(
       "/?insee=81004",
     );
+    expect(
+      pathForShare({
+        citycode: "81004",
+        networkCode: null,
+        addressLabel: "12 rue de l Ecole",
+      }),
+    ).toBe("/?insee=81004&adresse=12+rue+de+l+Ecole");
     expect(pathForShare({ citycode: null, networkCode: null })).toBe("/");
     expect(pathForShare({ citycode: "75108", networkCode: null })).toBe(
       "/eau-robinet/paris",
@@ -125,6 +152,7 @@ describe("shareSearch", () => {
       addressLabel: null,
     });
     expect(parseSharePath("/")).toBeNull();
+    expect(parseSharePath("/eau-robinet/unknown")).toBeNull();
   });
 });
 
