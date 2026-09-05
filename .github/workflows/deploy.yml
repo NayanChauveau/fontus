@@ -12,6 +12,7 @@ jobs:
   deploy:
     needs: ci
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.2
@@ -26,6 +27,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          command_timeout: 40m
           envs: POSTGRES_PASSWORD,SENTRY_DSN,TRAEFIK_HOST,DATABASE_URL
           script: |
             set -euo pipefail

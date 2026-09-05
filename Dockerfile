@@ -1,6 +1,6 @@
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 WORKDIR /app
 
 FROM base AS deps
@@ -11,6 +11,7 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV DOCKER_BUILD=1
 RUN pnpm build
 
 FROM base AS production

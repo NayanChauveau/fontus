@@ -32,6 +32,8 @@ docker compose -f docker-compose.prod.yml exec -T postgres \
 
 Health : `https://$TRAEFIK_HOST/api/health`
 
+Le premier `docker compose build` sur le VPS peut dépasser 10 min (npm + `next build`). Le workflow SSH a un `command_timeout` de 40 min. Le type-check Next est sauté dans l’image (`DOCKER_BUILD=1`) : le job CI le fait déjà.
+
 ## Nouveau site plus tard
 
 Copier `docker-compose.prod.yml`, changer le `Host`, le nom du router, et le dossier `/srv/…`.
