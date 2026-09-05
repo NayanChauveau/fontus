@@ -23,6 +23,7 @@ export const en = {
     fieldCitycode: "INSEE code",
     fieldCoordinates: "Coordinates",
     clear: "Change address",
+    clearQuery: "Clear the field",
   },
   networks: {
     title: "Distribution networks",

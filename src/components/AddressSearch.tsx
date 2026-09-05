@@ -141,34 +141,58 @@ export function AddressSearch() {
         >
           {messages.address.label}
         </label>
-        <input
-          ref={inputRef}
-          id="address-query"
-          type="search"
-          autoComplete="off"
-          role="combobox"
-          aria-expanded={open}
-          aria-controls={listboxId}
-          aria-autocomplete="list"
-          aria-activedescendant={
-            activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined
-          }
-          placeholder={messages.address.placeholder}
-          value={query}
-          onChange={(event) => {
-            const next = event.target.value;
-            setSelected(null);
-            setQuery(next);
-            if (next.trim().length < MIN_ADDRESS_QUERY_LENGTH) {
-              abortRef.current?.abort();
-              setSuggestions([]);
-              setStatus("idle");
-              setOpen(false);
+        <div className="relative">
+          <input
+            ref={inputRef}
+            id="address-query"
+            type="search"
+            autoComplete="off"
+            role="combobox"
+            aria-expanded={open}
+            aria-controls={listboxId}
+            aria-autocomplete="list"
+            aria-activedescendant={
+              activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined
             }
-          }}
-          onKeyDown={onKeyDown}
-          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-base text-zinc-950 outline-none ring-emerald-600/30 placeholder:text-zinc-400 focus:border-emerald-600 focus:ring-3 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
-        />
+            placeholder={messages.address.placeholder}
+            value={query}
+            onChange={(event) => {
+              const next = event.target.value;
+              setSelected(null);
+              setQuery(next);
+              if (next.trim().length < MIN_ADDRESS_QUERY_LENGTH) {
+                abortRef.current?.abort();
+                setSuggestions([]);
+                setStatus("idle");
+                setOpen(false);
+              }
+            }}
+            onKeyDown={onKeyDown}
+            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-12 text-base text-zinc-950 outline-none ring-emerald-600/30 placeholder:text-zinc-400 focus:border-emerald-600 focus:ring-3 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
+          />
+          {query.length > 0 && (
+            <button
+              type="button"
+              aria-label={messages.address.clearQuery}
+              onClick={clearSelection}
+              className="absolute top-1/2 right-2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            >
+              <svg
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+                className="size-4"
+              >
+                <path
+                  d="M4 4l8 8M12 4l-8 8"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
 
         {open && (
           <ul

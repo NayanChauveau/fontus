@@ -225,4 +225,14 @@ describe("AddressSearch", () => {
       "true",
     );
   });
+
+  it("clears the field with the custom control", async () => {
+    render(<AddressSearch />);
+    const input = screen.getByRole("combobox");
+    expect(screen.queryByRole("button", { name: "Effacer la saisie" })).toBeNull();
+    fireEvent.change(input, { target: { value: "mar" } });
+    fireEvent.click(screen.getByRole("button", { name: "Effacer la saisie" }));
+    expect((input as HTMLInputElement).value).toBe("");
+    expect(screen.queryByRole("button", { name: "Effacer la saisie" })).toBeNull();
+  });
 });

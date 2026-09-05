@@ -27,6 +27,7 @@ export const fr = {
     fieldCitycode: "Code INSEE",
     fieldCoordinates: "Coordonnées",
     clear: "Changer d’adresse",
+    clearQuery: "Effacer la saisie",
   },
   networks: {
     title: "Réseaux de distribution",

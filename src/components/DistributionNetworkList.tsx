@@ -23,9 +23,11 @@ export function DistributionNetworkList({ citycode }: { citycode: string }) {
     [dto, messages],
   );
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
+    setStatus("loading");
 
     void (async () => {
       try {
@@ -64,7 +66,7 @@ export function DistributionNetworkList({ citycode }: { citycode: string }) {
     return () => {
       controller.abort();
     };
-  }, [citycode]);
+  }, [citycode, reloadToken]);
 
   return (
     <>
@@ -81,9 +83,18 @@ export function DistributionNetworkList({ citycode }: { citycode: string }) {
         )}
 
         {status === "unavailable" && (
-          <p className="mt-3 text-sm text-red-700 dark:text-red-400">
-            {messages.networks.unavailable}
-          </p>
+          <div className="mt-3 flex flex-col items-start gap-2">
+            <p className="text-sm text-red-700 dark:text-red-400">
+              {messages.networks.unavailable}
+            </p>
+            <button
+              type="button"
+              onClick={() => setReloadToken((current) => current + 1)}
+              className="text-sm text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
+            >
+              {messages.errors.retry}
+            </button>
+          </div>
         )}
 
         {status === "ready" && viewModel && (

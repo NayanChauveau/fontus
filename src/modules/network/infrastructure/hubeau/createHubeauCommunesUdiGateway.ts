@@ -6,8 +6,9 @@ import { parseCommunesUdiResponse } from "./parseCommunesUdiResponse";
 export const HUBEAU_COMMUNES_UDI_URL =
   "https://hubeau.eaufrance.fr/api/v1/qualite_eau_potable/communes_udi";
 
-const REQUEST_TIMEOUT_MS = 8_000;
+const REQUEST_TIMEOUT_MS = 20_000;
 const MAX_PAGES = 5;
+const MAX_ATTEMPTS = 2;
 
 export type HttpGet = (url: URL, init: RequestInit) => Promise<Response>;
 
@@ -39,23 +40,29 @@ export function createHubeauCommunesUdiGateway(
 }
 
 async function getJson(httpGet: HttpGet, url: URL): Promise<unknown> {
-  let response: Response;
-  try {
-    response = await httpGet(url, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "fontus/0.1 (https://fontus.fr)",
-      },
-    });
-  } catch (error) {
-    throw new Error("HUBEAU_REQUEST_FAILED", { cause: error });
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await httpGet(url, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "fontus/0.1 (https://fontus.fr)",
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HUBEAU_HTTP_${response.status}`);
+      }
+      return response.json();
+    } catch (error) {
+      lastError = error;
+      if (error instanceof Error && error.message.startsWith("HUBEAU_HTTP_")) {
+        throw error;
+      }
+    }
   }
 
-  if (!response.ok) {
-    throw new Error(`HUBEAU_HTTP_${response.status}`);
-  }
-
-  return response.json();
+  throw new Error("HUBEAU_REQUEST_FAILED", { cause: lastError });
 }

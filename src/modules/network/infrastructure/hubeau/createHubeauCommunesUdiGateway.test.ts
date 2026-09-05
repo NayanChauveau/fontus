@@ -60,4 +60,32 @@ describe("createHubeauCommunesUdiGateway", () => {
       "HUBEAU_HTTP_500",
     );
   });
+
+  it("retries a dropped request once", async () => {
+    let calls = 0;
+    const gateway = createHubeauCommunesUdiGateway(async () => {
+      calls += 1;
+      if (calls === 1) {
+        throw new Error("offline");
+      }
+      return new Response(
+        JSON.stringify({
+          next: null,
+          data: [
+            {
+              code_commune: "33063",
+              nom_commune: "Bordeaux",
+              code_reseau: "033001214",
+              nom_reseau: "PAULIN",
+              annee: "2026",
+            },
+          ],
+        }),
+      );
+    });
+
+    const links = await gateway.listByCommune("33063", 2026);
+    expect(calls).toBe(2);
+    expect(links[0]?.networkCode).toBe("033001214");
+  });
 });

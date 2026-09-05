@@ -119,6 +119,24 @@ describe("DistributionNetworkList", () => {
     vi.unstubAllGlobals();
   });
 
+  it("retries the request from the unavailable state", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({ error: "x" }, { status: 503 }))
+      .mockResolvedValueOnce(Response.json(exact));
+    vi.stubGlobal("fetch", fetchMock);
+    render(<DistributionNetworkList citycode="33063" />);
+    await waitFor(() => {
+      expect(screen.getByText(/Impossible de charger/)).toBeTruthy();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Réessayer" }));
+    await waitFor(() => {
+      expect(screen.getByText("PAULIN")).toBeTruthy();
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.unstubAllGlobals();
+  });
+
   it("ignores abort errors", async () => {
     vi.stubGlobal(
       "fetch",
