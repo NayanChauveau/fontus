@@ -33,6 +33,9 @@ export const en = {
       limitsTitle: "What Fontus does not say",
       limitsBody:
         "We do not say whether the water is “good”. We show the measurement, the French standard, and foreign comparisons. The ARS banner remains the legal verdict.",
+      citiesNote:
+        "The 50 most populated municipalities in metropolitan France also have a city page.",
+      citiesLink: "See the major cities",
     },
   },
   address: {
@@ -214,6 +217,7 @@ export const en = {
     pfas: "PFAS",
     nitrates: "Nitrates",
     lead: "Lead",
+    cities: "Major cities",
   },
   legal: {
     mentions: "Legal notice",
@@ -368,6 +372,17 @@ export const en = {
       compareTitle: "See the level in your municipality",
       compareBody:
         "Fontus shows the latest official lead measurement for your UDI. A result below the legal limit is not a medical opinion. For a health question, contact your ARS or a health professional.",
+    },
+    city: {
+      hubTitle: "Tap water quality in major cities",
+      hubDescription:
+        "Official tap-water analyses for the 50 most populated municipalities in metropolitan France: distribution networks (UDI) by city.",
+      hubCrumb: "Major cities",
+      hubIntro:
+        "These pages cover the 50 most populated municipalities in metropolitan France. Each city opens the same search tool, with the municipality already filled in.",
+      title: "Tap water quality in {{name}}",
+      description:
+        "Distribution networks (UDI) and official tap-water analyses in {{name}} ({{department}}).",
     },
   },
 } as const;

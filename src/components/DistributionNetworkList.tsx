@@ -88,7 +88,9 @@ export function DistributionNetworkList({
           current && codes.includes(current) ? current : null;
         const next =
           requested ??
-          (payload.confidence === "exact" ? (codes[0] ?? null) : null);
+          (codes.length === 1 || payload.confidence === "exact"
+            ? (codes[0] ?? null)
+            : null);
         if (next !== current) {
           setSelectedCode(next);
         }

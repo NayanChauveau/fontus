@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  CITY_HUB_PATH,
   LEAD_PATH,
   NITRATES_PATH,
   PFAS_PATH,
@@ -20,6 +21,15 @@ export function HomeGuide({ messages }: { messages: Messages }) {
           <li>{guide.howStep2}</li>
           <li>{guide.howStep3}</li>
         </ol>
+        <p className="mt-2">
+          {guide.citiesNote}{" "}
+          <Link
+            href={CITY_HUB_PATH}
+            className="underline-offset-2 hover:underline"
+          >
+            {guide.citiesLink}
+          </Link>
+        </p>
       </section>
       <section>
         <h2 className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">

@@ -7,6 +7,12 @@ vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => undefined }),
 }));
 
+vi.mock("next/navigation", () => ({
+  permanentRedirect: (url: string) => {
+    throw new Error(`REDIRECT:${url}`);
+  },
+}));
+
 vi.mock("@/components/AddressSearch", () => ({
   AddressSearch: () => <div>address-search</div>,
 }));
@@ -56,5 +62,20 @@ describe("Home page", () => {
     ).resolves.toMatchObject({
       robots: { index: false, follow: true },
     });
+  });
+
+  it("sends catalog communes to the city pages", async () => {
+    const { default: Home } = await import("./page");
+    await expect(
+      Home({ searchParams: Promise.resolve({ insee: "31555" }) }),
+    ).rejects.toThrow("REDIRECT:/eau-robinet/toulouse");
+    await expect(
+      Home({
+        searchParams: Promise.resolve({
+          insee: "31555",
+          udi: "031000006",
+        }),
+      }),
+    ).rejects.toThrow("REDIRECT:/eau-robinet/toulouse/031000006");
   });
 });

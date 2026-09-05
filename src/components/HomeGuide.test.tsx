@@ -34,5 +34,10 @@ describe("HomeGuide", () => {
       expect(text).toContain(word);
     }
     expect(text).not.toMatch(/\d+\s*(µg|mg)\s*\/\s*L/i);
+    expect(
+      screen.getByRole("link", { name: "Voir les grandes villes" }).getAttribute(
+        "href",
+      ),
+    ).toBe("/eau-robinet");
   });
 });

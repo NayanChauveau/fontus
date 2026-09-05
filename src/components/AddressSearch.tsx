@@ -19,7 +19,11 @@ const DEBOUNCE_MS = 300;
 
 type SearchStatus = "idle" | "loading" | "ready" | "unavailable";
 
-export function AddressSearch() {
+export function AddressSearch({
+  initialCommuneName,
+}: {
+  initialCommuneName?: string;
+} = {}) {
   const messages = useMessages();
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +38,9 @@ export function AddressSearch() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<AddressSuggestionViewModel | null>(null);
-  const [communeName, setCommuneName] = useState<string | null>(null);
+  const [communeName, setCommuneName] = useState<string | null>(
+    initialCommuneName ?? null,
+  );
 
   const selected: AddressSuggestionViewModel | null = picked
     ? picked

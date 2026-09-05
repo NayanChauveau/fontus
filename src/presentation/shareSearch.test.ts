@@ -3,7 +3,9 @@ import {
   buildShareSearch,
   firstSearchParam,
   hasShareQueryParams,
+  parseSharePath,
   parseShareSearch,
+  pathForShare,
 } from "./shareSearch";
 
 describe("shareSearch", () => {
@@ -62,6 +64,31 @@ describe("shareSearch", () => {
     expect(hasShareQueryParams({ insee: "81004" })).toBe(true);
     expect(hasShareQueryParams({ udi: "081004110" })).toBe(true);
     expect(hasShareQueryParams({ insee: "xx" })).toBe(true);
+  });
+
+  it("reuses city pages for catalog communes", () => {
+    expect(pathForShare({ citycode: "31555", networkCode: null })).toBe(
+      "/eau-robinet/toulouse",
+    );
+    expect(
+      pathForShare({ citycode: "31555", networkCode: "031000006" }),
+    ).toBe("/eau-robinet/toulouse/031000006");
+    expect(pathForShare({ citycode: "81004", networkCode: null })).toBe(
+      "/?insee=81004",
+    );
+    expect(pathForShare({ citycode: null, networkCode: null })).toBe("/");
+  });
+
+  it("reads a catalog city from the pretty path", () => {
+    expect(parseSharePath("/eau-robinet/toulouse")).toEqual({
+      citycode: "31555",
+      networkCode: null,
+    });
+    expect(parseSharePath("/eau-robinet/toulouse/031000006")).toEqual({
+      citycode: "31555",
+      networkCode: "031000006",
+    });
+    expect(parseSharePath("/")).toBeNull();
   });
 });
 

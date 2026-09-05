@@ -60,6 +60,30 @@ describe("DistributionNetworkList", () => {
     vi.unstubAllGlobals();
   });
 
+  it("writes the only residential network into the share url when none is selected", async () => {
+    const onSelectedCodeChange = vi.fn();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json({
+          ...ambiguous,
+          networks: [ambiguous.networks[0]],
+        }),
+      ),
+    );
+    render(
+      <DistributionNetworkList
+        citycode="31555"
+        selectedCode={null}
+        onSelectedCodeChange={onSelectedCodeChange}
+      />,
+    );
+    await waitFor(() => {
+      expect(onSelectedCodeChange).toHaveBeenCalledWith("033001214");
+    });
+    vi.unstubAllGlobals();
+  });
+
   it("writes the exact network into the share url when none is selected", async () => {
     const onSelectedCodeChange = vi.fn();
     vi.stubGlobal("fetch", vi.fn(async () => Response.json(exact)));

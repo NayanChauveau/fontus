@@ -11,6 +11,9 @@ describe("SiteFooter", () => {
       "/",
     );
     expect(
+      screen.getByRole("link", { name: "Grandes villes" }).getAttribute("href"),
+    ).toBe("/eau-robinet");
+    expect(
       screen.getByRole("link", { name: "Mentions légales" }).getAttribute("href"),
     ).toBe("/mentions-legales");
     expect(

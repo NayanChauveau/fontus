@@ -38,6 +38,20 @@ docker compose -f docker-compose.prod.yml build web
 docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate web
 ```
 
+## Chauffe des pages ville
+
+Après un deploy, le premier crawl des pages `/eau-robinet/…` peut attendre Hub’Eau (surtout les UDI parisiennes). Script **manuel**, pas de cron :
+
+```bash
+# depuis le repo, contre le site déjà en ligne
+node scripts/warm-city-pages.mjs --origin https://fontus.fr
+
+# optionnel : chauffer aussi chaque page UDI (plus long)
+node scripts/warm-city-pages.mjs --origin https://fontus.fr --quality --pause 2000
+```
+
+Le script lit le hub, suit les 50 villes, puis éventuellement les liens UDI. Pause par défaut 1,5 s.
+
 ## Nouveau site plus tard
 
 Copier `docker-compose.prod.yml`, changer le `Host`, le nom du router, et le dossier `/srv/…`.

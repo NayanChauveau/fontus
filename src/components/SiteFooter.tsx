@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  CITY_HUB_PATH,
   FAQ_PATH,
   GLOSSARY_PATH,
   HOW_TO_READ_PATH,
@@ -19,6 +20,9 @@ export function SiteFooter() {
       <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2">
         <Link href="/" className="underline-offset-2 hover:underline">
           {messages.nav.home}
+        </Link>
+        <Link href={CITY_HUB_PATH} className="underline-offset-2 hover:underline">
+          {messages.nav.cities}
         </Link>
         <Link href={HOW_TO_READ_PATH} className="underline-offset-2 hover:underline">
           {messages.nav.howToRead}

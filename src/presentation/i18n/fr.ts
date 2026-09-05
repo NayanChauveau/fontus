@@ -36,6 +36,9 @@ export const fr = {
       limitsTitle: "Ce que Fontus ne dit pas",
       limitsBody:
         "On ne dit pas si l’eau est « bonne ». On montre la mesure, la norme française, et des comparaisons étrangères. Le bandeau ARS reste le verdict légal.",
+      citiesNote:
+        "Les 50 communes de métropole les plus peuplées ont aussi une page par ville.",
+      citiesLink: "Voir les grandes villes",
     },
   },
   address: {
@@ -218,6 +221,7 @@ export const fr = {
     pfas: "PFAS",
     nitrates: "Nitrates",
     lead: "Plomb",
+    cities: "Grandes villes",
   },
   legal: {
     mentions: "Mentions légales",
@@ -372,6 +376,17 @@ export const fr = {
       compareTitle: "Voir le niveau dans votre commune",
       compareBody:
         "Fontus affiche la dernière mesure officielle de plomb pour votre UDI. Un résultat sous la limite légale n’est pas un avis médical. Pour une question de santé, contactez votre ARS ou un professionnel de santé.",
+    },
+    city: {
+      hubTitle: "Qualité de l’eau du robinet dans les grandes villes",
+      hubDescription:
+        "Analyses officielles de l’eau du robinet pour les 50 communes de métropole les plus peuplées : réseaux de distribution (UDI) par ville.",
+      hubCrumb: "Grandes villes",
+      hubIntro:
+        "Ces pages couvrent les 50 communes de métropole les plus peuplées. Chaque ville ouvre le même outil de recherche, avec la commune déjà renseignée.",
+      title: "Qualité de l’eau du robinet à {{name}}",
+      description:
+        "Réseaux de distribution (UDI) et analyses officielles de l’eau du robinet à {{name}} ({{department}}).",
     },
   },
 } as const satisfies Messages;
