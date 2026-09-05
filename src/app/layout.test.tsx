@@ -22,7 +22,6 @@ describe("RootLayout", () => {
     cookieValue.current = undefined;
     const { default: RootLayout, generateMetadata } = await import("./layout");
     const ui = await RootLayout({
-      params: Promise.resolve({}),
       children: <div>child</div>,
     });
     render(ui);
@@ -41,7 +40,6 @@ describe("RootLayout", () => {
     vi.resetModules();
     const { default: RootLayout, generateMetadata } = await import("./layout");
     const ui = await RootLayout({
-      params: Promise.resolve({}),
       children: <div>child</div>,
     });
     render(ui);
