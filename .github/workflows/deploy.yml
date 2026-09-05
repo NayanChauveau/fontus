@@ -107,5 +107,5 @@ jobs:
             echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
             docker compose -f docker-compose.prod.yml pull web
             docker compose -f docker-compose.prod.yml up -d --remove-orphans postgres
-            docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate web
+            docker compose -f docker-compose.prod.yml up -d --force-recreate web
             docker logout ghcr.io

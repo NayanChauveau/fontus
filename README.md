@@ -36,6 +36,6 @@ Quand Hub’Eau dépasse 20 000 lignes même sur 6 mois, on lit un extrait DIS l
 
 Architecture : [`docs/architecture.md`](docs/architecture.md).
 
-En production : voir [`deploy/README.md`](deploy/README.md) (Traefik + Compose, même recette que jojo_portfolio). Data API Supabase éteinte (ou RLS deny-all). SSL Postgres sauf loopback / nom Docker (`postgres`) ; `DATABASE_SSL=0` dans Compose.
+En production : voir [`deploy/README.md`](deploy/README.md) (Traefik + Compose, même recette que jojo_portfolio). Le conteneur `web` applique `supabase/migrations/` au démarrage. Data API Supabase éteinte (ou RLS deny-all). SSL Postgres sauf loopback / nom Docker (`postgres`) ; `DATABASE_SSL=0` dans Compose.
 
 Les erreurs passent par `ObservabilityPort` (stderr JSON en prod, Sentry si `SENTRY_DSN`). Les logs de conteneurs peuvent aller à Datadog si l’agent du VPS tourne.

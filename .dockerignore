@@ -5,7 +5,8 @@
 .pnpm-store
 coverage
 node_modules
-supabase
+supabase/.temp
+supabase/.branches
 *.md
 .env
 .env.*

@@ -19,16 +19,9 @@ postgresql://postgres:MOTDEPASSE@postgres:5432/fontus
 
 DNS : `fontus.fr` (et `www` en CNAME) vers l’IP du VPS. Traefik + Let’s Encrypt s’occupent du certificat.
 
-## Premier up + migrations
+## Migrations
 
-Après le premier `docker compose -f docker-compose.prod.yml up -d` :
-
-```bash
-cd /srv/eau-robinet
-docker compose -f docker-compose.prod.yml exec -T postgres \
-  psql -U postgres -d fontus < supabase/migrations/20260902120000_network_cache.sql
-# puis les autres fichiers de supabase/migrations/ dans l’ordre
-```
+Le conteneur `web` applique `supabase/migrations/` au démarrage (`create table if not exists`, donc relançable). Postgres a un healthcheck : `web` n’écoute qu’après un `pg_isready` OK.
 
 Health : `https://$TRAEFIK_HOST/api/health`
 
