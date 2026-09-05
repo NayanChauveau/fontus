@@ -55,7 +55,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className="flex min-h-dvh flex-col">
+      <body suppressHydrationWarning className="flex min-h-dvh flex-col">
         {children}
         <SiteFooter />
       </body>
