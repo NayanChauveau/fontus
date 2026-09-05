@@ -491,6 +491,15 @@ describe("NetworkAnalyses", () => {
     expect(screen.getAllByText("US").length).toBeGreaterThan(0);
     expect(screen.getAllByText("OMS").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Stricte").length).toBeGreaterThan(0);
+    const exceedanceChips = screen.getAllByRole("button", {
+      name: /Aluminium : non conforme/,
+    });
+    expect(exceedanceChips.length).toBeGreaterThan(0);
+    expect(screen.queryByText("Détail par norme")).toBeNull();
+    act(() => {
+      exceedanceChips[0]?.click();
+    });
+    expect(screen.getByText("Détail par norme")).toBeTruthy();
     expect(screen.getByText(/métrique du site/)).toBeTruthy();
     expect(screen.getAllByText("référence stricte (site)").length).toBeGreaterThan(
       0,

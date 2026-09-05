@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useMessages } from "@/presentation/i18n/useLocale";
 import type {
   ComparisonViewModel,
@@ -21,7 +22,7 @@ export function NetworkAnalysesResults({
     viewModel.otherMeasurements.length === 0;
 
   return (
-    <div className="mt-3 flex flex-col gap-4">
+    <div className="mt-3 flex min-w-0 max-w-full flex-col gap-4 overflow-x-hidden">
       <OfficialBanner viewModel={viewModel} />
 
       {viewModel.comparisonFailed && (
@@ -292,11 +293,19 @@ function MeasurementTable({
 }) {
   const messages = useMessages();
   return (
-    <div>
+    <div className="min-w-0 max-w-full">
       <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
         {title}
       </h4>
-      <div className="overflow-x-auto">
+      <ul className="divide-y divide-zinc-100 overflow-x-hidden lg:hidden dark:divide-zinc-800">
+        {measurements.map((measurement) => (
+          <MobileMeasurementItem
+            key={measurement.parameterCode}
+            measurement={measurement}
+          />
+        ))}
+      </ul>
+      <div className="hidden overflow-x-auto lg:block">
         <table className="w-full min-w-[64rem] text-left text-sm">
           <thead>
             <tr className="border-b border-zinc-200 text-xs text-zinc-500 dark:border-zinc-800">
@@ -309,10 +318,7 @@ function MeasurementTable({
               <th className="py-2 pr-3 font-medium">{messages.analyses.compareEu}</th>
               <th className="py-2 pr-3 font-medium">{messages.analyses.compareCh}</th>
               <th className="py-2 pr-3 font-medium">{messages.analyses.compareUs}</th>
-              <th
-                className="py-2 pr-3 font-medium"
-                title={messages.analyses.whoNote}
-              >
+              <th className="py-2 pr-3 font-medium" title={messages.analyses.whoNote}>
                 {messages.analyses.compareWho}
               </th>
               <th
@@ -330,83 +336,194 @@ function MeasurementTable({
           </thead>
           <tbody>
             {measurements.map((measurement) => (
-              <tr
+              <DesktopMeasurementRow
                 key={measurement.parameterCode}
-                className="border-b border-zinc-100 last:border-0 dark:border-zinc-800"
-              >
-                <td className="py-2 pr-3 text-zinc-950 dark:text-zinc-50">
-                  <p>{measurement.parameterLabel}</p>
-                  {measurement.canonicalId && (
-                    <p className="font-mono text-xs text-zinc-500">
-                      {messages.analyses.dictionaryId} {measurement.canonicalId}
-                    </p>
-                  )}
-                  {measurement.originalLabel && (
-                    <p className="text-xs text-zinc-500">
-                      {measurement.originalLabel}
-                    </p>
-                  )}
-                </td>
-                <td className="py-2 pr-3 font-mono text-zinc-800 dark:text-zinc-200">
-                  <p
-                    className={
-                      measurement.emptyKind
-                        ? "font-sans text-zinc-500"
-                        : undefined
-                    }
-                  >
-                    {measurement.valueLabel}
-                  </p>
-                  {measurement.reconstructed && (
-                    <p
-                      className="font-sans text-[11px] text-zinc-500"
-                      title={messages.analyses.reconstructedSumNote}
-                    >
-                      {messages.analyses.reconstructed}
-                    </p>
-                  )}
-                </td>
-                {provenance && (
-                  <td className="py-2 pr-3 font-mono text-xs text-zinc-500">
-                    {measurement.unitLabel ?? "—"}
-                  </td>
-                )}
-                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
-                  <ComparisonCell comparison={measurement.fr} />
-                </td>
-                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
-                  <ComparisonCell comparison={measurement.eu} />
-                </td>
-                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
-                  <ComparisonCell comparison={measurement.ch} />
-                </td>
-                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
-                  <ComparisonCell comparison={measurement.us} />
-                </td>
-                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
-                  <ComparisonCell comparison={measurement.who} />
-                </td>
-                <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
-                  <ComparisonCell comparison={measurement.strict} />
-                </td>
-                <td className="py-2 pr-3 text-xs text-zinc-500">
-                  {measurement.sampledAtLabel || "—"}
-                </td>
-                {provenance && (
-                  <td className="py-2 pr-3 font-mono text-xs text-zinc-500">
-                    {measurement.udiLabel}
-                  </td>
-                )}
-                <td className="py-2 text-xs text-zinc-500">
-                  {measurement.sourceLabel || "—"}
-                </td>
-              </tr>
+                measurement={measurement}
+                provenance={provenance}
+              />
             ))}
           </tbody>
         </table>
       </div>
     </div>
   );
+}
+
+function MobileMeasurementItem({
+  measurement,
+}: {
+  measurement: NetworkMeasurementViewModel;
+}) {
+  const messages = useMessages();
+  const [open, setOpen] = useState(false);
+  const comparison = measurement.fr;
+  const label = mobileSummaryLabel(comparison, messages);
+  const tone =
+    comparison?.status === "exceedance"
+      ? "border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+      : comparison?.status === "compliant"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+        : "border-zinc-200 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300";
+
+  return (
+    <li className="min-w-0">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-label={`${measurement.parameterLabel} : ${label}`}
+        onClick={() => setOpen((current) => !current)}
+        className="flex min-h-11 w-full min-w-0 items-start justify-between gap-2 py-2.5 text-left"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] leading-snug break-words text-zinc-950 dark:text-zinc-50">
+            {measurement.parameterLabel}
+          </p>
+          <p
+            className={`mt-0.5 text-[12px] leading-snug break-all ${
+              measurement.emptyKind
+                ? "text-zinc-500"
+                : "font-mono text-zinc-800 dark:text-zinc-200"
+            }`}
+          >
+            {measurement.valueLabel}
+          </p>
+          {measurement.reconstructed && (
+            <p className="text-[11px] text-zinc-500">
+              {messages.analyses.reconstructed}
+            </p>
+          )}
+        </div>
+        <span
+          aria-hidden="true"
+          className={`inline-flex min-h-11 min-w-[6.75rem] shrink-0 items-center justify-center rounded-full border px-3 text-[12px] font-medium ${tone}`}
+        >
+          {label}
+        </span>
+      </button>
+      {open && (
+        <div className="mt-2 min-w-0 space-y-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
+          <p className="text-[11px] text-zinc-500">
+            {messages.analyses.mobileCompareDetails}
+          </p>
+          {compareBreakdown(measurement, messages).map((item) => (
+            <div key={item.label} className="min-w-0">
+              <p className="text-[11px] font-medium text-zinc-500">{item.label}</p>
+              <div className="text-xs break-words text-zinc-600 dark:text-zinc-400">
+                <ComparisonCell comparison={item.comparison} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </li>
+  );
+}
+
+function DesktopMeasurementRow({
+  measurement,
+  provenance,
+}: {
+  measurement: NetworkMeasurementViewModel;
+  provenance: boolean;
+}) {
+  const messages = useMessages();
+
+  return (
+    <tr className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
+      <td className="py-2 pr-3 text-zinc-950 dark:text-zinc-50">
+        <p>{measurement.parameterLabel}</p>
+        {measurement.canonicalId && (
+          <p className="font-mono text-xs text-zinc-500">
+            {messages.analyses.dictionaryId} {measurement.canonicalId}
+          </p>
+        )}
+        {measurement.originalLabel && (
+          <p className="text-xs text-zinc-500">{measurement.originalLabel}</p>
+        )}
+      </td>
+      <td className="py-2 pr-3 font-mono text-zinc-800 dark:text-zinc-200">
+        <p
+          className={
+            measurement.emptyKind ? "font-sans text-zinc-500" : undefined
+          }
+        >
+          {measurement.valueLabel}
+        </p>
+        {measurement.reconstructed && (
+          <p
+            className="font-sans text-[11px] text-zinc-500"
+            title={messages.analyses.reconstructedSumNote}
+          >
+            {messages.analyses.reconstructed}
+          </p>
+        )}
+      </td>
+      {provenance && (
+        <td className="py-2 pr-3 font-mono text-xs text-zinc-500">
+          {measurement.unitLabel ?? "—"}
+        </td>
+      )}
+      <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+        <ComparisonCell comparison={measurement.fr} />
+      </td>
+      <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+        <ComparisonCell comparison={measurement.eu} />
+      </td>
+      <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+        <ComparisonCell comparison={measurement.ch} />
+      </td>
+      <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+        <ComparisonCell comparison={measurement.us} />
+      </td>
+      <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+        <ComparisonCell comparison={measurement.who} />
+      </td>
+      <td className="py-2 pr-3 text-xs text-zinc-600 dark:text-zinc-400">
+        <ComparisonCell comparison={measurement.strict} />
+      </td>
+      <td className="py-2 pr-3 text-xs text-zinc-500">
+        {measurement.sampledAtLabel || "—"}
+      </td>
+      {provenance && (
+        <td className="py-2 pr-3 font-mono text-xs text-zinc-500">
+          {measurement.udiLabel}
+        </td>
+      )}
+      <td className="py-2 text-xs text-zinc-500">
+        {measurement.sourceLabel || "—"}
+      </td>
+    </tr>
+  );
+}
+
+function mobileSummaryLabel(
+  comparison: ComparisonViewModel | null,
+  messages: ReturnType<typeof useMessages>,
+): string {
+  if (!comparison || comparison.status === "no_threshold") {
+    return messages.analyses.noThreshold;
+  }
+  if (comparison.status === "exceedance") {
+    return messages.analyses.mobileNonCompliant;
+  }
+  if (comparison.status === "compliant") {
+    return messages.analyses.compliant;
+  }
+  return comparison.statusLabel;
+}
+
+function compareBreakdown(
+  measurement: NetworkMeasurementViewModel,
+  messages: ReturnType<typeof useMessages>,
+): Array<{ label: string; comparison: ComparisonViewModel | null }> {
+  return [
+    { label: messages.analyses.compareFr, comparison: measurement.fr },
+    { label: messages.analyses.compareEu, comparison: measurement.eu },
+    { label: messages.analyses.compareCh, comparison: measurement.ch },
+    { label: messages.analyses.compareUs, comparison: measurement.us },
+    { label: messages.analyses.compareWho, comparison: measurement.who },
+    { label: messages.analyses.compareStrict, comparison: measurement.strict },
+  ];
 }
 
 function ComparisonCell({

@@ -11,7 +11,7 @@ export function NetworkAnalyses({ networkCode }: { networkCode: string }) {
   return (
     <section
       aria-live="polite"
-      className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900"
+      className="min-w-0 overflow-x-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900"
     >
       <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
         {messages.analyses.title}
