@@ -17,7 +17,7 @@ Secrets GitHub (comme jojo) : `SSH_HOST`, `SSH_PORT`, `SSH_USER`, `SSH_KEY`, `SS
 postgresql://postgres:MOTDEPASSE@postgres:5432/fontus
 ```
 
-DNS : `fontus.fr` (et `www` en CNAME) vers l’IP du VPS. Traefik + Let’s Encrypt s’occupent du certificat.
+DNS : `fontus.fr` (et `www` en CNAME) vers l’IP du VPS. Traefik + Let’s Encrypt s’occupent du certificat (apex et www). `https://www.$TRAEFIK_HOST` redirige en 301 vers `https://$TRAEFIK_HOST` (chemin et query conservés).
 
 ## Migrations
 

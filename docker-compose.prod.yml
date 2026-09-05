@@ -21,9 +21,17 @@ services:
       NODE_ENV: production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.fontus.rule=Host(`${TRAEFIK_HOST}`) || Host(`www.${TRAEFIK_HOST}`)"
+      - "traefik.http.routers.fontus.rule=Host(`${TRAEFIK_HOST}`)"
       - "traefik.http.routers.fontus.entrypoints=websecure"
       - "traefik.http.routers.fontus.tls.certresolver=le"
+      - "traefik.http.routers.fontus-www.rule=Host(`www.${TRAEFIK_HOST}`)"
+      - "traefik.http.routers.fontus-www.entrypoints=websecure"
+      - "traefik.http.routers.fontus-www.tls.certresolver=le"
+      - "traefik.http.routers.fontus-www.middlewares=fontus-www-redirect"
+      - "traefik.http.routers.fontus-www.service=fontus"
+      - "traefik.http.middlewares.fontus-www-redirect.redirectregex.regex=^https://www\\.(.+)"
+      - "traefik.http.middlewares.fontus-www-redirect.redirectregex.replacement=https://$${1}"
+      - "traefik.http.middlewares.fontus-www-redirect.redirectregex.permanent=true"
       - "traefik.http.services.fontus.loadbalancer.server.port=3100"
       - "traefik.docker.network=traefik"
       - 'com.datadoghq.ad.logs=[{"source":"nextjs","service":"fontus"}]'
