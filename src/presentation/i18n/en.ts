@@ -376,7 +376,7 @@ export const en = {
         "These pages cover the 50 most populated municipalities in metropolitan France. Each city opens the same search tool, with the municipality already filled in.",
       title: "Tap water quality in {{name}}",
       description:
-        "Distribution networks (UDI) and official tap-water analyses in {{name}} ({{department}}).",
+        "Distribution networks (UDI) and official tap-water analyses in {{name}} ({{department}}, {{insee}}).",
     },
   },
 } as const;

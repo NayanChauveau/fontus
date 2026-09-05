@@ -380,7 +380,7 @@ export const fr = {
         "Ces pages couvrent les 50 communes de métropole les plus peuplées. Chaque ville ouvre le même outil de recherche, avec la commune déjà renseignée.",
       title: "Qualité de l’eau du robinet à {{name}}",
       description:
-        "Réseaux de distribution (UDI) et analyses officielles de l’eau du robinet à {{name}} ({{department}}).",
+        "Réseaux de distribution (UDI) et analyses officielles de l’eau du robinet à {{name}} ({{department}}, {{insee}}).",
     },
   },
 } as const satisfies Messages;

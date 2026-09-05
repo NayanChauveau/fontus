@@ -50,7 +50,8 @@ describe("city UDI page", () => {
       }),
     ).resolves.toMatchObject({
       title: "Qualité de l’eau du robinet à Toulouse",
-      alternates: { canonical: "/eau-robinet/toulouse/031000123" },
+      alternates: { canonical: "/eau-robinet/toulouse" },
+      openGraph: { url: "/eau-robinet/toulouse" },
     });
   });
 

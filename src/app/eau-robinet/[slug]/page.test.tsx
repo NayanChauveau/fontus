@@ -42,11 +42,30 @@ describe("city page", () => {
         "href",
       ),
     ).toBe("/eau-robinet");
+    expect(
+      JSON.parse(
+        document.querySelector('script[type="application/ld+json"]')
+          ?.textContent ?? "",
+      )[0],
+    ).toMatchObject({
+      "@type": "WebPage",
+      url: "https://fontus.fr/eau-robinet/toulouse",
+      about: { name: "Toulouse" },
+    });
     await expect(
       page.generateMetadata({ params: Promise.resolve({ slug: "toulouse" }) }),
     ).resolves.toMatchObject({
       title: "Qualité de l’eau du robinet à Toulouse",
+      description:
+        "Réseaux de distribution (UDI) et analyses officielles de l’eau du robinet à Toulouse (Haute-Garonne, 31555).",
       alternates: { canonical: "/eau-robinet/toulouse" },
+      openGraph: {
+        title: "Qualité de l’eau du robinet à Toulouse",
+        url: "/eau-robinet/toulouse",
+      },
+      twitter: {
+        title: "Qualité de l’eau du robinet à Toulouse",
+      },
     });
     expect(page.generateStaticParams()).toEqual(
       expect.arrayContaining([{ slug: "paris" }, { slug: "toulouse" }]),

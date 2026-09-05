@@ -52,6 +52,8 @@ node scripts/warm-city-pages.mjs --origin https://fontus.fr --quality --pause 20
 
 Le script lit le hub, suit les 50 villes, puis éventuellement les liens UDI. Pause par défaut 1,5 s.
 
+Dans Google Search Console (propriété `fontus.fr`), soumettre `https://fontus.fr/sitemap.xml` après le premier deploy des pages ville. La chauffe n’indexe rien toute seule : elle évite seulement un premier hit à froid.
+
 ## Nouveau site plus tard
 
 Copier `docker-compose.prod.yml`, changer le `Host`, le nom du router, et le dossier `/srv/…`.

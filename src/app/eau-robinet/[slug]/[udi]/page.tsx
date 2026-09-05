@@ -3,9 +3,12 @@ import { notFound } from "next/navigation";
 import { findCityBySlug } from "@/application/cities/largestCities";
 import { isNetworkCode, normalizeNetworkCode } from "@/application/networkCode";
 import { SearchResults } from "@/components/SearchResults";
-import { cityUdiPath } from "@/presentation/editorial/paths";
-import { fillTemplate } from "@/presentation/i18n/fillTemplate";
-import { requestMessages } from "@/presentation/i18n/requestLocale";
+import { cityPageCopy } from "@/presentation/cities/cityPageCopy";
+import { cityPagePath } from "@/presentation/editorial/paths";
+import { intlLocale } from "@/presentation/i18n/messages";
+import { requestLocale, requestMessages } from "@/presentation/i18n/requestLocale";
+import { cityPageJsonLd } from "@/presentation/seo/cityPageJsonLd";
+import { pageSocialMetadata } from "@/presentation/seo/pageSocialMetadata";
 
 type UdiPageProps = {
   params: Promise<{ slug: string; udi: string }>;
@@ -31,18 +34,19 @@ export async function generateMetadata({
   if (!resolved) {
     return {};
   }
+  const locale = await requestLocale();
   const messages = await requestMessages();
+  const copy = cityPageCopy(messages, resolved.city);
   return {
-    title: fillTemplate(messages.pages.city.title, {
-      name: resolved.city.name,
+    title: copy.title,
+    description: copy.description,
+    alternates: { canonical: cityPagePath(resolved.city.slug) },
+    ...pageSocialMetadata({
+      title: copy.title,
+      description: copy.description,
+      path: copy.path,
+      locale,
     }),
-    description: fillTemplate(messages.pages.city.description, {
-      name: resolved.city.name,
-      department: resolved.city.department,
-    }),
-    alternates: {
-      canonical: cityUdiPath(resolved.city.slug, resolved.networkCode),
-    },
   };
 }
 
@@ -53,18 +57,35 @@ export default async function CityUdiPage({ params }: UdiPageProps) {
     notFound();
   }
 
+  const locale = await requestLocale();
   const messages = await requestMessages();
-  const copy = messages.pages.city;
+  const copy = cityPageCopy(messages, resolved.city);
 
   return (
-    <SearchResults
-      title={fillTemplate(copy.title, { name: resolved.city.name })}
-      description={fillTemplate(copy.description, {
-        name: resolved.city.name,
-        department: resolved.city.department,
-      })}
-      messages={messages}
-      communeName={resolved.city.name}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            cityPageJsonLd({
+              name: resolved.city.name,
+              title: copy.title,
+              description: copy.description,
+              slug: resolved.city.slug,
+              department: resolved.city.department,
+              inLanguage: intlLocale(locale),
+              homeLabel: messages.nav.home,
+              hubLabel: messages.pages.city.hubCrumb,
+            }),
+          ),
+        }}
+      />
+      <SearchResults
+        title={copy.title}
+        description={copy.description}
+        messages={messages}
+        communeName={resolved.city.name}
+      />
+    </>
   );
 }

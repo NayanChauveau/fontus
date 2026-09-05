@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { findCityBySlug, LARGEST_CITIES } from "@/application/cities/largestCities";
 import { SearchResults } from "@/components/SearchResults";
-import { cityPagePath } from "@/presentation/editorial/paths";
-import { fillTemplate } from "@/presentation/i18n/fillTemplate";
-import { requestMessages } from "@/presentation/i18n/requestLocale";
+import { cityPageCopy } from "@/presentation/cities/cityPageCopy";
+import { intlLocale } from "@/presentation/i18n/messages";
+import { requestLocale, requestMessages } from "@/presentation/i18n/requestLocale";
+import { cityPageJsonLd } from "@/presentation/seo/cityPageJsonLd";
+import { pageSocialMetadata } from "@/presentation/seo/pageSocialMetadata";
 
 type CityPageProps = {
   params: Promise<{ slug: string }>;
@@ -22,14 +24,19 @@ export async function generateMetadata({
   if (!city) {
     return {};
   }
+  const locale = await requestLocale();
   const messages = await requestMessages();
+  const copy = cityPageCopy(messages, city);
   return {
-    title: fillTemplate(messages.pages.city.title, { name: city.name }),
-    description: fillTemplate(messages.pages.city.description, {
-      name: city.name,
-      department: city.department,
+    title: copy.title,
+    description: copy.description,
+    alternates: { canonical: copy.path },
+    ...pageSocialMetadata({
+      title: copy.title,
+      description: copy.description,
+      path: copy.path,
+      locale,
     }),
-    alternates: { canonical: cityPagePath(city.slug) },
   };
 }
 
@@ -40,18 +47,35 @@ export default async function CityPage({ params }: CityPageProps) {
     notFound();
   }
 
+  const locale = await requestLocale();
   const messages = await requestMessages();
-  const copy = messages.pages.city;
+  const copy = cityPageCopy(messages, city);
 
   return (
-    <SearchResults
-      title={fillTemplate(copy.title, { name: city.name })}
-      description={fillTemplate(copy.description, {
-        name: city.name,
-        department: city.department,
-      })}
-      messages={messages}
-      communeName={city.name}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            cityPageJsonLd({
+              name: city.name,
+              title: copy.title,
+              description: copy.description,
+              slug: city.slug,
+              department: city.department,
+              inLanguage: intlLocale(locale),
+              homeLabel: messages.nav.home,
+              hubLabel: messages.pages.city.hubCrumb,
+            }),
+          ),
+        }}
+      />
+      <SearchResults
+        title={copy.title}
+        description={copy.description}
+        messages={messages}
+        communeName={city.name}
+      />
+    </>
   );
 }
