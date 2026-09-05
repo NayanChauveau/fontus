@@ -11,6 +11,7 @@ import type { AddressSuggestionDto } from "@/application/dtos/AddressDto";
 import { MIN_ADDRESS_QUERY_LENGTH } from "@/application/addressQuery";
 import { DistributionNetworkList } from "@/components/DistributionNetworkList";
 import { useShareUrl } from "@/components/useShareUrl";
+import { displayCityName } from "@/presentation/cities/formatCityName";
 import { mapAddressDtoToViewModel } from "@/presentation/mappers/mapAddressDto";
 import { useMessages } from "@/presentation/i18n/useLocale";
 import type { AddressSuggestionViewModel } from "@/presentation/view-models/AddressViewModel";
@@ -28,7 +29,7 @@ export function AddressSearch({
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const { citycode, networkCode, replaceShare } = useShareUrl();
+  const { citycode, networkCode, addressLabel, replaceShare } = useShareUrl();
 
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<SearchStatus>("idle");
@@ -38,21 +39,29 @@ export function AddressSearch({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [open, setOpen] = useState(false);
   const [picked, setPicked] = useState<AddressSuggestionViewModel | null>(null);
-  const [communeName, setCommuneName] = useState<string | null>(
-    initialCommuneName ?? null,
-  );
+  const [dismissed, setDismissed] = useState(false);
+  const [communeName, setCommuneName] = useState<string | null>(() => {
+    if (citycode) {
+      return displayCityName(citycode, initialCommuneName) || null;
+    }
+    return initialCommuneName ? displayCityName("", initialCommuneName) : null;
+  });
 
   const selected: AddressSuggestionViewModel | null = picked
     ? picked
-    : citycode
-      ? {
+    : dismissed || !citycode
+      ? null
+      : {
           id: citycode,
-          label: communeName ?? citycode,
-          city: communeName ?? "",
+          label:
+            addressLabel ||
+            displayCityName(citycode, communeName) ||
+            citycode,
+          city: displayCityName(citycode, communeName),
           citycode,
           coordinates: "",
-        }
-      : null;
+        };
+  const committed = selected !== null && query === "";
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -107,18 +116,24 @@ export function AddressSearch({
 
   function selectSuggestion(suggestion: AddressSuggestionViewModel) {
     setOpen(false);
+    setQuery("");
+    setDismissed(false);
     setPicked(suggestion);
-    setCommuneName(suggestion.city);
-    replaceShare({ citycode: suggestion.citycode, networkCode: null });
+    setCommuneName(displayCityName(suggestion.citycode, suggestion.city));
+    replaceShare({
+      citycode: suggestion.citycode,
+      networkCode: null,
+      addressLabel: suggestion.label,
+    });
   }
 
   function clearSelection() {
     setPicked(null);
+    setDismissed(true);
     setCommuneName(null);
     setQuery("");
     setSuggestions([]);
     setStatus("idle");
-    replaceShare({ citycode: null, networkCode: null });
     inputRef.current?.focus();
   }
 
@@ -168,7 +183,7 @@ export function AddressSearch({
           <input
             ref={inputRef}
             id="address-query"
-            type="search"
+            type="text"
             autoComplete="off"
             role="combobox"
             aria-expanded={open}
@@ -178,15 +193,20 @@ export function AddressSearch({
               activeIndex >= 0 ? `${listboxId}-${activeIndex}` : undefined
             }
             placeholder={messages.address.placeholder}
-            value={query}
+            value={committed ? selected.label : query}
             onChange={(event) => {
               const next = event.target.value;
               setPicked(null);
-              setCommuneName(null);
-              if (citycode) {
-                replaceShare({ citycode: null, networkCode: null });
-              }
               setQuery(next);
+              if (next.trim() === "") {
+                setDismissed(true);
+                setCommuneName(null);
+                abortRef.current?.abort();
+                setSuggestions([]);
+                setStatus("idle");
+                setOpen(false);
+                return;
+              }
               if (next.trim().length < MIN_ADDRESS_QUERY_LENGTH) {
                 abortRef.current?.abort();
                 setSuggestions([]);
@@ -197,7 +217,7 @@ export function AddressSearch({
             onKeyDown={onKeyDown}
             className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 pr-12 text-base text-zinc-950 outline-none ring-emerald-600/30 placeholder:text-zinc-400 focus:border-emerald-600 focus:ring-3 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-50"
           />
-          {query.length > 0 && (
+          {(query.length > 0 || selected) && (
             <button
               type="button"
               aria-label={messages.address.clearQuery}
@@ -271,66 +291,23 @@ export function AddressSearch({
         )}
       </div>
 
-      {selected && (
-        <section
-          aria-live="polite"
-          className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900"
-        >
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-              {messages.address.selectedTitle}
-            </h3>
-            <button
-              type="button"
-              onClick={clearSelection}
-              className="text-sm text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
-            >
-              {messages.address.clear}
-            </button>
-          </div>
-          <dl className="grid gap-3 text-sm">
-            {selected.label !== selected.citycode ? (
-              <Field label={messages.address.fieldLabel} value={selected.label} />
-            ) : null}
-            {selected.city ? (
-              <Field label={messages.address.fieldCity} value={selected.city} />
-            ) : null}
-            <div className="hidden md:contents">
-              <Field
-                label={messages.address.fieldCitycode}
-                value={selected.citycode}
-              />
-              {selected.coordinates ? (
-                <Field
-                  label={messages.address.fieldCoordinates}
-                  value={selected.coordinates}
-                />
-              ) : null}
-            </div>
-          </dl>
-        </section>
-      )}
-
-      {selected && (
+      {committed && selected && (
         <DistributionNetworkList
           key={selected.citycode}
           citycode={selected.citycode}
           selectedCode={networkCode}
           onSelectedCodeChange={(code) => {
-            replaceShare({ citycode: selected.citycode, networkCode: code });
+            replaceShare({
+              citycode: selected.citycode,
+              networkCode: code,
+              addressLabel: selected.label,
+            });
           }}
-          onCommuneLoaded={setCommuneName}
+          onCommuneLoaded={(city) => {
+            setCommuneName(displayCityName(selected.citycode, city));
+          }}
         />
       )}
-    </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="font-medium text-zinc-700 dark:text-zinc-300">{label}</dt>
-      <dd className="font-mono text-zinc-950 dark:text-zinc-50">{value}</dd>
     </div>
   );
 }

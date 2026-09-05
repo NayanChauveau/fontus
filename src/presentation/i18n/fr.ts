@@ -51,12 +51,6 @@ export const fr = {
     noResults: "Aucune adresse trouvée.",
     unavailable:
       "Le service d’adresses est indisponible. Réessayez dans un instant.",
-    selectedTitle: "Adresse retenue",
-    fieldLabel: "Libellé",
-    fieldCity: "Commune",
-    fieldCitycode: "Code INSEE",
-    fieldCoordinates: "Coordonnées",
-    clear: "Changer d’adresse",
     clearQuery: "Effacer la saisie",
   },
   networks: {

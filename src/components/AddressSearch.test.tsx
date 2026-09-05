@@ -7,6 +7,7 @@ import { AddressSearch } from "./AddressSearch";
 const share = {
   citycode: null as string | null,
   networkCode: null as string | null,
+  addressLabel: null as string | null,
   replaceShare: vi.fn(),
 };
 
@@ -14,6 +15,7 @@ vi.mock("./useShareUrl", () => ({
   useShareUrl: () => ({
     citycode: share.citycode,
     networkCode: share.networkCode,
+    addressLabel: share.addressLabel,
     replaceShare: share.replaceShare,
   }),
 }));
@@ -61,6 +63,7 @@ describe("AddressSearch", () => {
     vi.unstubAllGlobals();
     share.citycode = null;
     share.networkCode = null;
+    share.addressLabel = null;
     share.replaceShare.mockReset();
   });
 
@@ -89,16 +92,18 @@ describe("AddressSearch", () => {
     fireEvent.keyDown(input, { key: "Enter" });
 
     await waitFor(() => {
-      expect(screen.getByText("Adresse retenue")).toBeTruthy();
+      expect((input as HTMLInputElement).value).toBe(suggestion.label);
     });
+    expect(screen.queryByText("Adresse retenue")).toBeNull();
     expect(screen.getByText("networks-33063")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: /Changer d’adresse/ }));
-    expect(screen.queryByText("Adresse retenue")).toBeNull();
-    expect(share.replaceShare).toHaveBeenCalledWith({
+    fireEvent.click(screen.getByRole("button", { name: "Effacer la saisie" }));
+    expect((input as HTMLInputElement).value).toBe("");
+    expect(share.replaceShare).not.toHaveBeenCalledWith({
       citycode: null,
       networkCode: null,
     });
+    expect(document.activeElement).toBe(input);
   });
 
   it("handles empty results, service errors and keyboard extras", async () => {
@@ -141,8 +146,9 @@ describe("AddressSearch", () => {
     fireEvent.mouseEnter(screen.getAllByRole("option", { name: /12 Rue Sainte-Catherine/ })[0]!);
     fireEvent.keyDown(input, { key: "Enter" });
     await waitFor(() => {
-      expect(screen.getByText("Adresse retenue")).toBeTruthy();
+      expect((input as HTMLInputElement).value).toBe(suggestion.label);
     });
+    expect(screen.queryByText("Adresse retenue")).toBeNull();
     fireEvent.keyDown(input, { key: "Escape" });
     fireEvent.keyDown(input, { key: "Enter" });
 
@@ -181,7 +187,10 @@ describe("AddressSearch", () => {
       expect(screen.getByRole("option")).toBeTruthy();
     });
     fireEvent.click(screen.getByRole("option", { name: /12 Rue Sainte-Catherine/ }));
-    expect(screen.getByText("Adresse retenue")).toBeTruthy();
+    expect(
+      (screen.getByRole("combobox") as HTMLInputElement).value,
+    ).toBe(suggestion.label);
+    expect(screen.queryByText("Adresse retenue")).toBeNull();
     expect(
       fetchMock.mock.calls.every(
         (call) => !String(call[0]).includes("/resolve"),
@@ -241,33 +250,84 @@ describe("AddressSearch", () => {
       expect(screen.getByRole("option")).toBeTruthy();
     });
     fireEvent.click(screen.getByRole("option", { name: /12 Rue Sainte-Catherine/ }));
-    expect(screen.getByText("Adresse retenue")).toBeTruthy();
+    expect(
+      (screen.getByRole("combobox") as HTMLInputElement).value,
+    ).toBe(suggestion.label);
+    expect(screen.queryByText("Adresse retenue")).toBeNull();
     expect(screen.getByText("networks-33063")).toBeTruthy();
     expect(share.replaceShare).toHaveBeenCalledWith({
       citycode: "33063",
       networkCode: null,
+      addressLabel: suggestion.label,
     });
+  });
+
+  it("shows a city name with a capital and catalog accents", () => {
+    share.citycode = "30189";
+    render(<AddressSearch />);
+    expect((screen.getByRole("combobox") as HTMLInputElement).value).toBe(
+      "Nîmes",
+    );
   });
 
   it("restores a commune and network from the share url", () => {
     share.citycode = "33063";
     share.networkCode = "033001214";
-    render(<AddressSearch />);
-    expect(screen.getByText("Adresse retenue")).toBeTruthy();
+    render(<AddressSearch initialCommuneName="Bordeaux" />);
+    const input = screen.getByRole("combobox") as HTMLInputElement;
+    expect(input.value).toBe("Bordeaux");
+    expect(screen.queryByText("Adresse retenue")).toBeNull();
     expect(screen.getByText("networks-33063-033001214")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "hydrate-city" }));
     fireEvent.click(screen.getByRole("button", { name: "pick-network" }));
     expect(share.replaceShare).toHaveBeenCalledWith({
       citycode: "33063",
       networkCode: "033001214",
+      addressLabel: "Bordeaux",
     });
-    fireEvent.change(screen.getByRole("combobox"), {
-      target: { value: "nouvelle saisie" },
-    });
-    expect(share.replaceShare).toHaveBeenCalledWith({
+    fireEvent.change(input, { target: { value: "Bordeau" } });
+    expect(input.value).toBe("Bordeau");
+    expect(screen.queryByText("networks-33063-033001214")).toBeNull();
+    expect(share.replaceShare).not.toHaveBeenCalledWith({
       citycode: null,
       networkCode: null,
     });
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input.value).toBe("");
+    expect(screen.queryByText("networks-33063-033001214")).toBeNull();
+    expect(share.replaceShare).not.toHaveBeenCalledWith({
+      citycode: null,
+      networkCode: null,
+    });
+  });
+
+  it("restores a street address from the share url", () => {
+    share.citycode = "31555";
+    share.addressLabel = "55 Avenue Pierre Molette 31100 Toulouse";
+    render(<AddressSearch initialCommuneName="Toulouse" />);
+    expect((screen.getByRole("combobox") as HTMLInputElement).value).toBe(
+      "55 Avenue Pierre Molette 31100 Toulouse",
+    );
+  });
+
+  it("keeps the remaining letters when the last character of a selection is deleted", () => {
+    share.citycode = "31555";
+    render(<AddressSearch initialCommuneName="Toulouse" />);
+    const input = screen.getByRole("combobox") as HTMLInputElement;
+    expect(input.value).toBe("Toulouse");
+    fireEvent.change(input, { target: { value: "Toulous" } });
+    expect(input.value).toBe("Toulous");
+    expect(share.replaceShare).not.toHaveBeenCalled();
+  });
+
+  it("keeps an empty field after a full delete without changing the url", () => {
+    share.citycode = "31555";
+    render(<AddressSearch initialCommuneName="Toulouse" />);
+    const input = screen.getByRole("combobox") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input.value).toBe("");
+    expect(screen.queryByText(/networks-/)).toBeNull();
+    expect(share.replaceShare).not.toHaveBeenCalled();
   });
 
   it("moves the highlight up from a middle option", async () => {

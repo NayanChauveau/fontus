@@ -12,8 +12,11 @@ export function useShareUrl() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const selection =
-    parseSharePath(pathname) ?? parseShareSearch(searchParams.toString());
+  const fromSearch = parseShareSearch(searchParams.toString());
+  const fromPath = parseSharePath(pathname);
+  const selection = fromPath
+    ? { ...fromPath, addressLabel: fromSearch.addressLabel }
+    : fromSearch;
 
   function replaceShare(next: ShareSelection) {
     const path = pathForShare(next);

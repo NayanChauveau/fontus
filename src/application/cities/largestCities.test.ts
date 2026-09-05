@@ -36,6 +36,12 @@ describe("largestCities", () => {
     expect(findCityByInsee(" 33063 ")?.slug).toBe("bordeaux");
   });
 
+  it("maps Paris, Lyon and Marseille arrondissements to the commune", () => {
+    expect(findCityByInsee("75108")?.slug).toBe("paris");
+    expect(findCityByInsee("13201")?.slug).toBe("marseille");
+    expect(findCityByInsee("69381")?.slug).toBe("lyon");
+  });
+
   it("returns undefined for unknown slug or INSEE", () => {
     expect(findCityBySlug("unknown")).toBeUndefined();
     expect(findCityByInsee("99999")).toBeUndefined();

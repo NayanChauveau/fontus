@@ -33,10 +33,12 @@ describe("useShareUrl", () => {
     result.current.replaceShare({
       citycode: "31555",
       networkCode: "031000006",
+      addressLabel: "55 Avenue Pierre Molette 31100 Toulouse",
     });
-    expect(nav.replace).toHaveBeenCalledWith("/eau-robinet/toulouse/031000006", {
-      scroll: true,
-    });
+    expect(nav.replace).toHaveBeenCalledWith(
+      "/eau-robinet/toulouse/031000006?adresse=55+Avenue+Pierre+Molette+31100+Toulouse",
+      { scroll: true },
+    );
 
     result.current.replaceShare({ citycode: null, networkCode: null });
     expect(nav.replace).toHaveBeenCalledWith("/", { scroll: false });
@@ -48,5 +50,16 @@ describe("useShareUrl", () => {
     const { result } = renderHook(() => useShareUrl());
     expect(result.current.citycode).toBe("31555");
     expect(result.current.networkCode).toBe("031000006");
+    expect(result.current.addressLabel).toBeNull();
+  });
+
+  it("keeps a street label from the query on a city path", () => {
+    nav.pathname = "/eau-robinet/toulouse";
+    nav.search = "adresse=55 Avenue Pierre Molette 31100 Toulouse";
+    const { result } = renderHook(() => useShareUrl());
+    expect(result.current.citycode).toBe("31555");
+    expect(result.current.addressLabel).toBe(
+      "55 Avenue Pierre Molette 31100 Toulouse",
+    );
   });
 });

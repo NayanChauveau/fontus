@@ -47,12 +47,6 @@ export const en = {
     searching: "Searching…",
     noResults: "No address found.",
     unavailable: "The address service is unavailable. Please try again shortly.",
-    selectedTitle: "Selected address",
-    fieldLabel: "Label",
-    fieldCity: "Municipality",
-    fieldCitycode: "INSEE code",
-    fieldCoordinates: "Coordinates",
-    clear: "Change address",
     clearQuery: "Clear the field",
   },
   networks: {

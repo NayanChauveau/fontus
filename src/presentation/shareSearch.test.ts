@@ -13,10 +13,12 @@ describe("shareSearch", () => {
     expect(parseShareSearch("?insee=33063&udi=033001214")).toEqual({
       citycode: "33063",
       networkCode: "033001214",
+      addressLabel: null,
     });
     expect(parseShareSearch("insee=2a004")).toEqual({
       citycode: "2A004",
       networkCode: null,
+      addressLabel: null,
     });
   });
 
@@ -24,14 +26,17 @@ describe("shareSearch", () => {
     expect(parseShareSearch("?insee=33&udi=033001214")).toEqual({
       citycode: null,
       networkCode: null,
+      addressLabel: null,
     });
     expect(parseShareSearch("?udi=033001214")).toEqual({
       citycode: null,
       networkCode: null,
+      addressLabel: null,
     });
     expect(parseShareSearch("?insee=33063&udi=paulin")).toEqual({
       citycode: "33063",
       networkCode: null,
+      addressLabel: null,
     });
   });
 
@@ -51,6 +56,16 @@ describe("shareSearch", () => {
     expect(parseShareSearch("?insee=")).toEqual({
       citycode: null,
       networkCode: null,
+      addressLabel: null,
+    });
+    expect(
+      parseShareSearch(
+        "?insee=31555&adresse=55+Avenue+Pierre+Molette+31100+Toulouse",
+      ),
+    ).toEqual({
+      citycode: "31555",
+      networkCode: null,
+      addressLabel: "55 Avenue Pierre Molette 31100 Toulouse",
     });
   });
 
@@ -77,16 +92,37 @@ describe("shareSearch", () => {
       "/?insee=81004",
     );
     expect(pathForShare({ citycode: null, networkCode: null })).toBe("/");
+    expect(pathForShare({ citycode: "75108", networkCode: null })).toBe(
+      "/eau-robinet/paris",
+    );
+    expect(
+      pathForShare({
+        citycode: "31555",
+        networkCode: null,
+        addressLabel: "55 Avenue Pierre Molette 31100 Toulouse",
+      }),
+    ).toBe(
+      "/eau-robinet/toulouse?adresse=55+Avenue+Pierre+Molette+31100+Toulouse",
+    );
+    expect(
+      pathForShare({
+        citycode: "31555",
+        networkCode: null,
+        addressLabel: "Toulouse",
+      }),
+    ).toBe("/eau-robinet/toulouse");
   });
 
   it("reads a catalog city from the pretty path", () => {
     expect(parseSharePath("/eau-robinet/toulouse")).toEqual({
       citycode: "31555",
       networkCode: null,
+      addressLabel: null,
     });
     expect(parseSharePath("/eau-robinet/toulouse/031000006")).toEqual({
       citycode: "31555",
       networkCode: "031000006",
+      addressLabel: null,
     });
     expect(parseSharePath("/")).toBeNull();
   });

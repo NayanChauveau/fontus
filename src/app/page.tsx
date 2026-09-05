@@ -11,6 +11,7 @@ import {
 type HomeSearchParams = Promise<{
   insee?: string | string[];
   udi?: string | string[];
+  adresse?: string | string[];
 }>;
 
 export async function generateMetadata({
@@ -36,6 +37,7 @@ export default async function Home({
   const catalogPath = pathForShare({
     citycode: firstSearchParam(params.insee),
     networkCode: firstSearchParam(params.udi),
+    addressLabel: firstSearchParam(params.adresse),
   });
   if (catalogPath.startsWith("/eau-robinet")) {
     permanentRedirect(catalogPath);

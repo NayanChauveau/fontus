@@ -77,5 +77,18 @@ describe("Home page", () => {
         }),
       }),
     ).rejects.toThrow("REDIRECT:/eau-robinet/toulouse/031000006");
+    await expect(
+      Home({ searchParams: Promise.resolve({ insee: "75108" }) }),
+    ).rejects.toThrow("REDIRECT:/eau-robinet/paris");
+    await expect(
+      Home({
+        searchParams: Promise.resolve({
+          insee: "31555",
+          adresse: "55 Avenue Pierre Molette 31100 Toulouse",
+        }),
+      }),
+    ).rejects.toThrow(
+      "REDIRECT:/eau-robinet/toulouse?adresse=55+Avenue+Pierre+Molette+31100+Toulouse",
+    );
   });
 });
