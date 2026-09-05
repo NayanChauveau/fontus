@@ -20,7 +20,7 @@ export function useShareUrl() {
 
   function replaceShare(next: ShareSelection) {
     const path = pathForShare(next);
-    router.replace(path, { scroll: path.startsWith("/eau-robinet") });
+    router.replace(path, { scroll: false });
   }
 
   return { ...selection, replaceShare };

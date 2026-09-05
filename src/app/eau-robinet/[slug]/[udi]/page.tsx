@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { findCityBySlug } from "@/application/cities/largestCities";
 import { isNetworkCode, normalizeNetworkCode } from "@/application/networkCode";
-import { SearchResults } from "@/components/SearchResults";
 import { cityPageCopy } from "@/presentation/cities/cityPageCopy";
 import { cityPagePath } from "@/presentation/editorial/paths";
 import { intlLocale } from "@/presentation/i18n/messages";
@@ -79,12 +78,6 @@ export default async function CityUdiPage({ params }: UdiPageProps) {
             }),
           ),
         }}
-      />
-      <SearchResults
-        title={copy.title}
-        description={copy.description}
-        messages={messages}
-        communeName={resolved.city.name}
       />
     </>
   );

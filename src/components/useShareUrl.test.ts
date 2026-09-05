@@ -37,7 +37,7 @@ describe("useShareUrl", () => {
     });
     expect(nav.replace).toHaveBeenCalledWith(
       "/eau-robinet/toulouse/031000006?adresse=55+Avenue+Pierre+Molette+31100+Toulouse",
-      { scroll: true },
+      { scroll: false },
     );
 
     result.current.replaceShare({ citycode: null, networkCode: null });

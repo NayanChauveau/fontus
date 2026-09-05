@@ -17,10 +17,22 @@ vi.mock("@/components/AddressSearch", () => ({
   AddressSearch: () => <div>address-search</div>,
 }));
 
+async function renderCity(slug: string) {
+  const layout = await import("./layout");
+  const page = await import("./page");
+  const params = Promise.resolve({ slug });
+  render(
+    await layout.default({
+      children: await page.default({ params }),
+      params,
+    }),
+  );
+  return page;
+}
+
 describe("city page", () => {
   it("renders the same search results page as home, with the city title", async () => {
-    const page = await import("./page");
-    render(await page.default({ params: Promise.resolve({ slug: "toulouse" }) }));
+    const page = await renderCity("toulouse");
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(
       screen.getByRole("heading", {

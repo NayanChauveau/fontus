@@ -17,18 +17,26 @@ vi.mock("@/components/AddressSearch", () => ({
   AddressSearch: () => <div>address-search</div>,
 }));
 
+async function renderUdi(slug: string, udi: string) {
+  const layout = await import("../layout");
+  const page = await import("./page");
+  const params = Promise.resolve({ slug, udi });
+  render(
+    await layout.default({
+      children: await page.default({ params }),
+      params: Promise.resolve({ slug }),
+    }),
+  );
+  return page;
+}
+
 describe("city UDI page", () => {
   afterEach(() => {
     cleanup();
   });
 
   it("renders the same search results page as the city page", async () => {
-    const page = await import("./page");
-    render(
-      await page.default({
-        params: Promise.resolve({ slug: "toulouse", udi: "031000123" }),
-      }),
-    );
+    const page = await renderUdi("toulouse", "031000123");
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(
       screen.getByRole("heading", {
@@ -56,12 +64,7 @@ describe("city UDI page", () => {
   });
 
   it("does not 404 a valid UDI that is not checked against the commune", async () => {
-    const page = await import("./page");
-    render(
-      await page.default({
-        params: Promise.resolve({ slug: "toulouse", udi: "099000000" }),
-      }),
-    );
+    await renderUdi("toulouse", "099000000");
     expect(
       screen.getByRole("heading", {
         level: 1,

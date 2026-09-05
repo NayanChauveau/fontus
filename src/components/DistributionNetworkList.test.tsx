@@ -163,8 +163,10 @@ describe("DistributionNetworkList", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: /PAULIN/ }));
     expect(screen.getByText("analyses-033001214")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /CAP ROUX/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Changer de réseau/ }));
     expect(screen.queryByText("analyses-033001214")).toBeNull();
+    expect(screen.getByRole("button", { name: /CAP ROUX/ })).toBeTruthy();
     vi.unstubAllGlobals();
   });
 

@@ -220,21 +220,19 @@ function NetworkResults({
       )}
 
       <ul className="flex flex-col gap-2">
-        {viewModel.networks
-          .filter((network) => !needsChoice || !selectedCode || network.code === selectedCode)
-          .map((network) => (
-            <li key={network.code}>
-              {needsChoice ? (
-                <NetworkChoice
-                  network={network}
-                  selected={network.code === selectedCode}
-                  onSelect={() => onSelect(network.code)}
-                />
-              ) : (
-                <NetworkCard network={network} />
-              )}
-            </li>
-          ))}
+        {viewModel.networks.map((network) => (
+          <li key={network.code}>
+            {needsChoice ? (
+              <NetworkChoice
+                network={network}
+                selected={network.code === selectedCode}
+                onSelect={() => onSelect(network.code)}
+              />
+            ) : (
+              <NetworkCard network={network} />
+            )}
+          </li>
+        ))}
       </ul>
     </div>
   );

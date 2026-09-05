@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { findCityBySlug, LARGEST_CITIES } from "@/application/cities/largestCities";
-import { SearchResults } from "@/components/SearchResults";
 import { cityPageCopy } from "@/presentation/cities/cityPageCopy";
 import { intlLocale } from "@/presentation/i18n/messages";
 import { requestLocale, requestMessages } from "@/presentation/i18n/requestLocale";
@@ -69,12 +68,6 @@ export default async function CityPage({ params }: CityPageProps) {
             }),
           ),
         }}
-      />
-      <SearchResults
-        title={copy.title}
-        description={copy.description}
-        messages={messages}
-        communeName={city.name}
       />
     </>
   );
