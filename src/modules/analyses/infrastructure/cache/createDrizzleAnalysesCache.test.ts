@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { createFakeDb } from "@/test/fakeDb";
 import {
   createDrizzleAnalysesCache,
+  sampleCodesToReplace,
   udiAdvisoryLockKey,
   udiSyncScope,
+  uniqueAnalysisSamples,
   withReservedAdvisoryLock,
 } from "./createDrizzleAnalysesCache";
 
@@ -29,6 +31,27 @@ const sample = {
 };
 
 describe("createDrizzleAnalysesCache", () => {
+  it("dedupes samples and replaces codes already stored on another udi", () => {
+    const duplicate = {
+      ...sample,
+      measurements: [
+        sample.measurements[0]!,
+        { ...sample.measurements[0]!, parameterCode: "1340" },
+      ],
+    };
+    const merged = uniqueAnalysisSamples([sample, duplicate]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.measurements.map((row) => row.parameterCode)).toEqual([
+      "1339",
+      "1340",
+    ]);
+    expect(sampleCodesToReplace(["s1", "s2"], ["old", "s1"])).toEqual([
+      "s1",
+      "s2",
+      "old",
+    ]);
+  });
+
   it("builds the udi sync scope", () => {
     expect(udiSyncScope("033001214")).toBe("udi:033001214");
     expect(udiAdvisoryLockKey("033001214")).toBeTypeOf("number");
@@ -162,6 +185,12 @@ describe("createDrizzleAnalysesCache", () => {
           ],
         },
       ],
+      fetchedAt: new Date(),
+      windowFrom: "2025-09-02",
+    });
+    await cache.write({
+      networkCode: "033001214",
+      samples: [sample, { ...sample, measurements: [] }],
       fetchedAt: new Date(),
       windowFrom: "2025-09-02",
     });

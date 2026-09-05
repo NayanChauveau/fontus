@@ -14,6 +14,41 @@ export function udiSyncScope(networkCode: string): string {
   return `udi:${networkCode}`;
 }
 
+const WRITE_CHUNK_SIZE = 500;
+
+export function uniqueAnalysisSamples(
+  samples: AnalysisSample[],
+): AnalysisSample[] {
+  const merged = new Map<string, AnalysisSample>();
+  for (const sample of samples) {
+    const existing = merged.get(sample.code);
+    if (!existing) {
+      merged.set(sample.code, {
+        ...sample,
+        measurements: [...sample.measurements],
+      });
+      continue;
+    }
+    for (const measurement of sample.measurements) {
+      if (
+        !existing.measurements.some(
+          (item) => item.parameterCode === measurement.parameterCode,
+        )
+      ) {
+        existing.measurements.push(measurement);
+      }
+    }
+  }
+  return [...merged.values()];
+}
+
+export function sampleCodesToReplace(
+  incomingCodes: readonly string[],
+  existingUdiCodes: readonly string[],
+): string[] {
+  return [...new Set([...incomingCodes, ...existingUdiCodes])];
+}
+
 export function udiAdvisoryLockKey(networkCode: string): number {
   let hash = 0;
   const scope = udiSyncScope(networkCode);
@@ -115,7 +150,8 @@ export function createDrizzleAnalysesCache(
     },
 
     async write(input) {
-      if (input.samples.length === 0) {
+      const snapshot = uniqueAnalysisSamples(input.samples);
+      if (snapshot.length === 0) {
         return;
       }
 
@@ -129,29 +165,33 @@ export function createDrizzleAnalysesCache(
           .select({ code: samples.code })
           .from(samples)
           .where(eq(samples.udiCode, input.networkCode));
-        const existingCodes = existing.map((row) => row.code);
-
-        if (existingCodes.length > 0) {
-          await tx
-            .delete(measurements)
-            .where(inArray(measurements.sampleCode, existingCodes));
-          await tx.delete(samples).where(eq(samples.udiCode, input.networkCode));
-        }
-
-        await tx.insert(samples).values(
-          input.samples.map((sample) => ({
-            code: sample.code,
-            udiCode: input.networkCode,
-            sampledAt: sample.sampledAt,
-            conclusion: sample.conclusion,
-            conformiteLimitesBact: sample.conformiteLimitesBact,
-            conformiteLimitesPc: sample.conformiteLimitesPc,
-            communeInsee: sample.communeInsee,
-            source: sample.source,
-          })),
+        const codesToReplace = sampleCodesToReplace(
+          snapshot.map((sample) => sample.code),
+          existing.map((row) => row.code),
         );
 
-        const rows = input.samples.flatMap((sample) =>
+        for (const chunk of chunkItems(codesToReplace, WRITE_CHUNK_SIZE)) {
+          await tx
+            .delete(measurements)
+            .where(inArray(measurements.sampleCode, chunk));
+          await tx.delete(samples).where(inArray(samples.code, chunk));
+        }
+
+        const sampleRows = snapshot.map((sample) => ({
+          code: sample.code,
+          udiCode: input.networkCode,
+          sampledAt: sample.sampledAt,
+          conclusion: sample.conclusion,
+          conformiteLimitesBact: sample.conformiteLimitesBact,
+          conformiteLimitesPc: sample.conformiteLimitesPc,
+          communeInsee: sample.communeInsee,
+          source: sample.source,
+        }));
+        for (const chunk of chunkItems(sampleRows, WRITE_CHUNK_SIZE)) {
+          await tx.insert(samples).values(chunk);
+        }
+
+        const rows = snapshot.flatMap((sample) =>
           sample.measurements.map((measurement) => ({
             sampleCode: sample.code,
             parameterCode: measurement.parameterCode,
@@ -166,11 +206,8 @@ export function createDrizzleAnalysesCache(
           })),
         );
 
-        const chunkSize = 500;
-        for (let index = 0; index < rows.length; index += chunkSize) {
-          await tx
-            .insert(measurements)
-            .values(rows.slice(index, index + chunkSize));
+        for (const chunk of chunkItems(rows, WRITE_CHUNK_SIZE)) {
+          await tx.insert(measurements).values(chunk);
         }
 
         const seen = new Map<
@@ -224,4 +261,12 @@ export function createDrizzleAnalysesCache(
       );
     },
   };
+}
+
+function chunkItems<T>(items: readonly T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
 }
