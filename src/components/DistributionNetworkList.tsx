@@ -27,7 +27,6 @@ export function DistributionNetworkList({ citycode }: { citycode: string }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    setStatus("loading");
 
     void (async () => {
       try {
@@ -89,7 +88,10 @@ export function DistributionNetworkList({ citycode }: { citycode: string }) {
             </p>
             <button
               type="button"
-              onClick={() => setReloadToken((current) => current + 1)}
+              onClick={() => {
+                setStatus("loading");
+                setReloadToken((current) => current + 1);
+              }}
               className="text-sm text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
             >
               {messages.errors.retry}
