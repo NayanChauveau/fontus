@@ -98,10 +98,17 @@ jobs:
                 "WEB_IMAGE=${WEB_IMAGE}" \
                 > .env
               chmod 600 .env
-            elif grep -q '^WEB_IMAGE=' .env; then
-              sed -i "s|^WEB_IMAGE=.*|WEB_IMAGE=${WEB_IMAGE}|" .env
             else
-              printf "WEB_IMAGE=%s\n" "${WEB_IMAGE}" >> .env
+              if grep -q '^WEB_IMAGE=' .env; then
+                sed -i "s|^WEB_IMAGE=.*|WEB_IMAGE=${WEB_IMAGE}|" .env
+              else
+                printf "WEB_IMAGE=%s\n" "${WEB_IMAGE}" >> .env
+              fi
+              if grep -q '^SENTRY_DSN=' .env; then
+                sed -i "s|^SENTRY_DSN=.*|SENTRY_DSN=${SENTRY_DSN}|" .env
+              else
+                printf "SENTRY_DSN=%s\n" "${SENTRY_DSN}" >> .env
+              fi
             fi
 
             echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
