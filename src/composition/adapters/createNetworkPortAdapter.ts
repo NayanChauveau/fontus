@@ -18,6 +18,7 @@ export function createNetworkPortAdapter(
           networks: result.commune.networks,
           hiddenNonResidentialCount: result.commune.hiddenNonResidentialCount,
           selectedNetworkCode: null,
+          source: result.source,
         };
         return dto;
       } catch (error) {

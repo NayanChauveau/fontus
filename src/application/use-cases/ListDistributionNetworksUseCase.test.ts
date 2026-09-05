@@ -13,6 +13,7 @@ const bordeaux = {
   ],
   hiddenNonResidentialCount: 0,
   selectedNetworkCode: null,
+  source: "remote" as const,
 };
 
 describe("ListDistributionNetworksUseCase", () => {

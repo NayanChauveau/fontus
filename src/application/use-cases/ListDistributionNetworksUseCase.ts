@@ -18,6 +18,7 @@ export class ListDistributionNetworksUseCase {
         networks: [],
         hiddenNonResidentialCount: 0,
         selectedNetworkCode: null,
+        source: "cache",
       };
     }
 

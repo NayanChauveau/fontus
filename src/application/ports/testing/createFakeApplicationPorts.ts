@@ -67,6 +67,7 @@ export function createFakeApplicationPorts(
           networks: [],
           hiddenNonResidentialCount: 0,
           selectedNetworkCode: null,
+          source: "cache",
         };
       },
     },

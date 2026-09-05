@@ -12,6 +12,7 @@ describe("mapDistributionNetworksDto", () => {
       networks: [{ code: "1", name: "COBAS", neighborhoods: ["Centre"] }],
       hiddenNonResidentialCount: 0,
       selectedNetworkCode: null,
+      source: "cache",
     });
     expect(exact.confidenceLabel).toContain("exacte");
     expect(exact.disclaimer).toContain("un seul");
@@ -25,6 +26,7 @@ describe("mapDistributionNetworksDto", () => {
       networks: [{ code: "2", name: "Paulin", neighborhoods: [] }],
       hiddenNonResidentialCount: 3,
       selectedNetworkCode: null,
+      source: "cache",
     });
     expect(ambiguous.confidenceLabel).toContain("ambiguë");
     expect(ambiguous.hiddenNote).toContain("3");
@@ -38,6 +40,7 @@ describe("mapDistributionNetworksDto", () => {
       networks: [],
       hiddenNonResidentialCount: 0,
       selectedNetworkCode: null,
+      source: "cache",
     });
     expect(none.confidenceLabel).toContain("aucun");
     expect(none.disclaimer).toContain("Aucun réseau");
@@ -53,6 +56,7 @@ describe("mapDistributionNetworksDto", () => {
         networks: [{ code: "2", name: "Paulin", neighborhoods: [] }],
         hiddenNonResidentialCount: 2,
         selectedNetworkCode: null,
+      source: "cache",
       },
       en,
     );

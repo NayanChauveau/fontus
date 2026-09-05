@@ -22,6 +22,7 @@ const ambiguous = {
   ],
   hiddenNonResidentialCount: 2,
   selectedNetworkCode: null,
+  source: "cache",
 };
 
 const exact = {

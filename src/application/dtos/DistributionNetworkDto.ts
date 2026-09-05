@@ -14,4 +14,5 @@ export type ListDistributionNetworksResultDto = {
   networks: DistributionNetworkDto[];
   hiddenNonResidentialCount: number;
   selectedNetworkCode: null;
+  source: "cache" | "remote";
 };
