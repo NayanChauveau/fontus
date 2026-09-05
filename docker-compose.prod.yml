@@ -31,8 +31,7 @@ services:
       - traefik
       - internal
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     restart: unless-stopped
 
   postgres:

@@ -36,4 +36,4 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts/run-migrations.mjs ./run-
 
 USER nextjs
 EXPOSE 3100
-CMD ["sh", "-c", "node run-migrations.mjs && exec node server.js"]
+CMD ["sh", "-c", "node run-migrations.mjs; exec node server.js"]

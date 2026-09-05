@@ -21,7 +21,7 @@ DNS : `fontus.fr` (et `www` en CNAME) vers l’IP du VPS. Traefik + Let’s Encr
 
 ## Migrations
 
-Le conteneur `web` applique `supabase/migrations/` au démarrage (`create table if not exists`, donc relançable). Postgres a un healthcheck : `web` n’écoute qu’après un `pg_isready` OK.
+Le conteneur `web` applique `supabase/migrations/` au démarrage (`create table if not exists`, donc relançable), puis lance Next même si une migration échoue (`/api/health` le dira). Postgres a un healthcheck ; le deploy ne bloque plus `web` dessus.
 
 Health : `https://$TRAEFIK_HOST/api/health`
 
