@@ -241,6 +241,8 @@ export const fr = {
       "L’IP de connexion sert à un quota court (Postgres), pour ne pas saturer les API publiques.",
     privacyCookie:
       "Un cookie de langue (eau-robinet-locale) retient FR ou EN pendant un an. SameSite=Lax ; Secure en HTTPS.",
+    privacyCache:
+      "Le navigateur peut garder une copie locale (localStorage) des réseaux et analyses déjà consultés, pour ne pas les recharger à chaque visite. Ce n’est pas une adresse, et ce n’est envoyé nulle part.",
     privacyLogs:
       "Les erreurs techniques peuvent partir vers Sentry (message, URL, pas le détail des analyses). Les logs de conteneurs peuvent aller vers Datadog si l’agent tourne sur le VPS.",
     privacyContact:

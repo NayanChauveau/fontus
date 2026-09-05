@@ -1,9 +1,12 @@
 /** @vitest-environment happy-dom */
 
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setStoredLocale } from "@/presentation/i18n/locale";
+import { createTestQueryClient, renderWithQuery } from "@/test/renderWithQuery";
 import { NetworkAnalyses } from "./NetworkAnalyses";
+
+const render = renderWithQuery;
 
 describe("NetworkAnalyses", () => {
   afterEach(() => {
@@ -646,6 +649,39 @@ describe("NetworkAnalyses", () => {
     await waitFor(() => {
       expect(screen.getByText("Eau du second réseau")).toBeTruthy();
     });
+  });
+
+  it("shows cached analyses again without waiting for the network", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        networkCode: "033001214",
+        windowFrom: "2025-09-02",
+        source: "cache",
+        latestSample: {
+          code: "s1",
+          sampledAt: "2026-06-18T11:40:00.000Z",
+          conclusion: "Eau conforme",
+          conformiteLimitesBact: "C",
+          conformiteLimitesPc: "C",
+          source: "hubeau",
+          measurements: [],
+        },
+        latestMeasurements: [],
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const client = createTestQueryClient();
+    const first = render(<NetworkAnalyses networkCode="033001214" />, client);
+    await waitFor(() => {
+      expect(screen.getByText("Eau conforme")).toBeTruthy();
+    });
+    first.unmount();
+    fetchMock.mockClear();
+    render(<NetworkAnalyses networkCode="033001214" />, client);
+    await waitFor(() => {
+      expect(screen.getByText("Eau conforme")).toBeTruthy();
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("hides comparison tables when comparison failed", async () => {

@@ -1,17 +1,35 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ListDistributionNetworksResultDto } from "@/application/dtos/DistributionNetworkDto";
+import { fetchJson } from "@/components/fetchJson";
 import { LoadingStatus } from "@/components/LoadingStatus";
 import { NetworkAnalyses } from "@/components/NetworkAnalyses";
 import { mapDistributionNetworksDto } from "@/presentation/mappers/mapDistributionNetworksDto";
 import { useMessages } from "@/presentation/i18n/useLocale";
+import { queryKeys } from "@/presentation/query/queryKeys";
+import { useAfterHydration } from "@/presentation/query/useAfterHydration";
 import type {
   DistributionNetworksViewModel,
   DistributionNetworkViewModel,
 } from "@/presentation/view-models/DistributionNetworkViewModel";
 
 type LoadStatus = "loading" | "ready" | "unavailable";
+
+async function fetchDistributionNetworks(
+  citycode: string,
+  signal: AbortSignal,
+): Promise<ListDistributionNetworksResultDto> {
+  const payload = await fetchJson<ListDistributionNetworksResultDto>(
+    `/api/networks?citycode=${encodeURIComponent(citycode)}`,
+    signal,
+  );
+  if (payload.networks.length === 0) {
+    throw new Error("UNAVAILABLE");
+  }
+  return payload;
+}
 
 export function DistributionNetworkList({
   citycode,
@@ -25,21 +43,28 @@ export function DistributionNetworkList({
   onCommuneLoaded?: (city: string) => void;
 }) {
   const messages = useMessages();
-  const [status, setStatus] = useState<LoadStatus>("loading");
-  const [dto, setDto] = useState<ListDistributionNetworksResultDto | null>(
-    null,
-  );
+  const hydrated = useAfterHydration();
+  const query = useQuery({
+    queryKey: queryKeys.networks(citycode),
+    queryFn: ({ signal }) => fetchDistributionNetworks(citycode, signal),
+    enabled: hydrated,
+  });
+  const dto = hydrated ? (query.data ?? null) : null;
   const viewModel = useMemo(
     () => (dto ? mapDistributionNetworksDto(dto, messages) : null),
     [dto, messages],
   );
+  const status: LoadStatus = dto
+    ? "ready"
+    : hydrated && query.isError
+      ? "unavailable"
+      : "loading";
   const [internalCode, setInternalCode] = useState<string | null>(null);
   const controlled = onSelectedCodeChange !== undefined;
   const selectedCode = controlled ? (selectedCodeProp ?? null) : internalCode;
   const selectedCodeRef = useRef(selectedCode);
   const onSelectedCodeChangeRef = useRef(onSelectedCodeChange);
   const onCommuneLoadedRef = useRef(onCommuneLoaded);
-  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     selectedCodeRef.current = selectedCode;
@@ -58,56 +83,24 @@ export function DistributionNetworkList({
   );
 
   useEffect(() => {
-    const controller = new AbortController();
-
-    void (async () => {
-      try {
-        const response = await fetch(
-          `/api/networks?citycode=${encodeURIComponent(citycode)}`,
-          { signal: controller.signal },
-        );
-        const payload = (await response.json()) as
-          | ListDistributionNetworksResultDto
-          | { error: string };
-
-        if (
-          !response.ok ||
-          "error" in payload ||
-          payload.networks.length === 0
-        ) {
-          setStatus("unavailable");
-          return;
-        }
-
-        setDto(payload);
-        onCommuneLoadedRef.current?.(payload.city);
-        const codes = payload.networks
-          .map((network) => network.code)
-          .filter((code): code is string => Boolean(code));
-        const current = selectedCodeRef.current;
-        const requested =
-          current && codes.includes(current) ? current : null;
-        const next =
-          requested ??
-          (codes.length === 1 || payload.confidence === "exact"
-            ? (codes[0] ?? null)
-            : null);
-        if (next !== current) {
-          setSelectedCode(next);
-        }
-        setStatus("ready");
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
-        setStatus("unavailable");
-      }
-    })();
-
-    return () => {
-      controller.abort();
-    };
-  }, [citycode, reloadToken, setSelectedCode]);
+    if (!dto) {
+      return;
+    }
+    onCommuneLoadedRef.current?.(dto.city);
+    const codes = dto.networks
+      .map((network) => network.code)
+      .filter((code): code is string => Boolean(code));
+    const current = selectedCodeRef.current;
+    const requested = current && codes.includes(current) ? current : null;
+    const next =
+      requested ??
+      (codes.length === 1 || dto.confidence === "exact"
+        ? (codes[0] ?? null)
+        : null);
+    if (next !== current) {
+      setSelectedCode(next);
+    }
+  }, [dto, setSelectedCode]);
 
   return (
     <>
@@ -132,8 +125,7 @@ export function DistributionNetworkList({
             <button
               type="button"
               onClick={() => {
-                setStatus("loading");
-                setReloadToken((current) => current + 1);
+                void query.refetch();
               }}
               className="text-sm text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
             >

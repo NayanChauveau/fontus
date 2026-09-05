@@ -1,66 +1,47 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import type { NetworkWaterQualityDto } from "@/application/dtos/NetworkWaterQualityDto";
+import { fetchJson } from "@/components/fetchJson";
 import { intlLocale } from "@/presentation/i18n/messages";
 import { useLocale, useMessages } from "@/presentation/i18n/useLocale";
 import { mapNetworkWaterQualityDto } from "@/presentation/mappers/mapNetworkWaterQualityDto";
+import { queryKeys } from "@/presentation/query/queryKeys";
+import { useAfterHydration } from "@/presentation/query/useAfterHydration";
 
 type LoadStatus = "loading" | "ready" | "unavailable";
 
 export function useNetworkQuality(networkCode: string) {
   const messages = useMessages();
   const locale = useLocale();
-  const [status, setStatus] = useState<LoadStatus>("loading");
-  const [dto, setDto] = useState<NetworkWaterQualityDto | null>(null);
-  const [resolvedCode, setResolvedCode] = useState<string | null>(null);
-  const matches = resolvedCode === networkCode;
+  const hydrated = useAfterHydration();
+  const query = useQuery({
+    queryKey: queryKeys.quality(networkCode),
+    queryFn: ({ signal }) =>
+      fetchJson<NetworkWaterQualityDto>(
+        `/api/udi/${encodeURIComponent(networkCode)}/quality`,
+        signal,
+      ),
+    enabled: hydrated,
+  });
+  const data = hydrated ? query.data : undefined;
   const viewModel = useMemo(
     () =>
-      matches && dto
-        ? mapNetworkWaterQualityDto(dto, {
+      data
+        ? mapNetworkWaterQualityDto(data, {
             messages,
             dateLocale: intlLocale(locale),
           })
         : null,
-    [dto, locale, matches, messages],
+    [data, locale, messages],
   );
 
-  useEffect(() => {
-    const controller = new AbortController();
+  const status: LoadStatus = data
+    ? "ready"
+    : hydrated && query.isError
+      ? "unavailable"
+      : "loading";
 
-    void (async () => {
-      try {
-        const response = await fetch(
-          `/api/udi/${encodeURIComponent(networkCode)}/quality`,
-          { signal: controller.signal },
-        );
-        const payload = (await response.json()) as
-          | NetworkWaterQualityDto
-          | { error: string };
-
-        if (!response.ok || "error" in payload) {
-          setResolvedCode(networkCode);
-          setStatus("unavailable");
-          return;
-        }
-
-        setDto(payload);
-        setResolvedCode(networkCode);
-        setStatus("ready");
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
-        setResolvedCode(networkCode);
-        setStatus("unavailable");
-      }
-    })();
-
-    return () => {
-      controller.abort();
-    };
-  }, [networkCode]);
-
-  return { status: matches ? status : "loading", viewModel };
+  return { status, viewModel };
 }

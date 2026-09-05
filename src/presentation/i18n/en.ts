@@ -237,6 +237,8 @@ export const en = {
       "The connection IP is used for a short-lived rate limit (Postgres), to keep public APIs usable.",
     privacyCookie:
       "A language cookie (eau-robinet-locale) stores FR or EN for one year. SameSite=Lax; Secure on HTTPS.",
+    privacyCache:
+      "The browser may keep a local copy (localStorage) of networks and analyses already viewed, so they are not fetched again on every visit. This is not an address, and it is not sent anywhere else.",
     privacyLogs:
       "Technical errors may be sent to Sentry (message, URL, no water-quality payload). Container logs may go to Datadog if that agent runs on the VPS.",
     privacyContact:

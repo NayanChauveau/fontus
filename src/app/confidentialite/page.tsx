@@ -24,6 +24,7 @@ export default async function ConfidentialitePage() {
       <p>{messages.legal.privacyAddress}</p>
       <p>{messages.legal.privacyIp}</p>
       <p>{messages.legal.privacyCookie}</p>
+      <p>{messages.legal.privacyCache}</p>
       <p>{messages.legal.privacyLogs}</p>
       <p>{messages.legal.privacyContact}</p>
     </main>

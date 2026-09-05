@@ -1,9 +1,15 @@
 /** @vitest-environment happy-dom */
 
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setStoredLocale } from "@/presentation/i18n/locale";
+import { queryKeys } from "@/presentation/query/queryKeys";
+import { createTestQueryClient, renderWithQuery } from "@/test/renderWithQuery";
 import { DistributionNetworkList } from "./DistributionNetworkList";
+
+const render = renderWithQuery;
 
 vi.mock("./NetworkAnalyses", () => ({
   NetworkAnalyses: ({ networkCode }: { networkCode: string }) => (
@@ -38,6 +44,19 @@ describe("DistributionNetworkList", () => {
     vi.unstubAllGlobals();
     window.localStorage.clear();
     document.documentElement.lang = "fr";
+  });
+
+  it("ssr stays on the loading markup when the query cache already has networks", () => {
+    const client = createTestQueryClient();
+    client.setQueryData(queryKeys.networks("33063"), exact);
+    const html = renderToString(
+      <QueryClientProvider client={client}>
+        <DistributionNetworkList citycode="33063" />
+      </QueryClientProvider>,
+    );
+    expect(html).toContain('aria-busy="true"');
+    expect(html).toContain("Recherche des réseaux");
+    expect(html).not.toContain("PAULIN");
   });
 
   it("keeps the shared network and reports the commune name", async () => {

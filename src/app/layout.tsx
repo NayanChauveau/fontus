@@ -9,6 +9,7 @@ import { SITE_NAME, SITE_ORIGIN } from "@/presentation/site";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/presentation/theme/theme";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { QueryProvider } from "@/presentation/query/QueryProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -90,9 +91,11 @@ export default async function RootLayout({
         >
           {messages.a11y.skipToContent}
         </a>
-        <SiteHeader />
-        {children}
-        <SiteFooter />
+        <QueryProvider>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+        </QueryProvider>
       </body>
     </html>
   );
