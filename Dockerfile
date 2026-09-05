@@ -18,6 +18,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV DOCKER_BUILD=1
 RUN --mount=type=cache,id=fontus-next,target=/app/.next/cache \
     pnpm build
+RUN mkdir -p /app/migrate-node_modules \
+    && cp -aL /app/node_modules/postgres /app/migrate-node_modules/postgres
 
 FROM base AS production
 ENV NODE_ENV=production
@@ -33,6 +35,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/supabase/migrations ./migrations
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/run-migrations.mjs ./run-migrations.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/migrate-node_modules/postgres ./node_modules/postgres
 
 USER nextjs
 EXPOSE 3100
