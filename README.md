@@ -1,6 +1,6 @@
-# eau-robinet
+# Fontus
 
-Site de comparaison de la qualité de l’eau du robinet. Scaffold Next.js + hexa + Supabase local.
+Site de comparaison de la qualité de l’eau du robinet (`fontus.fr`). Scaffold Next.js + hexa + Supabase local. Le dépôt git s’appelle encore `eau-robinet`.
 
 ## Prérequis
 
@@ -36,6 +36,6 @@ Quand Hub’Eau dépasse 20 000 lignes même sur 6 mois, on lit un extrait DIS l
 
 Architecture : [`docs/architecture.md`](docs/architecture.md).
 
-En production : garder la Data API Supabase éteinte (ou RLS deny-all déjà dans les migrations) ; l’app ne parle à Postgres que via `DATABASE_URL`. Hors localhost, le client exige SSL.
+En production : voir [`deploy/README.md`](deploy/README.md) (Traefik + Compose, même recette que jojo_portfolio). Data API Supabase éteinte (ou RLS deny-all). SSL Postgres sauf loopback / nom Docker (`postgres`) ; `DATABASE_SSL=0` dans Compose.
 
-Les erreurs applicatives (503 Hub’Eau, dégradations, crash UI) passent par `ObservabilityPort` et sortent sur stderr (lisible en local, JSON en prod). Rien n’est stocké en base ; Datadog se branchera plus tard sur ces logs.
+Les erreurs passent par `ObservabilityPort` (stderr JSON en prod, Sentry si `SENTRY_DSN`). Les logs de conteneurs peuvent aller à Datadog si l’agent du VPS tourne.

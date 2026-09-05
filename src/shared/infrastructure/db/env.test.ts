@@ -37,11 +37,27 @@ describe("getDatabaseUrl", () => {
     }
   });
 
-  it("requires ssl except on loopback", () => {
+  it("requires ssl except on loopback and docker service names", () => {
+    const previous = process.env.DATABASE_SSL;
+    delete process.env.DATABASE_SSL;
     expect(shouldRequireDatabaseSsl("postgres://db.example:5432/app")).toBe(true);
     expect(shouldRequireDatabaseSsl("postgres://localhost:54332/app")).toBe(false);
     expect(shouldRequireDatabaseSsl("postgres://127.0.0.1:54332/app")).toBe(false);
+    expect(shouldRequireDatabaseSsl("postgres://postgres:5432/app")).toBe(false);
     expect(shouldRequireDatabaseSsl("not-a-url-but-localhost")).toBe(false);
     expect(shouldRequireDatabaseSsl("not-a-url")).toBe(true);
+    process.env.DATABASE_SSL = "0";
+    expect(shouldRequireDatabaseSsl("postgres://db.example:5432/app")).toBe(false);
+    process.env.DATABASE_SSL = "false";
+    expect(shouldRequireDatabaseSsl("postgres://db.example:5432/app")).toBe(false);
+    process.env.DATABASE_SSL = "1";
+    expect(shouldRequireDatabaseSsl("postgres://postgres:5432/app")).toBe(true);
+    process.env.DATABASE_SSL = "true";
+    expect(shouldRequireDatabaseSsl("postgres://postgres:5432/app")).toBe(true);
+    if (previous === undefined) {
+      delete process.env.DATABASE_SSL;
+    } else {
+      process.env.DATABASE_SSL = previous;
+    }
   });
 });

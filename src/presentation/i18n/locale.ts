@@ -25,8 +25,13 @@ export function subscribeLocale(listener: () => void) {
   };
 }
 
+export function localeCookieSuffix(secure: boolean): string {
+  return `Path=/; Max-Age=31536000; SameSite=Lax${secure ? "; Secure" : ""}`;
+}
+
 export function persistLocaleCookie(locale: Locale) {
-  document.cookie = `${LOCALE_COOKIE_NAME}=${locale}; Path=/; Max-Age=31536000; SameSite=Lax`;
+  const secure = window.location.protocol === "https:";
+  document.cookie = `${LOCALE_COOKIE_NAME}=${locale}; ${localeCookieSuffix(secure)}`;
 }
 
 export function setStoredLocale(locale: Locale) {
@@ -38,4 +43,4 @@ export function setStoredLocale(locale: Locale) {
   }
 }
 
-export const LOCALE_BOOTSTRAP_SCRIPT = `(function(){try{var s=localStorage.getItem(${JSON.stringify(LOCALE_STORAGE_KEY)});if(s==="en"||s==="fr"){document.documentElement.lang=s;document.cookie=${JSON.stringify(LOCALE_COOKIE_NAME)}+"="+s+"; Path=/; Max-Age=31536000; SameSite=Lax";}}catch(e){}})();`;
+export const LOCALE_BOOTSTRAP_SCRIPT = `(function(){try{var s=localStorage.getItem(${JSON.stringify(LOCALE_STORAGE_KEY)});if(s==="en"||s==="fr"){document.documentElement.lang=s;document.cookie=${JSON.stringify(LOCALE_COOKIE_NAME)}+"="+s+"; Path=/; Max-Age=31536000; SameSite=Lax"+(location.protocol==="https:"?"; Secure":"");}}catch(e){}})();`;

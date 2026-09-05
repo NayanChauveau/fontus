@@ -25,7 +25,7 @@ export function createGeoPfGeocodingGateway(
           signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
           headers: {
             Accept: "application/json",
-            "User-Agent": "eau-robinet/0.1 (tap-water-quality)",
+            "User-Agent": "fontus/0.1 (https://fontus.fr)",
           },
         });
       } catch (error) {

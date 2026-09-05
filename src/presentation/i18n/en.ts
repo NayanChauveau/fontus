@@ -1,6 +1,6 @@
 export const en = {
   home: {
-    title: "Tap water quality",
+    title: "Fontus",
     description: "Compare official tap water analyses in France.",
     stackOk: "stack OK",
     stackKo: "stack KO",
@@ -163,6 +163,30 @@ export const en = {
     label: "Language",
     french: "Français",
     english: "English",
+  },
+  legal: {
+    mentions: "Legal notice",
+    privacy: "Privacy",
+    mentionsTitle: "Legal notice",
+    privacyTitle: "Privacy policy",
+    publisher:
+      "Fontus is published on a personal basis. It is not an official ARS or ministry service.",
+    sources:
+      "Measurements come from Hub’Eau (SISE-Eaux) and, when used, data.gouv DIS extracts. The ARS conclusion is reproduced, not recalculated.",
+    hosting:
+      "The site is hosted on a personal VPS. The database stays on that server and is not exposed on the public internet.",
+    privacyIntro:
+      "We do not create user accounts. We process only what is needed to answer a search.",
+    privacyAddress:
+      "The address you type is sent to our server, which queries the BAN (adresse.data.gouv.fr) to suggest municipalities.",
+    privacyIp:
+      "The connection IP is used for a short-lived rate limit (Postgres), to keep public APIs usable.",
+    privacyCookie:
+      "A language cookie (eau-robinet-locale) stores FR or EN for one year. SameSite=Lax; Secure on HTTPS.",
+    privacyLogs:
+      "Technical errors may be sent to Sentry (message, URL, no water-quality payload). Container logs may go to Datadog if that agent runs on the VPS.",
+    privacyContact:
+      "To ask for deletion of server-side data that might concern you, contact the site publisher.",
   },
 } as const;
 

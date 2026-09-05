@@ -17,13 +17,17 @@ describe("HomeHeader", () => {
 
   it("switches the title when the language changes", () => {
     render(<HomeHeader />);
+    expect(screen.getByRole("heading", { name: "Fontus" })).toBeTruthy();
     expect(
-      screen.getByRole("heading", { name: "Qualité de l’eau du robinet" }),
+      screen.getByText(
+        "Comparaison des analyses officielles de l’eau du robinet en France.",
+      ),
     ).toBeTruthy();
 
     fireEvent.click(screen.getByRole("radio", { name: "English" }));
+    expect(screen.getByRole("heading", { name: "Fontus" })).toBeTruthy();
     expect(
-      screen.getByRole("heading", { name: "Tap water quality" }),
+      screen.getByText("Compare official tap water analyses in France."),
     ).toBeTruthy();
   });
 });

@@ -2,7 +2,7 @@ import type { Messages } from "./en";
 
 export const fr = {
   home: {
-    title: "Qualité de l’eau du robinet",
+    title: "Fontus",
     description:
       "Comparaison des analyses officielles de l’eau du robinet en France.",
     stackOk: "stack OK",
@@ -167,5 +167,29 @@ export const fr = {
     label: "Langue",
     french: "Français",
     english: "English",
+  },
+  legal: {
+    mentions: "Mentions légales",
+    privacy: "Confidentialité",
+    mentionsTitle: "Mentions légales",
+    privacyTitle: "Politique de confidentialité",
+    publisher:
+      "Fontus est édité à titre personnel. Ce n’est pas un service officiel de l’ARS ni du ministère.",
+    sources:
+      "Les mesures viennent de Hub’Eau (SISE-Eaux) et, le cas échéant, des extraits DIS data.gouv. La conclusion ARS est reproduite, non recalculée.",
+    hosting:
+      "Le site est hébergé sur un VPS personnel. La base reste sur ce serveur et n’est pas exposée sur Internet.",
+    privacyIntro:
+      "Pas de compte utilisateur. On ne traite que ce qui sert à répondre à une recherche.",
+    privacyAddress:
+      "L’adresse saisie est envoyée à notre serveur, qui interroge la BAN (adresse.data.gouv.fr) pour proposer des communes.",
+    privacyIp:
+      "L’IP de connexion sert à un quota court (Postgres), pour ne pas saturer les API publiques.",
+    privacyCookie:
+      "Un cookie de langue (eau-robinet-locale) retient FR ou EN pendant un an. SameSite=Lax ; Secure en HTTPS.",
+    privacyLogs:
+      "Les erreurs techniques peuvent partir vers Sentry (message, URL, pas le détail des analyses). Les logs de conteneurs peuvent aller vers Datadog si l’agent tourne sur le VPS.",
+    privacyContact:
+      "Pour une demande d’effacement de données côté serveur qui vous concerneraient, contactez l’éditeur du site.",
   },
 } as const satisfies Messages;

@@ -1,0 +1,46 @@
+networks:
+  traefik:
+    external: true
+  internal: {}
+
+volumes:
+  pgdata:
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_POOL_MAX: "5"
+      DATABASE_SSL: "0"
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      NODE_ENV: production
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fontus.rule=Host(`${TRAEFIK_HOST}`)"
+      - "traefik.http.routers.fontus.entrypoints=websecure"
+      - "traefik.http.routers.fontus.tls.certresolver=le"
+      - "traefik.http.services.fontus.loadbalancer.server.port=3100"
+      - "traefik.docker.network=traefik"
+      - 'com.datadoghq.ad.logs=[{"source":"nextjs","service":"fontus"}]'
+    networks:
+      - traefik
+      - internal
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: fontus
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+    restart: unless-stopped

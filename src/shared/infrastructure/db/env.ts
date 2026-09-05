@@ -18,9 +18,21 @@ export function getDatabasePoolMax(): number {
 }
 
 export function shouldRequireDatabaseSsl(url: string): boolean {
+  const forced = process.env.DATABASE_SSL;
+  if (forced === "0" || forced === "false") {
+    return false;
+  }
+  if (forced === "1" || forced === "true") {
+    return true;
+  }
+
   try {
     const { hostname } = new URL(url);
-    return hostname !== "localhost" && hostname !== "127.0.0.1";
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return false;
+    }
+    // Docker Compose service names have no dot (e.g. postgres).
+    return hostname.includes(".");
   } catch {
     return !url.includes("localhost") && !url.includes("127.0.0.1");
   }

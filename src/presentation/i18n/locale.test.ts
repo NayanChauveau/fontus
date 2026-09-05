@@ -3,6 +3,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   applyLocale,
+  localeCookieSuffix,
   readLocale,
   resolveLocale,
   setStoredLocale,
@@ -36,7 +37,7 @@ describe("locale", () => {
 
   it("exposes english messages and an intl locale", () => {
     expect(catalogKeys(catalogs.en)).toEqual(catalogKeys(catalogs.fr));
-    expect(getMessages("en").home.title).toBe("Tap water quality");
+    expect(getMessages("en").home.title).toBe("Fontus");
     expect(intlLocale("en")).toBe("en-GB");
     expect(intlLocale("fr")).toBe("fr-FR");
   });
@@ -57,5 +58,12 @@ describe("locale", () => {
     expect(document.documentElement.lang).toBe("fr");
     setStoredLocale("fr");
     expect(listener).toHaveBeenCalledOnce();
+  });
+
+  it("marks the locale cookie Secure on HTTPS", () => {
+    expect(localeCookieSuffix(false)).toBe(
+      "Path=/; Max-Age=31536000; SameSite=Lax",
+    );
+    expect(localeCookieSuffix(true)).toContain("Secure");
   });
 });

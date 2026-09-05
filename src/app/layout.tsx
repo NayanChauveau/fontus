@@ -8,6 +8,7 @@ import {
 } from "@/presentation/i18n/locale";
 import { getMessages } from "@/presentation/i18n/messages";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/presentation/theme/theme";
+import { SiteFooter } from "@/components/SiteFooter";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -49,7 +50,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }

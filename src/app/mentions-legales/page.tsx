@@ -1,0 +1,28 @@
+import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { LOCALE_COOKIE_NAME, resolveLocale } from "@/presentation/i18n/locale";
+import { getMessages } from "@/presentation/i18n/messages";
+
+async function requestMessages() {
+  const locale = resolveLocale((await cookies()).get(LOCALE_COOKIE_NAME)?.value);
+  return getMessages(locale);
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const messages = await requestMessages();
+  return { title: messages.legal.mentionsTitle };
+}
+
+export default async function MentionsLegalesPage() {
+  const messages = await requestMessages();
+  return (
+    <article className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-10 text-sm text-zinc-800 dark:text-zinc-200">
+      <h1 className="text-2xl font-semibold text-zinc-950 dark:text-zinc-50">
+        {messages.legal.mentionsTitle}
+      </h1>
+      <p>{messages.legal.publisher}</p>
+      <p>{messages.legal.sources}</p>
+      <p>{messages.legal.hosting}</p>
+    </article>
+  );
+}

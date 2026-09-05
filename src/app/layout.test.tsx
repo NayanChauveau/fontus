@@ -30,8 +30,9 @@ describe("RootLayout", () => {
     expect(document.documentElement.lang).toBe("fr");
     expect(document.head.textContent).toContain("eau-robinet-theme");
     expect(document.head.textContent).toContain("eau-robinet-locale");
+    expect(screen.getByRole("link", { name: "Mentions légales" })).toBeTruthy();
     await expect(generateMetadata()).resolves.toMatchObject({
-      title: "Qualité de l’eau du robinet",
+      title: "Fontus",
     });
   });
 
@@ -46,7 +47,7 @@ describe("RootLayout", () => {
     render(ui);
     expect(document.documentElement.lang).toBe("en");
     await expect(generateMetadata()).resolves.toMatchObject({
-      title: "Tap water quality",
+      title: "Fontus",
     });
   });
 });
