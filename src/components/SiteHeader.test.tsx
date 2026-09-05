@@ -21,6 +21,9 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "Fontus" }).getAttribute("href")).toBe(
       "/",
     );
+    expect(
+      screen.getByRole("link", { name: "Soutenir" }).getAttribute("href"),
+    ).toBe("https://buymeacoffee.com/nayanchauvg");
     expect(screen.getByRole("radio", { name: "Français" })).toBeTruthy();
     fireEvent.click(screen.getByRole("radio", { name: "English" }));
     expect(screen.getByRole("link", { name: "Fontus" })).toBeTruthy();

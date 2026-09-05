@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LanguageSelect } from "@/components/LanguageSelect";
+import { SupportLink } from "@/components/SupportLink";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useMessages } from "@/presentation/i18n/useLocale";
 
@@ -18,6 +19,7 @@ export function SiteHeader() {
           <span>{messages.home.title}</span>
         </Link>
         <div className="flex shrink-0 items-center gap-2">
+          <SupportLink className="inline-flex h-10 items-center rounded-xl border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800 shadow-sm hover:border-emerald-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-emerald-700" />
           <LanguageSelect />
           <ThemeToggle />
         </div>

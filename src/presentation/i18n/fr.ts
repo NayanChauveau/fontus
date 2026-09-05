@@ -217,6 +217,7 @@ export const fr = {
     nitrates: "Nitrates",
     lead: "Plomb",
     cities: "Grandes villes",
+    support: "Soutenir",
   },
   legal: {
     mentions: "Mentions légales",

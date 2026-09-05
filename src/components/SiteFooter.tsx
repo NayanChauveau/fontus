@@ -10,6 +10,7 @@ import {
   NITRATES_PATH,
   PFAS_PATH,
 } from "@/presentation/editorial/paths";
+import { SupportLink } from "@/components/SupportLink";
 import { useMessages } from "@/presentation/i18n/useLocale";
 
 export function SiteFooter() {
@@ -54,6 +55,7 @@ export function SiteFooter() {
         >
           {messages.legal.privacy}
         </Link>
+        <SupportLink className="font-medium text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-300" />
       </nav>
     </footer>
   );

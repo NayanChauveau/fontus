@@ -28,5 +28,8 @@ describe("SiteFooter", () => {
     expect(
       screen.getByRole("link", { name: "PFAS" }).getAttribute("href"),
     ).toBe("/parametres/pfas");
+    expect(
+      screen.getByRole("link", { name: "Soutenir" }).getAttribute("href"),
+    ).toBe("https://buymeacoffee.com/nayanchauvg");
   });
 });

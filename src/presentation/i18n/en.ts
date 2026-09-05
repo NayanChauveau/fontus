@@ -213,6 +213,7 @@ export const en = {
     nitrates: "Nitrates",
     lead: "Lead",
     cities: "Major cities",
+    support: "Support",
   },
   legal: {
     mentions: "Legal notice",
