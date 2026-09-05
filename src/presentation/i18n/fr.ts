@@ -86,6 +86,7 @@ export const fr = {
   analyses: {
     title: "Dernières analyses",
     loading: "Chargement des analyses officielles…",
+    loadingHint: "Cela peut prendre quelques secondes.",
     unavailable:
       "Impossible de charger les analyses. Réessayez dans un instant.",
     empty: "Aucune analyse récente pour ce réseau.",

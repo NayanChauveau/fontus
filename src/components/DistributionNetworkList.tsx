@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ListDistributionNetworksResultDto } from "@/application/dtos/DistributionNetworkDto";
+import { LoadingStatus } from "@/components/LoadingStatus";
 import { NetworkAnalyses } from "@/components/NetworkAnalyses";
 import { mapDistributionNetworksDto } from "@/presentation/mappers/mapDistributionNetworksDto";
 import { useMessages } from "@/presentation/i18n/useLocale";
@@ -111,6 +112,7 @@ export function DistributionNetworkList({
   return (
     <>
       <section
+        aria-busy={status === "loading"}
         aria-live="polite"
         className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900"
       >
@@ -119,7 +121,7 @@ export function DistributionNetworkList({
         </h3>
 
         {status === "loading" && (
-          <p className="mt-3 text-sm text-zinc-500">{messages.networks.loading}</p>
+          <LoadingStatus label={messages.networks.loading} />
         )}
 
         {status === "unavailable" && (

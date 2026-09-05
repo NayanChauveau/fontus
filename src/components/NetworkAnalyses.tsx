@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadingStatus } from "@/components/LoadingStatus";
 import { useNetworkQuality } from "@/components/useNetworkQuality";
 import { NetworkAnalysesResults } from "@/components/NetworkAnalysesResults";
 import { useMessages } from "@/presentation/i18n/useLocale";
@@ -10,6 +11,7 @@ export function NetworkAnalyses({ networkCode }: { networkCode: string }) {
 
   return (
     <section
+      aria-busy={status === "loading"}
       aria-live="polite"
       className="min-w-0 overflow-x-hidden rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900"
     >
@@ -18,7 +20,11 @@ export function NetworkAnalyses({ networkCode }: { networkCode: string }) {
       </h3>
 
       {status === "loading" && (
-        <p className="mt-3 text-sm text-zinc-500">{messages.analyses.loading}</p>
+        <LoadingStatus
+          label={messages.analyses.loading}
+          hint={messages.analyses.loadingHint}
+          skeleton
+        />
       )}
 
       {status === "unavailable" && (

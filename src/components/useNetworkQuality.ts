@@ -26,6 +26,8 @@ export function useNetworkQuality(networkCode: string) {
 
   useEffect(() => {
     const controller = new AbortController();
+    setStatus("loading");
+    setDto(null);
 
     void (async () => {
       try {

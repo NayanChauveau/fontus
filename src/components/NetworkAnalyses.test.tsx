@@ -452,7 +452,12 @@ describe("NetworkAnalyses", () => {
     );
 
     render(<NetworkAnalyses networkCode="033001214" />);
-    expect(screen.getByText(/Chargement/)).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain(
+      "Chargement des analyses officielles…",
+    );
+    expect(
+      screen.getByText("Cela peut prendre quelques secondes."),
+    ).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByText("Eau conforme")).toBeTruthy();
     });
@@ -587,9 +592,60 @@ describe("NetworkAnalyses", () => {
     );
     render(<NetworkAnalyses networkCode="033001214" />);
     await waitFor(() => {
-      expect(screen.getByText(/Chargement/)).toBeTruthy();
+      expect(screen.getByRole("status")).toBeTruthy();
     });
     vi.unstubAllGlobals();
+  });
+
+  it("shows the loading panel again when the network changes", async () => {
+    const payload = (conclusion: string) =>
+      Response.json({
+        networkCode: "033001214",
+        windowFrom: "2025-09-02",
+        source: "cache",
+        latestSample: {
+          code: "s1",
+          sampledAt: "2026-06-18T11:40:00.000Z",
+          conclusion,
+          conformiteLimitesBact: "C",
+          conformiteLimitesPc: "C",
+          source: "hubeau",
+          measurements: [],
+        },
+        latestMeasurements: [],
+      });
+
+    let releaseSecond: () => void = () => {};
+    const secondGate = new Promise<void>((resolve) => {
+      releaseSecond = resolve;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo) => {
+        if (String(input).includes("033001215")) {
+          await secondGate;
+          return payload("Eau du second réseau");
+        }
+        return payload("Eau conforme");
+      }),
+    );
+
+    const view = render(<NetworkAnalyses networkCode="033001214" />);
+    await waitFor(() => {
+      expect(screen.getByText("Eau conforme")).toBeTruthy();
+    });
+
+    view.rerender(<NetworkAnalyses networkCode="033001215" />);
+    expect(screen.getByRole("status")).toBeTruthy();
+    expect(screen.queryByText("Eau conforme")).toBeNull();
+    expect(
+      screen.getByText("Cela peut prendre quelques secondes."),
+    ).toBeTruthy();
+
+    releaseSecond();
+    await waitFor(() => {
+      expect(screen.getByText("Eau du second réseau")).toBeTruthy();
+    });
   });
 
   it("hides comparison tables when comparison failed", async () => {

@@ -82,6 +82,7 @@ export const en = {
   analyses: {
     title: "Latest analyses",
     loading: "Loading official analyses…",
+    loadingHint: "This can take a few seconds.",
     unavailable: "Unable to load analyses. Please try again shortly.",
     empty: "No recent analysis for this network.",
     conclusionTitle: "ARS conclusion",
