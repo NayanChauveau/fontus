@@ -29,23 +29,7 @@ Health : `https://$TRAEFIK_HOST/api/health`
 
 Les erreurs API / UI partent vers Sentry si `SENTRY_DSN` est dans le `.env` du VPS (secret GitHub du même nom). Le plan Developer gratuit envoie un mail sur chaque nouvelle issue.
 
-Le `.env` n’est créé qu’une fois : après avoir collé le DSN dans GitHub, soit attendre le prochain deploy (il met à jour `SENTRY_DSN`), soit le poser à la main :
-
-```bash
-# /srv/eau-robinet/.env
-SENTRY_DSN=https://xxxx@o….ingest.sentry.io/…
-cd /srv/eau-robinet
-docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate web
-```
-
-Vérifier que le process a le DSN et qu’un event arrive dans Issues :
-
-```bash
-curl -sS -X POST https://fontus.fr/api/sentry-check
-# {"ok":true,"configured":true}
-```
-
-`configured: false` = le conteneur n’a pas le DSN. Pas de Session Replay : on n’envoie que le message et des tags (scope, event).
+Le `.env` n’est créé qu’une fois : le deploy met ensuite à jour `SENTRY_DSN`. Pas de Session Replay : on n’envoie que le message et des tags (scope, event).
 
 Le workflow **Deploy** compile l’image sur GitHub Actions (réseau npm + cache `gha`), la pousse vers `ghcr.io/<owner>/<repo>:<sha>` (et `:main`), puis le VPS fait `docker login` + `pull` + `up web`. Pas de nouveau secret : `GITHUB_TOKEN` suffit (`permissions.packages: write`).
 
