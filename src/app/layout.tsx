@@ -8,6 +8,7 @@ import { siteJsonLd } from "@/presentation/seo/siteJsonLd";
 import { SITE_NAME, SITE_ORIGIN } from "@/presentation/site";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/presentation/theme/theme";
 import { SiteFooter } from "@/components/SiteFooter";
+import { SiteHeader } from "@/components/SiteHeader";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -89,6 +90,7 @@ export default async function RootLayout({
         >
           {messages.a11y.skipToContent}
         </a>
+        <SiteHeader />
         {children}
         <SiteFooter />
       </body>

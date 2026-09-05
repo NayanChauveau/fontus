@@ -31,6 +31,10 @@ describe("RootLayout", () => {
     expect(document.documentElement.lang).toBe("fr");
     expect(document.head.textContent).toContain("eau-robinet-theme");
     expect(document.head.textContent).toContain("eau-robinet-locale");
+    expect(screen.getByRole("link", { name: "Fontus" }).getAttribute("href")).toBe(
+      "/",
+    );
+    expect(screen.queryByRole("heading")).toBeNull();
     expect(screen.getByRole("link", { name: "Mentions légales" })).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Aller au contenu" }).getAttribute("href"),

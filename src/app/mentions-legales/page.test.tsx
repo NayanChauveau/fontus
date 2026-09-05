@@ -1,6 +1,6 @@
 /** @vitest-environment happy-dom */
 
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/headers", () => ({
@@ -12,8 +12,9 @@ describe("legal pages", () => {
     const mentions = await import("./page");
     render(await mentions.default());
     expect(
-      screen.getByRole("heading", { name: "Mentions légales" }),
+      screen.getByRole("heading", { level: 1, name: "Mentions légales" }),
     ).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(document.getElementById("contenu")?.tagName).toBe("MAIN");
     await expect(mentions.generateMetadata()).resolves.toMatchObject({
       title: "Mentions légales",
@@ -22,11 +23,16 @@ describe("legal pages", () => {
       alternates: { canonical: "/mentions-legales" },
     });
 
+    cleanup();
     const privacy = await import("../confidentialite/page");
     render(await privacy.default());
     expect(
-      screen.getByRole("heading", { name: "Politique de confidentialité" }),
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Politique de confidentialité",
+      }),
     ).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     await expect(privacy.generateMetadata()).resolves.toMatchObject({
       title: "Politique de confidentialité",
       description:

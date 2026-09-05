@@ -2,32 +2,39 @@
 
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import Home, { generateMetadata } from "./page";
+
+vi.mock("next/headers", () => ({
+  cookies: async () => ({ get: () => undefined }),
+}));
 
 vi.mock("@/components/AddressSearch", () => ({
   AddressSearch: () => <div>address-search</div>,
 }));
 
-vi.mock("@/components/HomeHeader", () => ({
-  HomeHeader: () => <h1>home-header</h1>,
-}));
-
 describe("Home page", () => {
-  it("renders the title", () => {
-    render(<Home />);
-    expect(screen.getByRole("heading", { level: 1 })).toBeTruthy();
+  it("renders a single keyword heading", async () => {
+    const { default: Home, generateMetadata } = await import("./page");
+    render(await Home());
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Qualité de l’eau du robinet en France",
+      }),
+    ).toBeTruthy();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.queryByRole("heading", { name: "Fontus" })).toBeNull();
     expect(screen.getByText("address-search")).toBeTruthy();
-    expect(screen.getByText("home-header")).toBeTruthy();
     expect(document.getElementById("contenu")).toBeTruthy();
-  });
-
-  it("keeps the clean home indexable and noindexes share queries", async () => {
     await expect(
       generateMetadata({ searchParams: Promise.resolve({}) }),
     ).resolves.toEqual({
       alternates: { canonical: "/" },
       robots: undefined,
     });
+  });
+
+  it("noindexes share queries", async () => {
+    const { generateMetadata } = await import("./page");
     await expect(
       generateMetadata({
         searchParams: Promise.resolve({ insee: "81004" }),
