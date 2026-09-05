@@ -4,9 +4,45 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AddressSearch } from "./AddressSearch";
 
+const share = {
+  citycode: null as string | null,
+  networkCode: null as string | null,
+  replaceShare: vi.fn(),
+};
+
+vi.mock("./useShareUrl", () => ({
+  useShareUrl: () => ({
+    citycode: share.citycode,
+    networkCode: share.networkCode,
+    replaceShare: share.replaceShare,
+  }),
+}));
+
 vi.mock("./DistributionNetworkList", () => ({
-  DistributionNetworkList: ({ citycode }: { citycode: string }) => (
-    <div>networks-{citycode}</div>
+  DistributionNetworkList: ({
+    citycode,
+    selectedCode,
+    onSelectedCodeChange,
+    onCommuneLoaded,
+  }: {
+    citycode: string;
+    selectedCode?: string | null;
+    onSelectedCodeChange?: (code: string | null) => void;
+    onCommuneLoaded?: (city: string) => void;
+  }) => (
+    <div>
+      <button type="button" onClick={() => onCommuneLoaded?.("Bordeaux")}>
+        hydrate-city
+      </button>
+      <button
+        type="button"
+        onClick={() => onSelectedCodeChange?.("033001214")}
+      >
+        pick-network
+      </button>
+      networks-{citycode}
+      {selectedCode ? `-${selectedCode}` : ""}
+    </div>
   ),
 }));
 
@@ -23,6 +59,9 @@ describe("AddressSearch", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    share.citycode = null;
+    share.networkCode = null;
+    share.replaceShare.mockReset();
   });
 
   it("searches, selects and clears an address without resolving", async () => {
@@ -56,6 +95,10 @@ describe("AddressSearch", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Changer d’adresse/ }));
     expect(screen.queryByText("Adresse retenue")).toBeNull();
+    expect(share.replaceShare).toHaveBeenCalledWith({
+      citycode: null,
+      networkCode: null,
+    });
   });
 
   it("handles empty results, service errors and keyboard extras", async () => {
@@ -200,6 +243,31 @@ describe("AddressSearch", () => {
     fireEvent.click(screen.getByRole("option", { name: /12 Rue Sainte-Catherine/ }));
     expect(screen.getByText("Adresse retenue")).toBeTruthy();
     expect(screen.getByText("networks-33063")).toBeTruthy();
+    expect(share.replaceShare).toHaveBeenCalledWith({
+      citycode: "33063",
+      networkCode: null,
+    });
+  });
+
+  it("restores a commune and network from the share url", () => {
+    share.citycode = "33063";
+    share.networkCode = "033001214";
+    render(<AddressSearch />);
+    expect(screen.getByText("Adresse retenue")).toBeTruthy();
+    expect(screen.getByText("networks-33063-033001214")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "hydrate-city" }));
+    fireEvent.click(screen.getByRole("button", { name: "pick-network" }));
+    expect(share.replaceShare).toHaveBeenCalledWith({
+      citycode: "33063",
+      networkCode: "033001214",
+    });
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "nouvelle saisie" },
+    });
+    expect(share.replaceShare).toHaveBeenCalledWith({
+      citycode: null,
+      networkCode: null,
+    });
   });
 
   it("moves the highlight up from a middle option", async () => {

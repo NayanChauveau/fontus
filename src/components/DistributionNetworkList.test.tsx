@@ -40,6 +40,58 @@ describe("DistributionNetworkList", () => {
     document.documentElement.lang = "fr";
   });
 
+  it("keeps the shared network and reports the commune name", async () => {
+    const onSelectedCodeChange = vi.fn();
+    const onCommuneLoaded = vi.fn();
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json(ambiguous)));
+    render(
+      <DistributionNetworkList
+        citycode="33063"
+        selectedCode="033001174"
+        onSelectedCodeChange={onSelectedCodeChange}
+        onCommuneLoaded={onCommuneLoaded}
+      />,
+    );
+    await waitFor(() => {
+      expect(screen.getByText("analyses-033001174")).toBeTruthy();
+    });
+    expect(onCommuneLoaded).toHaveBeenCalledWith("Bordeaux");
+    expect(onSelectedCodeChange).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("writes the exact network into the share url when none is selected", async () => {
+    const onSelectedCodeChange = vi.fn();
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json(exact)));
+    render(
+      <DistributionNetworkList
+        citycode="33009"
+        selectedCode={null}
+        onSelectedCodeChange={onSelectedCodeChange}
+      />,
+    );
+    await waitFor(() => {
+      expect(onSelectedCodeChange).toHaveBeenCalledWith("033001214");
+    });
+    vi.unstubAllGlobals();
+  });
+
+  it("clears an unknown shared network when the commune is ambiguous", async () => {
+    const onSelectedCodeChange = vi.fn();
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json(ambiguous)));
+    render(
+      <DistributionNetworkList
+        citycode="33063"
+        selectedCode="099999999"
+        onSelectedCodeChange={onSelectedCodeChange}
+      />,
+    );
+    await waitFor(() => {
+      expect(onSelectedCodeChange).toHaveBeenCalledWith(null);
+    });
+    vi.unstubAllGlobals();
+  });
+
   it("auto-selects the only network when confidence is exact", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json(exact)));
     render(<DistributionNetworkList citycode="33009" />);

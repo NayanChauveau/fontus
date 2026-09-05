@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ListDistributionNetworksResultDto } from "@/application/dtos/DistributionNetworkDto";
 import { NetworkAnalyses } from "@/components/NetworkAnalyses";
 import { mapDistributionNetworksDto } from "@/presentation/mappers/mapDistributionNetworksDto";
@@ -12,7 +12,17 @@ import type {
 
 type LoadStatus = "loading" | "ready" | "unavailable";
 
-export function DistributionNetworkList({ citycode }: { citycode: string }) {
+export function DistributionNetworkList({
+  citycode,
+  selectedCode: selectedCodeProp,
+  onSelectedCodeChange,
+  onCommuneLoaded,
+}: {
+  citycode: string;
+  selectedCode?: string | null;
+  onSelectedCodeChange?: (code: string | null) => void;
+  onCommuneLoaded?: (city: string) => void;
+}) {
   const messages = useMessages();
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [dto, setDto] = useState<ListDistributionNetworksResultDto | null>(
@@ -22,8 +32,29 @@ export function DistributionNetworkList({ citycode }: { citycode: string }) {
     () => (dto ? mapDistributionNetworksDto(dto, messages) : null),
     [dto, messages],
   );
-  const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const [internalCode, setInternalCode] = useState<string | null>(null);
+  const controlled = onSelectedCodeChange !== undefined;
+  const selectedCode = controlled ? (selectedCodeProp ?? null) : internalCode;
+  const selectedCodeRef = useRef(selectedCode);
+  const onSelectedCodeChangeRef = useRef(onSelectedCodeChange);
+  const onCommuneLoadedRef = useRef(onCommuneLoaded);
   const [reloadToken, setReloadToken] = useState(0);
+
+  useEffect(() => {
+    selectedCodeRef.current = selectedCode;
+    onSelectedCodeChangeRef.current = onSelectedCodeChange;
+    onCommuneLoadedRef.current = onCommuneLoaded;
+  });
+
+  const setSelectedCode = useCallback(
+    (code: string | null) => {
+      if (!controlled) {
+        setInternalCode(code);
+      }
+      onSelectedCodeChangeRef.current?.(code);
+    },
+    [controlled],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -48,11 +79,19 @@ export function DistributionNetworkList({ citycode }: { citycode: string }) {
         }
 
         setDto(payload);
-        setSelectedCode(
-          payload.confidence === "exact"
-            ? (payload.networks[0]?.code ?? null)
-            : null,
-        );
+        onCommuneLoadedRef.current?.(payload.city);
+        const codes = payload.networks
+          .map((network) => network.code)
+          .filter((code): code is string => Boolean(code));
+        const current = selectedCodeRef.current;
+        const requested =
+          current && codes.includes(current) ? current : null;
+        const next =
+          requested ??
+          (payload.confidence === "exact" ? (codes[0] ?? null) : null);
+        if (next !== current) {
+          setSelectedCode(next);
+        }
         setStatus("ready");
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
@@ -65,7 +104,7 @@ export function DistributionNetworkList({ citycode }: { citycode: string }) {
     return () => {
       controller.abort();
     };
-  }, [citycode, reloadToken]);
+  }, [citycode, reloadToken, setSelectedCode]);
 
   return (
     <>

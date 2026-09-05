@@ -10,6 +10,7 @@ import {
 import type { AddressSuggestionDto } from "@/application/dtos/AddressDto";
 import { MIN_ADDRESS_QUERY_LENGTH } from "@/application/addressQuery";
 import { DistributionNetworkList } from "@/components/DistributionNetworkList";
+import { useShareUrl } from "@/components/useShareUrl";
 import { mapAddressDtoToViewModel } from "@/presentation/mappers/mapAddressDto";
 import { useMessages } from "@/presentation/i18n/useLocale";
 import type { AddressSuggestionViewModel } from "@/presentation/view-models/AddressViewModel";
@@ -23,6 +24,7 @@ export function AddressSearch() {
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const { citycode, networkCode, replaceShare } = useShareUrl();
 
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<SearchStatus>("idle");
@@ -31,9 +33,20 @@ export function AddressSearch() {
   );
   const [activeIndex, setActiveIndex] = useState(-1);
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<AddressSuggestionViewModel | null>(
-    null,
-  );
+  const [picked, setPicked] = useState<AddressSuggestionViewModel | null>(null);
+  const [communeName, setCommuneName] = useState<string | null>(null);
+
+  const selected: AddressSuggestionViewModel | null = picked
+    ? picked
+    : citycode
+      ? {
+          id: citycode,
+          label: communeName ?? citycode,
+          city: communeName ?? "",
+          citycode,
+          coordinates: "",
+        }
+      : null;
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -88,14 +101,18 @@ export function AddressSearch() {
 
   function selectSuggestion(suggestion: AddressSuggestionViewModel) {
     setOpen(false);
-    setSelected(suggestion);
+    setPicked(suggestion);
+    setCommuneName(suggestion.city);
+    replaceShare({ citycode: suggestion.citycode, networkCode: null });
   }
 
   function clearSelection() {
-    setSelected(null);
+    setPicked(null);
+    setCommuneName(null);
     setQuery("");
     setSuggestions([]);
     setStatus("idle");
+    replaceShare({ citycode: null, networkCode: null });
     inputRef.current?.focus();
   }
 
@@ -158,7 +175,11 @@ export function AddressSearch() {
             value={query}
             onChange={(event) => {
               const next = event.target.value;
-              setSelected(null);
+              setPicked(null);
+              setCommuneName(null);
+              if (citycode) {
+                replaceShare({ citycode: null, networkCode: null });
+              }
               setQuery(next);
               if (next.trim().length < MIN_ADDRESS_QUERY_LENGTH) {
                 abortRef.current?.abort();
@@ -262,17 +283,23 @@ export function AddressSearch() {
             </button>
           </div>
           <dl className="grid gap-3 text-sm">
-            <Field label={messages.address.fieldLabel} value={selected.label} />
-            <Field label={messages.address.fieldCity} value={selected.city} />
+            {selected.label !== selected.citycode ? (
+              <Field label={messages.address.fieldLabel} value={selected.label} />
+            ) : null}
+            {selected.city ? (
+              <Field label={messages.address.fieldCity} value={selected.city} />
+            ) : null}
             <div className="hidden md:contents">
               <Field
                 label={messages.address.fieldCitycode}
                 value={selected.citycode}
               />
-              <Field
-                label={messages.address.fieldCoordinates}
-                value={selected.coordinates}
-              />
+              {selected.coordinates ? (
+                <Field
+                  label={messages.address.fieldCoordinates}
+                  value={selected.coordinates}
+                />
+              ) : null}
             </div>
           </dl>
         </section>
@@ -282,6 +309,11 @@ export function AddressSearch() {
         <DistributionNetworkList
           key={selected.citycode}
           citycode={selected.citycode}
+          selectedCode={networkCode}
+          onSelectedCodeChange={(code) => {
+            replaceShare({ citycode: selected.citycode, networkCode: code });
+          }}
+          onCommuneLoaded={setCommuneName}
         />
       )}
     </div>
