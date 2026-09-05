@@ -2,7 +2,7 @@ import { parseHubeauUrl } from "@/shared/infrastructure/http/assertHubeauUrl";
 import type { ResultatsDisGatewayPort } from "../../application/ports/ResultatsDisGatewayPort";
 import { parseResultatsDisResponse } from "./parseResultatsDisResponse";
 
-export const HUBEAU_RESULTATS_DIS_URL =
+const HUBEAU_RESULTATS_DIS_URL =
   "https://hubeau.eaufrance.fr/api/v1/qualite_eau_potable/resultats_dis";
 
 const REQUEST_TIMEOUT_MS = 20_000;

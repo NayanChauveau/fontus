@@ -29,7 +29,7 @@ export function localeCookieSuffix(secure: boolean): string {
   return `Path=/; Max-Age=31536000; SameSite=Lax${secure ? "; Secure" : ""}`;
 }
 
-export function persistLocaleCookie(locale: Locale) {
+function persistLocaleCookie(locale: Locale) {
   const secure = window.location.protocol === "https:";
   document.cookie = `${LOCALE_COOKIE_NAME}=${locale}; ${localeCookieSuffix(secure)}`;
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  CATALOG_REVIEW_MAX_AGE_DAYS,
   CATALOG_REVIEWS,
   listStaleCatalogReviews,
 } from "./catalogReviews";
@@ -24,18 +25,22 @@ describe("listStaleCatalogReviews", () => {
 
   it("treats an invalid review date as stale and ignores a future stamp", () => {
     expect(
-      listStaleCatalogReviews(new Date("2026-09-05T00:00:00.000Z"), 30, [
-        {
-          id: "who",
-          reviewedAt: "not-a-date",
-          sourceUrl: "https://example.test/who",
-        },
-        {
-          id: "us",
-          reviewedAt: "2026-12-01",
-          sourceUrl: "https://example.test/us",
-        },
-      ]),
+      listStaleCatalogReviews(
+        new Date("2026-09-05T00:00:00.000Z"),
+        CATALOG_REVIEW_MAX_AGE_DAYS,
+        [
+          {
+            id: "who",
+            reviewedAt: "not-a-date",
+            sourceUrl: "https://example.test/who",
+          },
+          {
+            id: "us",
+            reviewedAt: "2026-12-01",
+            sourceUrl: "https://example.test/us",
+          },
+        ],
+      ),
     ).toEqual([
       {
         id: "who",

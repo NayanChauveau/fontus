@@ -3,8 +3,8 @@ import { join } from "node:path";
 import postgres from "postgres";
 import { getDatabaseUrl, shouldRequireDatabaseSsl } from "./env";
 
-export const DEFAULT_MIGRATION_ATTEMPTS = 15;
-export const DEFAULT_MIGRATION_RETRY_MS = 2000;
+const DEFAULT_MIGRATION_ATTEMPTS = 15;
+const DEFAULT_MIGRATION_RETRY_MS = 2000;
 
 export function listSqlMigrationFileNames(names: readonly string[]): string[] {
   return names.filter((name) => name.endsWith(".sql")).sort();

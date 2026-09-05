@@ -23,7 +23,7 @@ export type AnalysisSample = {
   measurements: AnalysisMeasurement[];
 };
 
-export const ANALYSIS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const ANALYSIS_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 export const HUBEAU_ROW_HARD_CAP = 20_000;
 export const HUBEAU_ROW_SOFT_CAP = 10_000;
 

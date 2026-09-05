@@ -77,7 +77,7 @@ export function findCityByInsee(insee: string): LargestCity | undefined {
 }
 
 /** BAN arrondissements → commune catalogue (Paris, Lyon, Marseille). */
-export function catalogCommuneInsee(insee: string): string {
+function catalogCommuneInsee(insee: string): string {
   const code = normalizeCitycode(insee);
   if (/^751(0[1-9]|1[0-9]|20)$/.test(code)) {
     return "75056";

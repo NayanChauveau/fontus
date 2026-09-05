@@ -6,7 +6,7 @@ export type ParsedMeasurement = {
   qualifier: MeasurementQualifier;
 };
 
-export function parseFrenchNumber(value: string): number | null {
+function parseFrenchNumber(value: string): number | null {
   const normalized = value.trim().replace(/\s/g, "").replace(",", ".");
   if (!/^-?\d+(?:\.\d+)?$/.test(normalized)) {
     return null;

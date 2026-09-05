@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        task: [type-check, lint, test:coverage]
+        task: [type-check, lint, knip, test:coverage]
     name: ${{ matrix.task }}
     steps:
       - uses: actions/checkout@v5

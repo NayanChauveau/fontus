@@ -1,5 +1,5 @@
 import type { Query } from "@tanstack/react-query";
-import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import {
   QUERY_CACHE_GC_MS,
   QUERY_PERSIST_KEY,
@@ -14,7 +14,7 @@ export function shouldPersistQuery(query: Pick<Query, "queryKey" | "state">) {
 
 export function createPersistOptions() {
   return {
-    persister: createSyncStoragePersister({
+    persister: createAsyncStoragePersister({
       key: QUERY_PERSIST_KEY,
       storage: typeof window === "undefined" ? undefined : window.localStorage,
     }),

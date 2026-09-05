@@ -5,5 +5,3 @@ export type AddressSuggestionViewModel = {
   citycode: string;
   coordinates: string;
 };
-
-export type ResolvedAddressViewModel = AddressSuggestionViewModel;

@@ -4,7 +4,7 @@ import type {
 } from "@/application/dtos/NetworkWaterQualityDto";
 import { summarizeHistory } from "@/modules/analyses/domain/summarizeHistory";
 
-export const HISTORY_CANONICAL_IDS = ["nitrates", "pfas20", "lead"] as const;
+const HISTORY_CANONICAL_IDS = ["nitrates", "pfas20", "lead"] as const;
 
 export function buildParameterHistories(
   measurements: MeasurementDto[],

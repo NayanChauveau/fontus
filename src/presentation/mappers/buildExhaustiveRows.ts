@@ -2,7 +2,7 @@ import { fr } from "../i18n/fr";
 import type { Messages } from "../i18n/messages";
 import type { NetworkMeasurementViewModel } from "../view-models/NetworkAnalysesViewModel";
 
-export const WATCH_PARAMETERS = [
+const WATCH_PARAMETERS = [
   { id: "pfas20", nameKey: "watchPfas20", unit: "µg/L", category: "pfas" },
   { id: "pfoa", nameKey: "watchPfoa", unit: "µg/L", category: "pfas" },
   { id: "pfos", nameKey: "watchPfos", unit: "µg/L", category: "pfas" },

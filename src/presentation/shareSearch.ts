@@ -4,9 +4,9 @@ import { isInseeCitycode, normalizeCitycode } from "@/application/citycode";
 import { isNetworkCode, normalizeNetworkCode } from "@/application/networkCode";
 import { cityPagePath, cityUdiPath } from "@/presentation/editorial/paths";
 
-export const SHARE_INSEE_PARAM = "insee";
-export const SHARE_UDI_PARAM = "udi";
-export const SHARE_ADDRESS_PARAM = "adresse";
+const SHARE_INSEE_PARAM = "insee";
+const SHARE_UDI_PARAM = "udi";
+const SHARE_ADDRESS_PARAM = "adresse";
 
 export type ShareSelection = {
   citycode: string | null;

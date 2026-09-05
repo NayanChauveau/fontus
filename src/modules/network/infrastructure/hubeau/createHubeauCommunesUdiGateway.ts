@@ -3,7 +3,7 @@ import type { RawUdiLink } from "../../domain/DistributionNetwork";
 import type { CommunesUdiGatewayPort } from "../../application/ports/CommunesUdiGatewayPort";
 import { parseCommunesUdiResponse } from "./parseCommunesUdiResponse";
 
-export const HUBEAU_COMMUNES_UDI_URL =
+const HUBEAU_COMMUNES_UDI_URL =
   "https://hubeau.eaufrance.fr/api/v1/qualite_eau_potable/communes_udi";
 
 const REQUEST_TIMEOUT_MS = 20_000;

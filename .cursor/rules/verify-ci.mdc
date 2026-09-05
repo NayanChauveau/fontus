@@ -10,10 +10,11 @@ Après toute modification de code, et avant de dire que c’est fini, lancer **d
 ```bash
 pnpm type-check
 pnpm lint
+pnpm knip
 pnpm test:coverage
 ```
 
-- Ce sont les trois jobs du workflow `quality` (`.github/workflows/ci.yml`).
+- Ce sont les jobs du workflow `quality` (`.github/workflows/ci.yml`).
 - Ne pas s’arrêter à un sous-ensemble de tests, ni à `pnpm test` sans couverture : le CI exige le seuil de `test:coverage`.
-- Si un check échoue : corriger, relancer les trois, puis seulement conclure.
+- Si un check échoue : corriger, relancer les quatre, puis seulement conclure.
 - Ne pas committer ni pousser pour « débloquer » un check rouge.
