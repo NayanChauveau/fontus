@@ -8,6 +8,7 @@ volumes:
 
 services:
   web:
+    image: ${WEB_IMAGE}
     build:
       context: .
       dockerfile: Dockerfile
@@ -20,7 +21,7 @@ services:
       NODE_ENV: production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.fontus.rule=Host(`${TRAEFIK_HOST}`)"
+      - "traefik.http.routers.fontus.rule=Host(`${TRAEFIK_HOST}`) || Host(`www.${TRAEFIK_HOST}`)"
       - "traefik.http.routers.fontus.entrypoints=websecure"
       - "traefik.http.routers.fontus.tls.certresolver=le"
       - "traefik.http.services.fontus.loadbalancer.server.port=3100"

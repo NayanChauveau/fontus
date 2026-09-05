@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
@@ -5,14 +7,17 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=fontus-pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile --store-dir /pnpm/store --ignore-scripts \
+    && pnpm rebuild esbuild unrs-resolver
 
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DOCKER_BUILD=1
-RUN pnpm build
+RUN --mount=type=cache,id=fontus-next,target=/app/.next/cache \
+    pnpm build
 
 FROM base AS production
 ENV NODE_ENV=production

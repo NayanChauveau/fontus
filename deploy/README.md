@@ -32,7 +32,18 @@ docker compose -f docker-compose.prod.yml exec -T postgres \
 
 Health : `https://$TRAEFIK_HOST/api/health`
 
-Le premier `docker compose build` sur le VPS peut dépasser 10 min (npm + `next build`). Le workflow SSH a un `command_timeout` de 40 min. Le type-check Next est sauté dans l’image (`DOCKER_BUILD=1`) : le job CI le fait déjà.
+Le workflow **Deploy** compile l’image sur GitHub Actions (réseau npm + cache `gha`), la pousse vers `ghcr.io/<owner>/<repo>:<sha>` (et `:main`), puis le VPS fait `docker login` + `pull` + `up web`. Pas de nouveau secret : `GITHUB_TOKEN` suffit (`permissions.packages: write`).
+
+Le type-check Next est sauté dans l’image (`DOCKER_BUILD=1`) : le job CI le fait déjà. Postgres n’est pas recréé à chaque fois.
+
+Secours sur le VPS, sans GitHub :
+
+```bash
+cd /srv/eau-robinet
+export WEB_IMAGE=fontus-web:local
+docker compose -f docker-compose.prod.yml build web
+docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate web
+```
 
 ## Nouveau site plus tard
 
