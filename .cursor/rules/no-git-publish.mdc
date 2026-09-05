@@ -1,0 +1,11 @@
+---
+description: Never commit or push. The user owns all git publish steps.
+alwaysApply: true
+---
+
+# Git : ne jamais commit ni push
+
+- Ne jamais exécuter `git commit`, `git push`, ni un équivalent (`gh`, hook qui publie, etc.).
+- Ne pas proposer de le faire « pour débloquer le CI / le deploy ».
+- Préparer le code et dire ce qu’il reste à committer. C’est l’humain qui commit et pousse.
+- Si un commit a été créé par erreur : l’annoncer et attendre. Ne pas `push`.
