@@ -3,8 +3,11 @@ import type { Messages } from "./en";
 export const fr = {
   home: {
     title: "Fontus",
+    metaTitle: "Qualité de l’eau du robinet en France",
     description:
       "Comparaison des analyses officielles de l’eau du robinet en France.",
+    metaDescription:
+      "Consultez les analyses officielles de l’eau potable du robinet par commune : PFAS, nitrates, plomb, comparaison aux normes ARS, UE, Suisse, US et OMS.",
     stackOk: "stack OK",
     stackKo: "stack KO",
     postgresOk: "PostgreSQL joignable",
@@ -166,6 +169,13 @@ export const fr = {
     unexpected: "Une erreur inattendue s’est produite.",
     retry: "Réessayer",
   },
+  a11y: {
+    skipToContent: "Aller au contenu",
+  },
+  notFound: {
+    title: "Page introuvable",
+    home: "Retour à l’accueil",
+  },
   theme: {
     toggleToDark: "Passer en mode sombre",
     toggleToLight: "Passer en mode clair",
@@ -179,7 +189,11 @@ export const fr = {
     mentions: "Mentions légales",
     privacy: "Confidentialité",
     mentionsTitle: "Mentions légales",
+    mentionsDescription:
+      "Éditeur, sources Hub’Eau / SISE-Eaux et hébergement de Fontus, comparateur d’analyses de l’eau du robinet.",
     privacyTitle: "Politique de confidentialité",
+    privacyDescription:
+      "Données traitées par Fontus : adresse BAN, quota IP, cookie de langue. Pas de compte utilisateur.",
     publisher:
       "Fontus est édité à titre personnel. Ce n’est pas un service officiel de l’ARS ni du ministère.",
     sources:

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { buildShareSearch, parseShareSearch } from "./shareSearch";
+import {
+  buildShareSearch,
+  firstSearchParam,
+  hasShareQueryParams,
+  parseShareSearch,
+} from "./shareSearch";
 
 describe("shareSearch", () => {
   it("parses a commune and a network from the query string", () => {
@@ -46,4 +51,17 @@ describe("shareSearch", () => {
       networkCode: null,
     });
   });
+
+  it("detects share query params even when they are invalid", () => {
+    expect(firstSearchParam(undefined)).toBeNull();
+    expect(firstSearchParam("")).toBeNull();
+    expect(firstSearchParam([])).toBeNull();
+    expect(firstSearchParam(["81004"])).toBe("81004");
+    expect(hasShareQueryParams({})).toBe(false);
+    expect(hasShareQueryParams({ insee: "" })).toBe(false);
+    expect(hasShareQueryParams({ insee: "81004" })).toBe(true);
+    expect(hasShareQueryParams({ udi: "081004110" })).toBe(true);
+    expect(hasShareQueryParams({ insee: "xx" })).toBe(true);
+  });
 });
+

@@ -20,7 +20,9 @@ vi.mock("next/headers", () => ({
 describe("RootLayout", () => {
   it("wraps children in a french document by default", async () => {
     cookieValue.current = undefined;
-    const { default: RootLayout, generateMetadata } = await import("./layout");
+    const { default: RootLayout, generateMetadata, viewport } = await import(
+      "./layout"
+    );
     const ui = await RootLayout({
       children: <div>child</div>,
     });
@@ -30,8 +32,20 @@ describe("RootLayout", () => {
     expect(document.head.textContent).toContain("eau-robinet-theme");
     expect(document.head.textContent).toContain("eau-robinet-locale");
     expect(screen.getByRole("link", { name: "Mentions légales" })).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Aller au contenu" }).getAttribute("href"),
+    ).toBe("#contenu");
+    expect(
+      document.querySelector('script[type="application/ld+json"]')?.textContent,
+    ).toContain("WebSite");
+    expect(viewport.themeColor).toBe("#0369a1");
     await expect(generateMetadata()).resolves.toMatchObject({
-      title: "Fontus",
+      metadataBase: new URL("https://fontus.fr"),
+      title: {
+        default: "Qualité de l’eau du robinet en France",
+        template: "%s | Fontus",
+      },
+      robots: { index: true, follow: true },
     });
   });
 
@@ -44,8 +58,13 @@ describe("RootLayout", () => {
     });
     render(ui);
     expect(document.documentElement.lang).toBe("en");
+    expect(screen.getByRole("link", { name: "Skip to content" })).toBeTruthy();
     await expect(generateMetadata()).resolves.toMatchObject({
-      title: "Fontus",
+      title: {
+        default: "Tap water quality in France",
+        template: "%s | Fontus",
+      },
+      openGraph: { locale: "en_GB" },
     });
   });
 });

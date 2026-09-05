@@ -1,7 +1,10 @@
 export const en = {
   home: {
     title: "Fontus",
+    metaTitle: "Tap water quality in France",
     description: "Compare official tap water analyses in France.",
+    metaDescription:
+      "Check official tap water analyses by French municipality: PFAS, nitrates, lead, compared with ARS, EU, Swiss, US and WHO standards.",
     stackOk: "stack OK",
     stackKo: "stack KO",
     postgresOk: "PostgreSQL reachable",
@@ -162,6 +165,13 @@ export const en = {
     unexpected: "An unexpected error occurred.",
     retry: "Try again",
   },
+  a11y: {
+    skipToContent: "Skip to content",
+  },
+  notFound: {
+    title: "Page not found",
+    home: "Back to home",
+  },
   theme: {
     toggleToDark: "Switch to dark mode",
     toggleToLight: "Switch to light mode",
@@ -175,7 +185,11 @@ export const en = {
     mentions: "Legal notice",
     privacy: "Privacy",
     mentionsTitle: "Legal notice",
+    mentionsDescription:
+      "Publisher, Hub’Eau / SISE-Eaux sources and hosting of Fontus, a tap-water analysis comparison site.",
     privacyTitle: "Privacy policy",
+    privacyDescription:
+      "Data processed by Fontus: BAN address lookup, short IP quota, language cookie. No user accounts.",
     publisher:
       "Fontus is published on a personal basis. It is not an official ARS or ministry service.",
     sources:

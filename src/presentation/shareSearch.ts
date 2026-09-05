@@ -9,6 +9,26 @@ export type ShareSelection = {
   networkCode: string | null;
 };
 
+export function firstSearchParam(
+  value: string | string[] | undefined,
+): string | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) {
+    return null;
+  }
+  return raw;
+}
+
+export function hasShareQueryParams(params: {
+  insee?: string | string[];
+  udi?: string | string[];
+}): boolean {
+  return (
+    firstSearchParam(params.insee) !== null ||
+    firstSearchParam(params.udi) !== null
+  );
+}
+
 export function parseShareSearch(search: string): ShareSelection {
   const params = new URLSearchParams(
     search.startsWith("?") ? search.slice(1) : search,
