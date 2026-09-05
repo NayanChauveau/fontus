@@ -13,21 +13,21 @@ export function useNetworkQuality(networkCode: string) {
   const locale = useLocale();
   const [status, setStatus] = useState<LoadStatus>("loading");
   const [dto, setDto] = useState<NetworkWaterQualityDto | null>(null);
+  const [resolvedCode, setResolvedCode] = useState<string | null>(null);
+  const matches = resolvedCode === networkCode;
   const viewModel = useMemo(
     () =>
-      dto
+      matches && dto
         ? mapNetworkWaterQualityDto(dto, {
             messages,
             dateLocale: intlLocale(locale),
           })
         : null,
-    [dto, locale, messages],
+    [dto, locale, matches, messages],
   );
 
   useEffect(() => {
     const controller = new AbortController();
-    setStatus("loading");
-    setDto(null);
 
     void (async () => {
       try {
@@ -40,16 +40,19 @@ export function useNetworkQuality(networkCode: string) {
           | { error: string };
 
         if (!response.ok || "error" in payload) {
+          setResolvedCode(networkCode);
           setStatus("unavailable");
           return;
         }
 
         setDto(payload);
+        setResolvedCode(networkCode);
         setStatus("ready");
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
         }
+        setResolvedCode(networkCode);
         setStatus("unavailable");
       }
     })();
@@ -59,5 +62,5 @@ export function useNetworkQuality(networkCode: string) {
     };
   }, [networkCode]);
 
-  return { status, viewModel };
+  return { status: matches ? status : "loading", viewModel };
 }
