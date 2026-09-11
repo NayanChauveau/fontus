@@ -48,9 +48,6 @@ describe("GetNetworkAnalyses", () => {
           };
         },
         async write() {},
-        async withNetworkLock(_networkCode, work) {
-          return work();
-        },
       },
       () => NOW,
     );
@@ -108,9 +105,6 @@ describe("GetNetworkAnalyses", () => {
           };
         },
         async write() {},
-        async withNetworkLock(_networkCode, work) {
-          return work();
-        },
       },
       () => NOW,
     );
@@ -156,9 +150,6 @@ describe("GetNetworkAnalyses", () => {
           };
         },
         async write() {},
-        async withNetworkLock(_networkCode, work) {
-          return work();
-        },
       },
       () => NOW,
     );
@@ -205,9 +196,6 @@ describe("GetNetworkAnalyses", () => {
         },
         async write(input) {
           written.push(input);
-        },
-        async withNetworkLock(_networkCode, work) {
-          return work();
         },
       },
       () => NOW,
@@ -303,9 +291,6 @@ describe("GetNetworkAnalyses", () => {
         async write() {
           throw new Error("db");
         },
-        async withNetworkLock(_networkCode, work) {
-          return work();
-        },
       },
       () => NOW,
       {
@@ -343,9 +328,6 @@ describe("GetNetworkAnalyses", () => {
           };
         },
         async write() {},
-        async withNetworkLock(_networkCode, work) {
-          return work();
-        },
       },
       () => NOW,
       {
@@ -383,9 +365,6 @@ describe("GetNetworkAnalyses", () => {
           };
         },
         async write() {},
-        async withNetworkLock(_networkCode, work) {
-          return work();
-        },
       },
       () => NOW,
     );
@@ -411,9 +390,6 @@ describe("GetNetworkAnalyses", () => {
           };
         },
         async write() {},
-        async withNetworkLock(_networkCode, work) {
-          return work();
-        },
       },
       () => NOW,
     );
@@ -538,9 +514,6 @@ describe("GetNetworkAnalyses", () => {
         async write(input) {
           written.push(input);
         },
-        async withNetworkLock(_networkCode, work) {
-          return work();
-        },
       },
       () => NOW,
     );
@@ -598,9 +571,6 @@ describe("GetNetworkAnalyses", () => {
         async write() {
           wrote = true;
         },
-        async withNetworkLock(_networkCode, work) {
-          return work();
-        },
       },
       () => NOW,
     );
@@ -633,9 +603,6 @@ describe("GetNetworkAnalyses", () => {
         },
         async write() {
           wrote = true;
-        },
-        async withNetworkLock(_networkCode, work) {
-          return work();
         },
       },
       () => NOW,
@@ -764,8 +731,5 @@ function memoryCache(): AnalysesCachePort {
       return null;
     },
     async write() {},
-    async withNetworkLock(_networkCode, work) {
-      return work();
-    },
   };
 }

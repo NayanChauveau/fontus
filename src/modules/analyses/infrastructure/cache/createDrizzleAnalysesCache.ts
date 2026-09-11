@@ -1,5 +1,5 @@
 import { eq, inArray, sql } from "drizzle-orm";
-import { getDb, getSql, type AppDatabase } from "@/shared/infrastructure/db/client";
+import { getDb, type AppDatabase } from "@/shared/infrastructure/db/client";
 import {
   measurements,
   samples,
@@ -56,27 +56,6 @@ export function udiAdvisoryLockKey(networkCode: string): number {
     hash = (Math.imul(31, hash) + scope.charCodeAt(index)) | 0;
   }
   return hash;
-}
-
-export async function withReservedAdvisoryLock<T>(
-  key: number,
-  work: () => Promise<T>,
-  reserve: () => Promise<{
-    (strings: TemplateStringsArray, ...values: unknown[]): unknown;
-    release(): void;
-  }>,
-): Promise<T> {
-  const reserved = await reserve();
-  try {
-    await reserved`select pg_advisory_lock(${key})`;
-    try {
-      return await work();
-    } finally {
-      await reserved`select pg_advisory_unlock(${key})`;
-    }
-  } finally {
-    reserved.release();
-  }
 }
 
 export function createDrizzleAnalysesCache(
@@ -156,6 +135,9 @@ export function createDrizzleAnalysesCache(
       }
 
       await db.transaction(async (tx) => {
+        await tx.execute(
+          sql`select pg_advisory_xact_lock(${udiAdvisoryLockKey(input.networkCode)})`,
+        );
         await tx
           .insert(udis)
           .values({ code: input.networkCode, name: input.networkCode })
@@ -253,12 +235,6 @@ export function createDrizzleAnalysesCache(
             },
           });
       });
-    },
-
-    async withNetworkLock(networkCode, work) {
-      return withReservedAdvisoryLock(udiAdvisoryLockKey(networkCode), work, () =>
-        getSql().reserve(),
-      );
     },
   };
 }

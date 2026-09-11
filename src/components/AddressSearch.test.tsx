@@ -1,6 +1,6 @@
 /** @vitest-environment happy-dom */
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AddressSearch } from "./AddressSearch";
 
@@ -60,6 +60,7 @@ const suggestion = {
 describe("AddressSearch", () => {
   afterEach(() => {
     cleanup();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     share.citycode = null;
     share.networkCode = null;
@@ -197,6 +198,67 @@ describe("AddressSearch", () => {
       ),
     ).toBe(true);
     expect(screen.getByText("networks-33063")).toBeTruthy();
+  });
+
+  it("shows unavailable when suggest hangs past the timeout", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_input: RequestInfo, init?: RequestInit) => {
+        return new Promise<Response>((_resolve, reject) => {
+          const fail = () => {
+            reject(new DOMException("aborted", "AbortError"));
+          };
+          if (init?.signal?.aborted) {
+            fail();
+            return;
+          }
+          init?.signal?.addEventListener("abort", fail);
+        });
+      }),
+    );
+
+    render(<AddressSearch />);
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "12 rue Sainte-Catherine" },
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+    expect(screen.getByText(/Recherche/)).toBeTruthy();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(8_000);
+    });
+    expect(screen.getByText(/indisponible/)).toBeTruthy();
+  });
+
+  it("stays idle when the query is cleared during a search", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_input: RequestInfo, init?: RequestInit) => {
+        return new Promise<Response>((_resolve, reject) => {
+          const fail = () => {
+            reject(new DOMException("aborted", "AbortError"));
+          };
+          if (init?.signal?.aborted) {
+            fail();
+            return;
+          }
+          init?.signal?.addEventListener("abort", fail);
+        });
+      }),
+    );
+
+    render(<AddressSearch />);
+    const input = screen.getByRole("combobox");
+    fireEvent.change(input, { target: { value: "12 rue Sainte-Catherine" } });
+    await waitFor(() => {
+      expect(screen.getByText(/Recherche/)).toBeTruthy();
+    });
+    fireEvent.change(input, { target: { value: "" } });
+    expect(screen.queryByText(/indisponible/)).toBeNull();
+    expect(screen.queryByText(/Recherche/)).toBeNull();
+    expect((input as HTMLInputElement).value).toBe("");
   });
 
   it("ignores an aborted suggest after a first successful search", async () => {

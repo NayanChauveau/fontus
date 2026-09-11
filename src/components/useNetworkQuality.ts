@@ -2,8 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
-import type { NetworkWaterQualityDto } from "@/application/dtos/NetworkWaterQualityDto";
-import { fetchJson } from "@/components/fetchJson";
+import { fetchNetworkQuality } from "@/components/fetchNetworkQuality";
 import { intlLocale } from "@/presentation/i18n/messages";
 import { useLocale, useMessages } from "@/presentation/i18n/useLocale";
 import { mapNetworkWaterQualityDto } from "@/presentation/mappers/mapNetworkWaterQualityDto";
@@ -11,11 +10,6 @@ import { queryKeys } from "@/presentation/query/queryKeys";
 import { useAfterHydration } from "@/presentation/query/useAfterHydration";
 
 type LoadStatus = "loading" | "ready" | "unavailable";
-
-function qualityUrl(networkCode: string, refresh = false) {
-  const path = `/api/udi/${encodeURIComponent(networkCode)}/quality`;
-  return refresh ? `${path}?refresh=1` : path;
-}
 
 export function useNetworkQuality(networkCode: string) {
   const messages = useMessages();
@@ -25,8 +19,7 @@ export function useNetworkQuality(networkCode: string) {
   const startedRefreshFor = useRef<string>("");
   const query = useQuery({
     queryKey: queryKeys.quality(networkCode),
-    queryFn: ({ signal }) =>
-      fetchJson<NetworkWaterQualityDto>(qualityUrl(networkCode), signal),
+    queryFn: ({ signal }) => fetchNetworkQuality(networkCode, signal),
     enabled: hydrated,
   });
   const data = hydrated ? query.data : undefined;
@@ -43,10 +36,7 @@ export function useNetworkQuality(networkCode: string) {
       queryKey: queryKeys.quality(networkCode),
       staleTime: 0,
       queryFn: ({ signal }) =>
-        fetchJson<NetworkWaterQualityDto>(
-          qualityUrl(networkCode, true),
-          signal,
-        ),
+        fetchNetworkQuality(networkCode, signal, true),
     });
   }, [data, hydrated, networkCode, queryClient]);
 

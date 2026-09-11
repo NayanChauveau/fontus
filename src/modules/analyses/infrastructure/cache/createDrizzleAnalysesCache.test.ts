@@ -6,7 +6,6 @@ import {
   udiAdvisoryLockKey,
   udiSyncScope,
   uniqueAnalysisSamples,
-  withReservedAdvisoryLock,
 } from "./createDrizzleAnalysesCache";
 
 const sample = {
@@ -196,18 +195,27 @@ describe("createDrizzleAnalysesCache", () => {
     });
   });
 
-  it("holds an advisory lock around work", async () => {
-    const calls: string[] = [];
-    const reserved = Object.assign(
-      async (strings: TemplateStringsArray) => {
-        calls.push(String(strings[0]));
-      },
-      { release: () => calls.push("release") },
-    );
-    const result = await withReservedAdvisoryLock(1, async () => "ok", async () => reserved);
-    expect(result).toBe("ok");
-    expect(calls.some((call) => call.includes("pg_advisory_lock"))).toBe(true);
-    expect(calls.some((call) => call.includes("pg_advisory_unlock"))).toBe(true);
-    expect(calls).toContain("release");
+  it("takes a transaction-scoped advisory lock while writing", async () => {
+    const db = createFakeDb({
+      selectResults: [[{ code: "old" }]],
+    });
+    const executed: unknown[] = [];
+    const originalExecute = db.execute.bind(db);
+    db.execute = async (query?: unknown) => {
+      executed.push(query);
+      return originalExecute();
+    };
+    const cache = createDrizzleAnalysesCache(db as never);
+    await cache.write({
+      networkCode: "033001214",
+      samples: [sample],
+      fetchedAt: new Date(),
+      windowFrom: "2025-09-02",
+    });
+    expect(
+      executed.some((query) =>
+        JSON.stringify(query).includes("pg_advisory_xact_lock"),
+      ),
+    ).toBe(true);
   });
 });

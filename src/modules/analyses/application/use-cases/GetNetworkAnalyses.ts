@@ -73,11 +73,9 @@ export class GetNetworkAnalyses {
       return running;
     }
 
-    const pending = this.cache
-      .withNetworkLock(networkCode, () => this.load(networkCode))
-      .finally(() => {
-        this.inflight.delete(networkCode);
-      });
+    const pending = this.load(networkCode).finally(() => {
+      this.inflight.delete(networkCode);
+    });
     this.inflight.set(networkCode, pending);
     return pending;
   }

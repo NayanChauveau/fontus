@@ -174,6 +174,70 @@ describe("DistributionNetworkList", () => {
     expect(screen.queryByText(/Année/)).toBeNull();
   });
 
+  it("prefetches quality when a clickable network enters the viewport", async () => {
+    const observers: Array<{
+      callback: IntersectionObserverCallback;
+      disconnect: ReturnType<typeof vi.fn>;
+    }> = [];
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        callback: IntersectionObserverCallback;
+        disconnect = vi.fn();
+        unobserve = vi.fn();
+        observe = vi.fn();
+        constructor(callback: IntersectionObserverCallback) {
+          this.callback = callback;
+          observers.push(this);
+        }
+      },
+    );
+    const fetchMock = vi.fn(async (input: RequestInfo) => {
+      const url = String(input);
+      if (url.includes("/api/networks")) {
+        return Response.json(ambiguous);
+      }
+      return Response.json({
+        networkCode: "033001214",
+        windowFrom: "2025-09-02",
+        source: "cache",
+        latestSample: null,
+        latestMeasurements: [],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<DistributionNetworkList citycode="33063" />);
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /PAULIN/ })).toBeTruthy();
+    });
+    expect(
+      fetchMock.mock.calls.some(([input]) =>
+        String(input).includes("/api/udi/"),
+      ),
+    ).toBe(false);
+
+    act(() => {
+      observers[0]?.callback(
+        [
+          {
+            isIntersecting: true,
+            target: document.createElement("button"),
+          } as unknown as IntersectionObserverEntry,
+        ],
+        observers[0] as unknown as IntersectionObserver,
+      );
+    });
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          String(input).includes("/api/udi/033001214/quality"),
+        ),
+      ).toBe(true);
+    });
+  });
+
   it("lets the user pick and change a network when ambiguous", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json(ambiguous)));
     render(<DistributionNetworkList citycode="33063" />);

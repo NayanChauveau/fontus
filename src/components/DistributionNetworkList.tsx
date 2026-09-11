@@ -6,6 +6,7 @@ import type { ListDistributionNetworksResultDto } from "@/application/dtos/Distr
 import { fetchJson } from "@/components/fetchJson";
 import { LoadingStatus } from "@/components/LoadingStatus";
 import { NetworkAnalyses } from "@/components/NetworkAnalyses";
+import { usePrefetchVisibleQuality } from "@/components/usePrefetchVisibleQuality";
 import { mapDistributionNetworksDto } from "@/presentation/mappers/mapDistributionNetworksDto";
 import { useMessages } from "@/presentation/i18n/useLocale";
 import { queryKeys } from "@/presentation/query/queryKeys";
@@ -292,8 +293,10 @@ function NetworkChoice({
   onSelect: () => void;
 }) {
   const messages = useMessages();
+  const prefetchRef = usePrefetchVisibleQuality(network.code);
   return (
     <button
+      ref={prefetchRef}
       type="button"
       onClick={onSelect}
       aria-pressed={selected}

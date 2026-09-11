@@ -17,6 +17,7 @@ import { useMessages } from "@/presentation/i18n/useLocale";
 import type { AddressSuggestionViewModel } from "@/presentation/view-models/AddressViewModel";
 
 const DEBOUNCE_MS = 300;
+const SUGGEST_TIMEOUT_MS = 8_000;
 
 type SearchStatus = "idle" | "loading" | "ready" | "unavailable";
 
@@ -69,12 +70,19 @@ export function AddressSearch({
       return;
     }
 
+    let cancelled = false;
+    let timedOut = false;
+    let fetchTimeout: number | undefined;
     const handle = window.setTimeout(() => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
       setStatus("loading");
       setOpen(true);
+      fetchTimeout = window.setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, SUGGEST_TIMEOUT_MS);
 
       void (async () => {
         try {
@@ -99,17 +107,26 @@ export function AddressSearch({
           setOpen(true);
         } catch (error) {
           if (isAbortError(error)) {
+            if (!cancelled && timedOut) {
+              setSuggestions([]);
+              setStatus("unavailable");
+              setOpen(true);
+            }
             return;
           }
           setSuggestions([]);
           setStatus("unavailable");
           setOpen(true);
+        } finally {
+          window.clearTimeout(fetchTimeout);
         }
       })();
     }, DEBOUNCE_MS);
 
     return () => {
+      cancelled = true;
       window.clearTimeout(handle);
+      window.clearTimeout(fetchTimeout);
       abortRef.current?.abort();
     };
   }, [query]);

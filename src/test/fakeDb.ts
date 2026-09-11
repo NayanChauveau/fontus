@@ -46,7 +46,7 @@ export function createFakeDb(options: {
     select: () => ReturnType<typeof thenable>;
     insert: () => ReturnType<typeof insertable>;
     delete: () => { where: () => Promise<undefined> };
-    execute: () => Promise<undefined>;
+    execute: (query?: unknown) => Promise<undefined>;
     transaction: <T>(fn: (tx: FakeDb) => Promise<T>) => Promise<T>;
   };
 
