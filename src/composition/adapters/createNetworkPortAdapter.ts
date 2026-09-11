@@ -7,9 +7,12 @@ export function createNetworkPortAdapter(
   module: NetworkModuleFacade,
 ): NetworkPort {
   return {
-    async listByCitycode(citycode) {
+    async listByCitycode(citycode, options) {
       try {
-        const result = await module.listNetworksForCommune.execute(citycode);
+        const result = await module.listNetworksForCommune.execute(
+          citycode,
+          options,
+        );
         const dto: ListDistributionNetworksResultDto = {
           citycode: result.commune.citycode || citycode,
           city: result.commune.city,
@@ -19,6 +22,7 @@ export function createNetworkPortAdapter(
           hiddenNonResidentialCount: result.commune.hiddenNonResidentialCount,
           selectedNetworkCode: null,
           source: result.source,
+          stale: result.stale,
         };
         return dto;
       } catch (error) {

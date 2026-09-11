@@ -37,20 +37,24 @@ describe("ListDistributionNetworksUseCase", () => {
   });
 
   it("delegates a valid INSEE code", async () => {
+    let received: { refresh?: boolean } | undefined;
     const { ports } = createFakeApplicationPorts({
       network: {
-        async listByCitycode(citycode) {
+        async listByCitycode(citycode, options) {
           expect(citycode).toBe("33063");
-          return bordeaux;
+          received = options;
+          return { ...bordeaux, stale: true };
         },
       },
     });
 
     const result = await new ListDistributionNetworksUseCase(ports).execute(
       "33063",
+      { refresh: true },
     );
 
-    expect(result).toEqual(bordeaux);
+    expect(received).toEqual({ refresh: true });
+    expect(result).toEqual({ ...bordeaux, stale: true });
     expect(result.selectedNetworkCode).toBeNull();
   });
 

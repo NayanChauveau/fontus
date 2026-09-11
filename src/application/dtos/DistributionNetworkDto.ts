@@ -15,4 +15,5 @@ export type ListDistributionNetworksResultDto = {
   hiddenNonResidentialCount: number;
   selectedNetworkCode: null;
   source: "cache" | "remote";
+  stale?: boolean;
 };

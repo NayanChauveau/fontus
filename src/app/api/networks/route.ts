@@ -14,9 +14,12 @@ export async function GET(request: Request) {
 
   try {
     await enforceRateLimit(request, "networks");
+    const refresh =
+      new URL(request.url).searchParams.get("refresh") === "1";
     const dto =
       await ensureApplication().listDistributionNetworksUseCase.execute(
         citycode,
+        { refresh },
       );
     return Response.json(dto);
   } catch (error) {

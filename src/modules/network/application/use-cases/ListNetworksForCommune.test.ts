@@ -96,7 +96,7 @@ describe("ListNetworksForCommune", () => {
     ]);
   });
 
-  it("ignores a stale populated cache and refetches", async () => {
+  it("serves a stale populated cache immediately without calling Hub’Eau", async () => {
     let gatewayCalls = 0;
     const { cache } = createMemoryCache([
       {
@@ -119,8 +119,66 @@ describe("ListNetworksForCommune", () => {
     );
 
     const result = await useCase.execute("33063");
+    expect(gatewayCalls).toBe(0);
+    expect(result.source).toBe("cache");
+    expect(result.stale).toBe(true);
+    expect(result.confidence).toBe("ambiguous");
+  });
+
+  it("refetches a stale populated cache when refresh is requested", async () => {
+    let gatewayCalls = 0;
+    const { cache } = createMemoryCache([
+      {
+        citycode: "33063",
+        city: "Bordeaux",
+        year: 2026,
+        links: bordeaux,
+        fetchedAt: new Date("2026-08-01T10:00:00.000Z"),
+      },
+    ]);
+    const useCase = new ListNetworksForCommune(
+      {
+        async listByCommune() {
+          gatewayCalls += 1;
+          return bordeaux;
+        },
+      },
+      cache,
+      now,
+    );
+
+    const result = await useCase.execute("33063", { refresh: true });
     expect(gatewayCalls).toBe(1);
     expect(result.source).toBe("remote");
+    expect(result.stale).toBe(false);
+  });
+
+  it("serves a fresh populated cache when refresh is requested", async () => {
+    let gatewayCalls = 0;
+    const { cache } = createMemoryCache([
+      {
+        citycode: "33063",
+        city: "Bordeaux",
+        year: 2026,
+        links: bordeaux,
+        fetchedAt: new Date("2026-09-01T10:00:00.000Z"),
+      },
+    ]);
+    const useCase = new ListNetworksForCommune(
+      {
+        async listByCommune() {
+          gatewayCalls += 1;
+          return [];
+        },
+      },
+      cache,
+      now,
+    );
+
+    const result = await useCase.execute("33063", { refresh: true });
+    expect(gatewayCalls).toBe(0);
+    expect(result.source).toBe("cache");
+    expect(result.stale).toBe(false);
   });
 
   it("serves a fresh cache without calling Hub’Eau", async () => {
@@ -149,6 +207,7 @@ describe("ListNetworksForCommune", () => {
 
     expect(gatewayCalls).toBe(0);
     expect(result.source).toBe("cache");
+    expect(result.stale).toBe(false);
     expect(result.confidence).toBe("ambiguous");
   });
 

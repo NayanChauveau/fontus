@@ -52,6 +52,7 @@ export const en = {
   networks: {
     title: "Distribution networks",
     loading: "Looking up networks…",
+    updating: "Updating networks…",
     unavailable:
       "Unable to load distribution networks. Please try again shortly.",
     confidenceExact: "exact match",
@@ -83,6 +84,7 @@ export const en = {
     title: "Latest analyses",
     loading: "Loading official analyses…",
     loadingHint: "This can take a few seconds.",
+    updating: "Updating analyses…",
     unavailable: "Unable to load analyses. Please try again shortly.",
     empty: "No recent analysis for this network.",
     conclusionTitle: "ARS conclusion",

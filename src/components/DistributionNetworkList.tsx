@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ListDistributionNetworksResultDto } from "@/application/dtos/DistributionNetworkDto";
 import { fetchJson } from "@/components/fetchJson";
@@ -17,12 +17,18 @@ import type {
 
 type LoadStatus = "loading" | "ready" | "unavailable";
 
+function networksUrl(citycode: string, refresh = false) {
+  const path = `/api/networks?citycode=${encodeURIComponent(citycode)}`;
+  return refresh ? `${path}&refresh=1` : path;
+}
+
 async function fetchDistributionNetworks(
   citycode: string,
   signal: AbortSignal,
+  refresh = false,
 ): Promise<ListDistributionNetworksResultDto> {
   const payload = await fetchJson<ListDistributionNetworksResultDto>(
-    `/api/networks?citycode=${encodeURIComponent(citycode)}`,
+    networksUrl(citycode, refresh),
     signal,
   );
   if (payload.networks.length === 0) {
@@ -44,12 +50,31 @@ export function DistributionNetworkList({
 }) {
   const messages = useMessages();
   const hydrated = useAfterHydration();
+  const queryClient = useQueryClient();
+  const startedRefreshFor = useRef<string>("");
   const query = useQuery({
     queryKey: queryKeys.networks(citycode),
     queryFn: ({ signal }) => fetchDistributionNetworks(citycode, signal),
     enabled: hydrated,
   });
   const dto = hydrated ? (query.data ?? null) : null;
+  const revalidating = Boolean(dto) && query.isFetching;
+
+  useEffect(() => {
+    if (!hydrated || dto?.stale !== true) {
+      return;
+    }
+    if (startedRefreshFor.current === citycode) {
+      return;
+    }
+    startedRefreshFor.current = citycode;
+    void queryClient.query({
+      queryKey: queryKeys.networks(citycode),
+      staleTime: 0,
+      queryFn: ({ signal }) =>
+        fetchDistributionNetworks(citycode, signal, true),
+    });
+  }, [citycode, dto, hydrated, queryClient]);
   const viewModel = useMemo(
     () => (dto ? mapDistributionNetworksDto(dto, messages) : null),
     [dto, messages],
@@ -105,13 +130,16 @@ export function DistributionNetworkList({
   return (
     <>
       <section
-        aria-busy={status === "loading"}
+        aria-busy={status === "loading" || revalidating}
         aria-live="polite"
         className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900"
       >
         <h3 className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
           {messages.networks.title}
         </h3>
+        {revalidating && (
+          <p className="mt-2 text-xs text-zinc-500">{messages.networks.updating}</p>
+        )}
 
         {status === "loading" && (
           <LoadingStatus label={messages.networks.loading} />

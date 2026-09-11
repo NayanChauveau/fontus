@@ -43,6 +43,18 @@ describe("GET /api/udi/:code/quality", () => {
       { params: Promise.resolve({ code: "033001214" }) },
     );
     expect(response.status).toBe(200);
+    expect(execute).toHaveBeenCalledWith("033001214", { refresh: false });
+  });
+
+  it("asks the use case to refresh when requested", async () => {
+    execute.mockResolvedValueOnce({ latestMeasurements: [] });
+    const { GET } = await import("./route");
+    const response = await GET(
+      new Request("http://localhost/api/udi/033001214/quality?refresh=1"),
+      { params: Promise.resolve({ code: "033001214" }) },
+    );
+    expect(response.status).toBe(200);
+    expect(execute).toHaveBeenCalledWith("033001214", { refresh: true });
   });
 
   it("maps application errors to 503", async () => {

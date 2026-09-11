@@ -217,6 +217,68 @@ describe("DistributionNetworkList", () => {
     vi.unstubAllGlobals();
   });
 
+  it("shows stale networks while a refresh is in flight", async () => {
+    let releaseRefresh: () => void = () => {};
+    const refreshGate = new Promise<void>((resolve) => {
+      releaseRefresh = resolve;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo) => {
+        if (String(input).includes("refresh=1")) {
+          await refreshGate;
+          return Response.json({
+            ...exact,
+            networks: [{ code: "033001214", name: "PAULIN À JOUR", neighborhoods: ["Centre"] }],
+          });
+        }
+        return Response.json({ ...exact, stale: true });
+      }),
+    );
+
+    render(<DistributionNetworkList citycode="33063" />);
+    await waitFor(() => {
+      expect(screen.getByText("PAULIN")).toBeTruthy();
+    });
+    await waitFor(() => {
+      expect(screen.getByText("Mise à jour des réseaux…")).toBeTruthy();
+    });
+
+    releaseRefresh();
+    await waitFor(() => {
+      expect(screen.getByText("PAULIN À JOUR")).toBeTruthy();
+    });
+    expect(screen.queryByText("Mise à jour des réseaux…")).toBeNull();
+  });
+
+  it("does not start a second refresh when the first refresh stays stale", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo) => {
+      const stale = String(input).includes("refresh=1");
+      return Response.json({
+        ...exact,
+        stale: true,
+        networks: [
+          {
+            code: "033001214",
+            name: stale ? "PAULIN ENCORE STALE" : "PAULIN",
+            neighborhoods: ["Centre"],
+          },
+        ],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<DistributionNetworkList citycode="33063" />);
+    await waitFor(() => {
+      expect(screen.getByText("PAULIN ENCORE STALE")).toBeTruthy();
+    });
+    expect(
+      fetchMock.mock.calls.filter(([input]) =>
+        String(input).includes("refresh=1"),
+      ),
+    ).toHaveLength(1);
+  });
+
   it("retries the request from the unavailable state", async () => {
     const fetchMock = vi
       .fn()

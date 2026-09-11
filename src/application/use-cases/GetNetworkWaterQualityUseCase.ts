@@ -5,7 +5,10 @@ import type { ApplicationPorts } from "../ports/ApplicationPorts";
 export class GetNetworkWaterQualityUseCase {
   constructor(private readonly ports: ApplicationPorts) {}
 
-  async execute(networkCode: string): Promise<NetworkWaterQualityDto> {
+  async execute(
+    networkCode: string,
+    options?: { refresh?: boolean },
+  ): Promise<NetworkWaterQualityDto> {
     if (!isNetworkCode(networkCode)) {
       return {
         networkCode: "",
@@ -19,6 +22,7 @@ export class GetNetworkWaterQualityUseCase {
 
     const dto = await this.ports.analyses.getByNetworkCode(
       normalizeNetworkCode(networkCode),
+      options,
     );
     const historyMeasurements = dto.historyMeasurements ?? [];
 

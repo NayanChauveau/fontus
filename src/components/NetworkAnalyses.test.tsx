@@ -651,6 +651,91 @@ describe("NetworkAnalyses", () => {
     });
   });
 
+  it("shows stale analyses while a refresh is in flight", async () => {
+    const payload = (conclusion: string, stale?: boolean) =>
+      Response.json({
+        networkCode: "033001214",
+        windowFrom: "2025-09-02",
+        source: "cache",
+        stale,
+        latestSample: {
+          code: "s1",
+          sampledAt: "2026-06-18T11:40:00.000Z",
+          conclusion,
+          conformiteLimitesBact: "C",
+          conformiteLimitesPc: "C",
+          source: "hubeau",
+          measurements: [],
+        },
+        latestMeasurements: [],
+      });
+
+    let releaseRefresh: () => void = () => {};
+    const refreshGate = new Promise<void>((resolve) => {
+      releaseRefresh = resolve;
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo) => {
+        if (String(input).includes("refresh=1")) {
+          await refreshGate;
+          return payload("Eau à jour");
+        }
+        return payload("Eau en cache", true);
+      }),
+    );
+
+    render(<NetworkAnalyses networkCode="033001214" />);
+    await waitFor(() => {
+      expect(screen.getByText("Eau en cache")).toBeTruthy();
+    });
+    await waitFor(() => {
+      expect(screen.getByText("Mise à jour des analyses…")).toBeTruthy();
+    });
+    expect(
+      screen.getByText("Dernières analyses").closest("section")?.getAttribute("aria-busy"),
+    ).toBe("true");
+
+    releaseRefresh();
+    await waitFor(() => {
+      expect(screen.getByText("Eau à jour")).toBeTruthy();
+    });
+    expect(screen.queryByText("Mise à jour des analyses…")).toBeNull();
+  });
+
+  it("does not start a second refresh when the first refresh stays stale", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo) => {
+      const stale = String(input).includes("refresh=1");
+      return Response.json({
+        networkCode: "033001214",
+        windowFrom: "2025-09-02",
+        source: "cache",
+        stale: true,
+        latestSample: {
+          code: "s1",
+          sampledAt: "2026-06-18T11:40:00.000Z",
+          conclusion: stale ? "Eau encore stale" : "Eau en cache",
+          conformiteLimitesBact: "C",
+          conformiteLimitesPc: "C",
+          source: "hubeau",
+          measurements: [],
+        },
+        latestMeasurements: [],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<NetworkAnalyses networkCode="033001214" />);
+    await waitFor(() => {
+      expect(screen.getByText("Eau encore stale")).toBeTruthy();
+    });
+    expect(
+      fetchMock.mock.calls.filter(([input]) =>
+        String(input).includes("refresh=1"),
+      ),
+    ).toHaveLength(1);
+  });
+
   it("shows cached analyses again without waiting for the network", async () => {
     const fetchMock = vi.fn(async () =>
       Response.json({

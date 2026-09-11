@@ -91,6 +91,7 @@ export type NetworkWaterQualityDto = {
   networkCode: string;
   windowFrom: string;
   source: "cache" | "remote" | "import";
+  stale?: boolean;
   latestSample: AnalysisSampleDto | null;
   latestMeasurements: MeasurementDto[];
   historyMeasurements?: MeasurementDto[];

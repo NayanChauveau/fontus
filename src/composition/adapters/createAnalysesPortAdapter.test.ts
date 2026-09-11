@@ -27,13 +27,19 @@ const sample = {
 
 describe("createAnalysesPortAdapter", () => {
   it("maps the latest sample and per-parameter snapshots", async () => {
+    let received: { refresh?: boolean } | undefined;
     const adapter = createAnalysesPortAdapter({
       getNetworkAnalyses: {
-        async execute() {
+        async execute(
+          _networkCode: string,
+          options?: { refresh?: boolean },
+        ) {
+          received = options;
           return {
             networkCode: "033001214",
             windowFrom: "2025-09-02",
             source: "cache",
+            stale: true,
             latestSample: sample,
             latestMeasurements: [
               { sampledAt: sample.sampledAt, measurement: sample.measurements[0]! },
@@ -44,13 +50,15 @@ describe("createAnalysesPortAdapter", () => {
       } as never,
     });
 
-    const dto = await adapter.getByNetworkCode("033001214");
+    const dto = await adapter.getByNetworkCode("033001214", { refresh: true });
+    expect(received).toEqual({ refresh: true });
     expect(dto.latestSample?.measurements[0]?.rawText).toBe("<0,01");
     expect(dto.latestMeasurements[0]?.sampledAt).toBe(
       "2026-06-18T11:40:00.000Z",
     );
     expect(dto.historyMeasurements).toEqual([]);
     expect(dto.parameterHistories).toEqual([]);
+    expect(dto.stale).toBe(true);
   });
 
   it("returns a null sample when the module has none", async () => {

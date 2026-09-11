@@ -20,9 +20,12 @@ export async function GET(
 
   try {
     await enforceRateLimit(_request, "quality");
+    const refresh =
+      new URL(_request.url).searchParams.get("refresh") === "1";
     const dto =
       await ensureApplication().getNetworkWaterQualityUseCase.execute(
         networkCode,
+        { refresh },
       );
     return Response.json(toPublicQualityDto(dto));
   } catch (error) {

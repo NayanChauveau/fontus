@@ -12,13 +12,17 @@ export function createAnalysesPortAdapter(
   module: AnalysesModuleFacade,
 ): AnalysesPort {
   return {
-    async getByNetworkCode(networkCode) {
+    async getByNetworkCode(networkCode, options) {
       try {
-        const result = await module.getNetworkAnalyses.execute(networkCode);
+        const result = await module.getNetworkAnalyses.execute(
+          networkCode,
+          options,
+        );
         return {
           networkCode: result.networkCode,
           windowFrom: result.windowFrom,
           source: result.source,
+          stale: result.stale,
           latestSample: result.latestSample
             ? toSampleDto(result.latestSample)
             : null,

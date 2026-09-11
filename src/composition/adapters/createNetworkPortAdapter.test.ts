@@ -16,15 +16,18 @@ describe("createNetworkPortAdapter", () => {
               hiddenNonResidentialCount: 0,
             },
             confidence: "none",
-            source: "remote",
+            source: "cache",
+            stale: true,
           };
         },
       } as never,
     });
 
-    const dto = await adapter.listByCitycode("33063");
+    const dto = await adapter.listByCitycode("33063", { refresh: true });
     expect(dto.citycode).toBe("33063");
     expect(dto.city).toBe("Bordeaux");
+    expect(dto.stale).toBe(true);
+    expect(dto.source).toBe("cache");
   });
 
   it("wraps module failures", async () => {

@@ -7,10 +7,15 @@ import { resolveNetworkConfidence } from "../../domain/resolveNetworkConfidence"
 import type { CommunesUdiGatewayPort } from "../ports/CommunesUdiGatewayPort";
 import type { NetworkCachePort } from "../ports/NetworkCachePort";
 
+export type ListNetworksForCommuneOptions = {
+  refresh?: boolean;
+};
+
 export type ListNetworksForCommuneResult = {
   commune: CommuneNetworks;
   confidence: ReturnType<typeof resolveNetworkConfidence>;
   source: "cache" | "remote";
+  stale?: boolean;
 };
 
 export class ListNetworksForCommune {
@@ -20,10 +25,24 @@ export class ListNetworksForCommune {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  async execute(citycode: string): Promise<ListNetworksForCommuneResult> {
+  async execute(
+    citycode: string,
+    options: ListNetworksForCommuneOptions = {},
+  ): Promise<ListNetworksForCommuneResult> {
     const communeCode = resolveCommuneInsee(citycode);
     const now = this.now();
     const year = now.getUTCFullYear();
+
+    if (!options.refresh) {
+      const cachedCurrent = await this.readAny(communeCode, year);
+      if (cachedCurrent && cachedCurrent.links.length > 0) {
+        return this.requireNetworks(
+          cachedCurrent.links,
+          "cache",
+          !isFreshSync(cachedCurrent.fetchedAt, now),
+        );
+      }
+    }
 
     const cachedCurrent = await this.readFresh(communeCode, year, now);
     if (cachedCurrent && cachedCurrent.links.length > 0) {
@@ -56,6 +75,14 @@ export class ListNetworksForCommune {
     }
 
     throw new Error("NO_DISTRIBUTION_NETWORK");
+  }
+
+  private async readAny(citycode: string, year: number) {
+    try {
+      return await this.cache.read(citycode, year);
+    } catch {
+      return null;
+    }
   }
 
   private async readFresh(
@@ -102,6 +129,7 @@ export class ListNetworksForCommune {
   private requireNetworks(
     links: Awaited<ReturnType<CommunesUdiGatewayPort["listByCommune"]>>,
     source: "cache" | "remote",
+    stale = false,
   ): ListNetworksForCommuneResult {
     const grouped = groupUdiLinks(links);
     if (!grouped || grouped.networks.length === 0) {
@@ -120,6 +148,7 @@ export class ListNetworksForCommune {
         becameUniqueAfterFilter: narrowed.hiddenCount > 0,
       }),
       source,
+      stale,
     };
   }
 }

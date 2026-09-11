@@ -34,6 +34,17 @@ describe("GET /api/networks", () => {
       new Request("http://localhost/api/networks?citycode=33063"),
     );
     expect(response.status).toBe(200);
+    expect(execute).toHaveBeenCalledWith("33063", { refresh: false });
+  });
+
+  it("asks the use case to refresh when requested", async () => {
+    execute.mockResolvedValueOnce({ confidence: "exact", networks: [] });
+    const { GET } = await import("./route");
+    const response = await GET(
+      new Request("http://localhost/api/networks?citycode=33063&refresh=1"),
+    );
+    expect(response.status).toBe(200);
+    expect(execute).toHaveBeenCalledWith("33063", { refresh: true });
   });
 
   it("maps application errors to 503", async () => {

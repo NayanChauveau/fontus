@@ -32,10 +32,15 @@ export type AnalysesErrorReporter = {
   }): void;
 };
 
+export type GetNetworkAnalysesOptions = {
+  refresh?: boolean;
+};
+
 export type GetNetworkAnalysesResult = {
   networkCode: string;
   windowFrom: string;
   source: "cache" | "remote" | "import";
+  stale?: boolean;
   latestSample: AnalysisSample | null;
   latestMeasurements: ParameterSnapshot[];
   historySnapshots: ParameterSnapshot[];
@@ -52,7 +57,17 @@ export class GetNetworkAnalyses {
     private readonly disImport: DisImportPort = emptyDisImport,
   ) {}
 
-  async execute(networkCode: string): Promise<GetNetworkAnalysesResult> {
+  async execute(
+    networkCode: string,
+    options: GetNetworkAnalysesOptions = {},
+  ): Promise<GetNetworkAnalysesResult> {
+    if (!options.refresh) {
+      const cached = await this.readCached(networkCode);
+      if (cached) {
+        return this.serveCached(networkCode, cached);
+      }
+    }
+
     const running = this.inflight.get(networkCode);
     if (running) {
       return running;
@@ -69,20 +84,9 @@ export class GetNetworkAnalyses {
 
   private async load(networkCode: string): Promise<GetNetworkAnalysesResult> {
     const now = this.now();
-    const cached = await this.readFresh(networkCode, now);
-    if (cached) {
-      this.reporter.report({
-        level: "info",
-        scope: "analyses",
-        event: "cache_hit",
-        context: { networkCode },
-      });
-      return toResult(
-        networkCode,
-        cached.windowFrom,
-        "cache",
-        cached.samples,
-      );
+    const cached = await this.readCached(networkCode);
+    if (cached && isFreshAnalysisSync(cached.fetchedAt, now)) {
+      return this.serveCached(networkCode, cached);
     }
 
     const window = await this.resolveWindow(networkCode, now);
@@ -123,13 +127,29 @@ export class GetNetworkAnalyses {
     return toResult(networkCode, window.dateMin, "remote", fetched.samples);
   }
 
-  private async readFresh(networkCode: string, now: Date) {
+  private serveCached(
+    networkCode: string,
+    cached: NonNullable<Awaited<ReturnType<AnalysesCachePort["read"]>>>,
+  ): GetNetworkAnalysesResult {
+    const stale = !isFreshAnalysisSync(cached.fetchedAt, this.now());
+    this.reporter.report({
+      level: "info",
+      scope: "analyses",
+      event: stale ? "cache_stale" : "cache_hit",
+      context: { networkCode },
+    });
+    return toResult(
+      networkCode,
+      cached.windowFrom,
+      "cache",
+      cached.samples,
+      stale,
+    );
+  }
+
+  private async readCached(networkCode: string) {
     try {
-      const cached = await this.cache.read(networkCode);
-      if (!cached || !isFreshAnalysisSync(cached.fetchedAt, now)) {
-        return null;
-      }
-      return cached;
+      return await this.cache.read(networkCode);
     } catch (error) {
       this.reporter.report({
         level: "error",
@@ -240,11 +260,13 @@ function toResult(
   windowFrom: string,
   source: "cache" | "remote" | "import",
   samples: AnalysisSample[],
+  stale = false,
 ): GetNetworkAnalysesResult {
   return {
     networkCode,
     windowFrom,
     source,
+    stale,
     latestSample: latestSample(samples),
     latestMeasurements: latestMeasurementsByParameter(samples),
     historySnapshots: extractHistorySnapshots(samples),

@@ -7,6 +7,7 @@ export function toPublicQualityDto(
     networkCode: dto.networkCode,
     windowFrom: dto.windowFrom,
     source: dto.source,
+    stale: dto.stale,
     latestSample: dto.latestSample
       ? { ...dto.latestSample, measurements: [] }
       : null,

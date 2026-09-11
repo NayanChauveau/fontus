@@ -59,6 +59,27 @@ const paulin: Awaited<
 };
 
 describe("GetNetworkWaterQualityUseCase", () => {
+  it("forwards a refresh and keeps a stale cache flag", async () => {
+    let received: { refresh?: boolean } | undefined;
+    const { ports } = createFakeApplicationPorts({
+      analyses: {
+        async getByNetworkCode(_networkCode, options) {
+          received = options;
+          return { ...paulin, source: "cache", stale: true };
+        },
+      },
+    });
+
+    const result = await new GetNetworkWaterQualityUseCase(ports).execute(
+      "033001214",
+      { refresh: true },
+    );
+
+    expect(received).toEqual({ refresh: true });
+    expect(result.stale).toBe(true);
+    expect(result.source).toBe("cache");
+  });
+
   it("returns empty without calling the port when the network code is invalid", async () => {
     let called = false;
     const { ports } = createFakeApplicationPorts({

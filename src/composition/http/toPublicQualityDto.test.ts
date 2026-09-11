@@ -7,6 +7,7 @@ describe("toPublicQualityDto", () => {
       networkCode: "033001214",
       windowFrom: "2025-09-02",
       source: "cache",
+      stale: true,
       latestSample: {
         code: "s1",
         sampledAt: "2026-06-18T11:40:00.000Z",
@@ -44,5 +45,6 @@ describe("toPublicQualityDto", () => {
     expect(publicDto.historyMeasurements).toBeUndefined();
     expect(publicDto.latestSample?.measurements).toEqual([]);
     expect(publicDto.latestSample?.conclusion).toBe("conforme");
+    expect(publicDto.stale).toBe(true);
   });
 });

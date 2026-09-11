@@ -59,6 +59,7 @@ describe("GetNetworkAnalyses", () => {
 
     expect(fetched).toBe(false);
     expect(result.source).toBe("cache");
+    expect(result.stale).toBe(false);
     expect(result.latestSample?.measurements[0]?.rawText).toBe("<0,01");
     expect(result.latestSample?.measurements[0]?.numericValue).toBe(0.01);
     expect(result.latestSample?.measurements[0]?.qualifier).toBe("lt");
@@ -319,12 +320,50 @@ describe("GetNetworkAnalyses", () => {
     expect(result.latestSample?.code).toBe(latest.code);
     expect(reported).toEqual([
       "cache_read_failed",
+      "cache_read_failed",
       "cache_write_failed",
       "hubeau_fetch",
     ]);
   });
 
-  it("ignores a stale cache entry", async () => {
+  it("serves a stale cache immediately without calling Hub’Eau", async () => {
+    let fetched = false;
+    const reported: string[] = [];
+    const useCase = new GetNetworkAnalyses(
+      trackingGateway(() => {
+        fetched = true;
+      }),
+      {
+        async read() {
+          return {
+            networkCode: PAULIN,
+            samples: [latest],
+            fetchedAt: new Date("2020-01-01T00:00:00.000Z"),
+            windowFrom: "2019-01-01",
+          };
+        },
+        async write() {},
+        async withNetworkLock(_networkCode, work) {
+          return work();
+        },
+      },
+      () => NOW,
+      {
+        report(event) {
+          reported.push(event.event);
+        },
+      },
+    );
+
+    const result = await useCase.execute(PAULIN);
+    expect(fetched).toBe(false);
+    expect(result.source).toBe("cache");
+    expect(result.stale).toBe(true);
+    expect(result.latestSample?.code).toBe(latest.code);
+    expect(reported).toEqual(["cache_stale"]);
+  });
+
+  it("refetches a stale cache when refresh is requested", async () => {
     const useCase = new GetNetworkAnalyses(
       {
         async count() {
@@ -351,7 +390,38 @@ describe("GetNetworkAnalyses", () => {
       () => NOW,
     );
 
-    expect((await useCase.execute(PAULIN)).source).toBe("remote");
+    const result = await useCase.execute(PAULIN, { refresh: true });
+    expect(result.source).toBe("remote");
+    expect(result.stale).toBe(false);
+  });
+
+  it("serves a fresh cache when refresh is requested", async () => {
+    let fetched = false;
+    const useCase = new GetNetworkAnalyses(
+      trackingGateway(() => {
+        fetched = true;
+      }),
+      {
+        async read() {
+          return {
+            networkCode: PAULIN,
+            samples: [latest],
+            fetchedAt: new Date("2026-09-01T00:00:00.000Z"),
+            windowFrom: "2025-09-02",
+          };
+        },
+        async write() {},
+        async withNetworkLock(_networkCode, work) {
+          return work();
+        },
+      },
+      () => NOW,
+    );
+
+    const result = await useCase.execute(PAULIN, { refresh: true });
+    expect(fetched).toBe(false);
+    expect(result.source).toBe("cache");
+    expect(result.stale).toBe(false);
   });
 
   it("uses the system clock by default and skips a duplicate measurement on merge", async () => {

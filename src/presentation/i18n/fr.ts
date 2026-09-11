@@ -56,6 +56,7 @@ export const fr = {
   networks: {
     title: "Réseaux de distribution",
     loading: "Recherche des réseaux…",
+    updating: "Mise à jour des réseaux…",
     unavailable:
       "Impossible de charger les réseaux de distribution. Réessayez dans un instant.",
     confidenceExact: "certitude exacte",
@@ -87,6 +88,7 @@ export const fr = {
     title: "Dernières analyses",
     loading: "Chargement des analyses officielles…",
     loadingHint: "Cela peut prendre quelques secondes.",
+    updating: "Mise à jour des analyses…",
     unavailable:
       "Impossible de charger les analyses. Réessayez dans un instant.",
     empty: "Aucune analyse récente pour ce réseau.",

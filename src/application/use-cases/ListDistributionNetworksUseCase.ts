@@ -8,7 +8,10 @@ import type { ApplicationPorts } from "../ports/ApplicationPorts";
 export class ListDistributionNetworksUseCase {
   constructor(private readonly ports: ApplicationPorts) {}
 
-  async execute(citycode: string): Promise<ListDistributionNetworksResultDto> {
+  async execute(
+    citycode: string,
+    options?: { refresh?: boolean },
+  ): Promise<ListDistributionNetworksResultDto> {
     if (!isInseeCitycode(citycode)) {
       return {
         citycode: "",
@@ -22,6 +25,9 @@ export class ListDistributionNetworksUseCase {
       };
     }
 
-    return this.ports.network.listByCitycode(normalizeCitycode(citycode));
+    return this.ports.network.listByCitycode(
+      normalizeCitycode(citycode),
+      options,
+    );
   }
 }
