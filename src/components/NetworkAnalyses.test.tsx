@@ -16,6 +16,13 @@ describe("NetworkAnalyses", () => {
     document.documentElement.lang = "fr";
   });
 
+  it("shows loading for an empty network code", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    render(<NetworkAnalyses networkCode="" />);
+    expect(screen.getByText("Chargement des analyses officielles…")).toBeTruthy();
+  });
+
   it("shows the official conclusion and both measurement groups", async () => {
     vi.stubGlobal(
       "fetch",
