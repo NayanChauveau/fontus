@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+# Local bench for deploy/remote-deploy.sh: fake /srv/eau-robinet, fake /root/.ssh, Docker and
+# Compose stubs. Nothing touches Docker or the VPS. Run: bash deploy/test-remote-deploy.sh
+set -uo pipefail
+
+SCRIPT="$(cd "$(dirname "$0")" && pwd)/remote-deploy.sh"
+PW="pw-$(printf 'secret%s' 42)-a9f"
+URL="postgresql://postgres:${PW}@postgres:5432/fontus"
+TOKEN="ghs_test_token_value_123"
+failures=0
+
+setup() {
+  T="$(mktemp -d)"; D="$T/srv/eau-robinet"
+  mkdir -p "$D/.git" "$D/src/app" "$D/.pnpm-store" "$D/scripts" "$D/supabase/migrations" "$T/backups" "$T/ssh" \
+    "$T/payload/scripts" "$T/payload/supabase/migrations"
+  echo old > "$D/docker-compose.prod.yml"; echo old > "$D/scripts/run-migrations.mjs"; echo old > "$D/scripts/apply-prod-migrations.sh"
+  echo old > "$D/supabase/config.toml"; echo "-- old" > "$D/supabase/migrations/001.sql"; echo x > "$D/package.json"
+  printf 'POSTGRES_PASSWORD=%s\nDATABASE_URL=%s\nWEB_IMAGE=old\n' "$PW" "$URL" > "$D/.env"
+  printf 'Host github.com\n  IdentityFile ~/.ssh/infra_traefik_deploy\n  IdentityFile ~/.ssh/jojo_portfolio_deploy\n  IdentitiesOnly yes\n' > "$T/ssh/config"
+  for k in eau_robinet_deploy jojo_portfolio_deploy; do echo k > "$T/ssh/$k"; echo p > "$T/ssh/$k.pub"; done
+  printf '#!/bin/sh\necho "compose $* config=${DOCKER_CONFIG:-none}" >> "%s/calls.log"\n' "$T" > "$T/compose"
+  printf '#!/bin/sh\ncat > /dev/null; echo "docker $* config=$DOCKER_CONFIG" >> "%s/calls.log"\n' "$T" > "$T/docker"
+  printf '#!/bin/sh\necho "migrations $PWD" >> "%s/calls.log"\n' "$T" > "$T/migrate"
+  chmod +x "$T/compose" "$T/docker" "$T/migrate"
+  echo new > "$T/payload/docker-compose.prod.yml"
+  echo new > "$T/payload/scripts/apply-prod-migrations.sh"; echo new > "$T/payload/scripts/postgres-18-upgrade.sh"
+  echo "-- new" > "$T/payload/supabase/migrations/001.sql"
+  incoming "$PW" "$URL"
+}
+
+incoming() {
+  printf 'POSTGRES_PASSWORD=%s\nDATABASE_URL=%s\nSENTRY_DSN=\nTRAEFIK_HOST=fontus.fr\nWEB_IMAGE=ghcr.io/x/fontus:abc\nDATABASE_POOL_MAX=5\nDATABASE_SSL=0\nNODE_ENV=production\nGHCR_USER=bot\nGHCR_TOKEN=%s\n' \
+    "$1" "$2" "$TOKEN" > "$T/payload/incoming.env"
+}
+
+full() { tar -czf "$T/payload.tgz" -C "$T/payload" docker-compose.prod.yml scripts supabase incoming.env "$@"; }
+
+run() {
+  env TARGET_DIR="$D" BACKUP_DIR="$T/backups" SSH_DIR="$T/ssh" COMPOSE="$T/compose" DOCKER="$T/docker" \
+    MIGRATIONS_CMD="$T/migrate" HOME="$T" bash -c "$(cat "$SCRIPT")" < "$T/payload.tgz" > "$T/out.log" 2>&1
+}
+
+check() {
+  local name="$1"; shift
+  if "$@"; then echo "ok   $name"; else echo "FAIL $name"; sed 's/^/    | /' "$T/out.log" | tail -n 8; failures=$((failures + 1)); fi
+  rm -rf "$T"
+}
+
+listing() { (cd "$D/$1" && find . -type f | sort | tr '\n' ' '); }
+perms() { stat -f '%Lp' "$1" 2>/dev/null || stat -c '%a' "$1"; }
+
+case_first() {
+  run && [ "$(cd "$D" && ls -A | sort | tr '\n' ' ')" = ".env docker-compose.prod.yml scripts supabase " ] \
+    && [ "$(listing scripts)" = "./apply-prod-migrations.sh ./postgres-18-upgrade.sh " ] \
+    && [ "$(listing supabase)" = "./migrations/001.sql " ] && grep -q new "$D/docker-compose.prod.yml" \
+    && ls "$T/backups/"eau-robinet-git-checkout-*.tar.gz >/dev/null 2>&1
+}
+setup; full; check "first deploy archives and cleans" case_first
+
+case_env() {
+  run && [ "$(perms "$D/.env")" = "600" ] && grep -qx "WEB_IMAGE=ghcr.io/x/fontus:abc" "$D/.env" \
+    && grep -qx "POSTGRES_PASSWORD=$PW" "$D/.env" && ! grep -q GHCR "$D/.env"
+}
+setup; full; check "env rewritten 600 from payload, without GHCR credentials" case_env
+
+case_order() {
+  run && [ "$(cut -d' ' -f1-3 "$T/calls.log" | tr '\n' '|')" = "docker login ghcr.io|compose -f docker-compose.prod.yml|docker logout ghcr.io|compose -f docker-compose.prod.yml|migrations $D|compose -f docker-compose.prod.yml|" ] \
+    && grep -q "pull web" "$T/calls.log" && grep -q "up -d --remove-orphans postgres" "$T/calls.log" \
+    && grep -q "up -d --no-deps --force-recreate web" "$T/calls.log"
+}
+setup; full; check "deploys in the same order as before" case_order
+
+case_docker_config() {
+  run && grep "docker login" "$T/calls.log" | grep -qv "config=$T/.docker" && ! grep -q "config= " "$T/calls.log" && [ ! -e "$T/.docker" ]
+}
+setup; full; check "registry login uses a throwaway Docker config" case_docker_config
+
+case_guard_pw() {
+  incoming "other-password" "$URL"; full
+  ! run && [ ! -e "$T/calls.log" ] && grep -q "POSTGRES_PASSWORD differs" "$T/out.log" && grep -q old "$D/docker-compose.prod.yml" \
+    && [ -d "$D/.git" ] && grep -qx "WEB_IMAGE=old" "$D/.env"
+}
+setup; check "guard refuses a different password" case_guard_pw
+
+case_guard_url() {
+  incoming "$PW" "postgresql://postgres:x@elsewhere:5432/fontus"; full
+  ! run && [ ! -e "$T/calls.log" ] && grep -q "DATABASE_URL differs" "$T/out.log"
+}
+setup; check "guard refuses a different DATABASE_URL" case_guard_url
+
+case_quiet() {
+  incoming "other-password" "$URL"; full; run
+  ! grep -q "other-password" "$T/out.log" && ! grep -q "$PW" "$T/out.log" && ! grep -q "$TOKEN" "$T/out.log"
+}
+setup; check "guard does not print values" case_quiet
+
+case_no_env() { rm "$D/.env"; run && grep -qx "POSTGRES_PASSWORD=$PW" "$D/.env"; }
+setup; full; check "first .env is accepted" case_no_env
+
+case_keys() {
+  run && [ ! -e "$T/ssh/eau_robinet_deploy" ] && [ ! -e "$T/ssh/eau_robinet_deploy.pub" ] && [ -e "$T/ssh/jojo_portfolio_deploy" ] \
+    && grep -q "Host github.com" "$T/ssh/config" && grep -q jojo_portfolio_deploy "$T/ssh/config"
+}
+setup; full; check "only own key removed" case_keys
+
+case_paths() {
+  echo x > "$T/payload/scripts/evil.sh"; full
+  ! run && [ ! -e "$T/calls.log" ] && [ -d "$D/.git" ]
+}
+setup; check "rejects unexpected paths" case_paths
+
+case_bad_key() {
+  printf 'LD_PRELOAD=/tmp/x.so\n' >> "$T/payload/incoming.env"; full
+  ! run && [ ! -e "$T/calls.log" ]
+}
+setup; check "rejects unexpected env keys" case_bad_key
+
+case_compose_fails() {
+  printf '#!/bin/sh\nexit 1\n' > "$T/compose"; full
+  ! run && [ -d "$D/.git" ] && [ -e "$T/ssh/eau_robinet_deploy" ]
+}
+setup; check "failed compose keeps checkout and key" case_compose_fails
+
+case_again() { full; run && run && [ "$(ls "$T/backups" | grep -c git-checkout)" = "1" ] && [ "$(ls "$T/backups" | grep -c -- -env-)" = "1" ]; }
+setup; check "second run is idempotent" case_again
+
+case_archive_clean() {
+  mkdir -p "$D/node_modules/x"; echo y > "$D/node_modules/x/i.js"
+  run && ! tar -tzf "$T/backups/"eau-robinet-git-checkout-*.tar.gz | grep -qE '(^|/)(\.git|\.env|\.pnpm-store|node_modules)(/|$)'
+}
+setup; full; check "checkout archive excludes .git, .env and dependencies" case_archive_clean
+
+case_env_backup() {
+  run && [ "$(perms "$(ls "$T/backups/"eau-robinet-env-*)")" = "600" ] && grep -qx "WEB_IMAGE=old" "$T/backups/"eau-robinet-env-*
+}
+setup; full; check "previous .env backed up 600" case_env_backup
+
+case_guard_host() {
+  printf 'TRAEFIK_HOST=other.example\n' >> "$D/.env"; full
+  ! run && [ ! -e "$T/calls.log" ] && grep -q "TRAEFIK_HOST differs" "$T/out.log"
+}
+setup; check "guard refuses a different TRAEFIK_HOST" case_guard_host
+
+case_guard_unknown() {
+  printf 'MY_SERVER_ONLY_SETTING=1\n' >> "$D/.env"; full
+  ! run && [ ! -e "$T/calls.log" ] && grep -q "MY_SERVER_ONLY_SETTING" "$T/out.log" && grep -q "MY_SERVER_ONLY_SETTING=1" "$D/.env"
+}
+setup; check "guard refuses to drop unknown keys of the current .env" case_guard_unknown
+
+case_bad_line_quiet() {
+  printf 'leaked-part-of-a-secret=zzz\n' >> "$T/payload/incoming.env"; full
+  ! run && ! grep -q "leaked-part" "$T/out.log" && grep -q "line 11" "$T/out.log"
+}
+setup; check "bad env line reported by number only" case_bad_line_quiet
+
+case_docker_scope() {
+  run && grep "up -d --remove-orphans postgres" "$T/calls.log" | grep -q "config=none" \
+    && grep "up -d --no-deps" "$T/calls.log" | grep -q "config=none" \
+    && grep "pull web" "$T/calls.log" | grep -qv "config=none"
+}
+setup; full; check "throwaway Docker config only for registry calls" case_docker_scope
+
+if [ "$failures" -eq 0 ]; then echo "all cases passed"; else echo "$failures case(s) failed"; exit 1; fi

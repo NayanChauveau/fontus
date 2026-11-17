@@ -9,7 +9,7 @@ docker network ls | grep traefik
 # si absent : cd /srv/traefik && docker compose up -d
 ```
 
-Clé deploy : `~/.ssh/eau_robinet_deploy` (read-only sur le repo GitHub).
+Déploiement par envoi depuis la CI (novembre 2026) : la CI envoie seulement `docker-compose.prod.yml`, `scripts/apply-prod-migrations.sh`, `scripts/postgres-18-upgrade.sh`, `supabase/migrations/*.sql` et les secrets, dans une archive par SSH. `deploy/remote-deploy.sh` les installe dans `/srv/eau-robinet` et réécrit `.env` (600) depuis les secrets GitHub. Le VPS n'a plus de copie git ni de clé GitHub pour ce repo. Garde-fou : si `POSTGRES_PASSWORD` ou `DATABASE_URL` diffère du `.env` en place, le déploiement s'arrête sans rien changer (une rotation de mot de passe se fait volontairement, pas par un déploiement). Tester le script en local : `bash deploy/test-remote-deploy.sh`.
 
 Secrets GitHub (comme jojo) : `SSH_HOST`, `SSH_PORT`, `SSH_USER`, `SSH_KEY`, `SSH_PASSPHRASE`, plus `POSTGRES_PASSWORD`, `TRAEFIK_HOST=fontus.fr`, `SENTRY_DSN`, `DATABASE_URL` :
 

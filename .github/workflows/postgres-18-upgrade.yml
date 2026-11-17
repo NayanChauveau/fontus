@@ -54,9 +54,8 @@ jobs:
           envs: MODE,SNAPSHOT_DONE
           script: |
             set -euo pipefail
-            export GIT_SSH_COMMAND='ssh -i ~/.ssh/eau_robinet_deploy -o IdentitiesOnly=yes'
+            # The script is installed by the push deploy (deploy/remote-deploy.sh); no git on the VPS.
             cd /srv/eau-robinet
-            git pull
             install -d -m 700 /srv/backups/eau-robinet
             log="/srv/backups/eau-robinet/$(date -u +%Y%m%dT%H%M%SZ)-$MODE.log"
             SNAPSHOT_DONE="$SNAPSHOT_DONE" setsid nohup bash scripts/postgres-18-upgrade.sh "$MODE" > "$log" 2>&1 < /dev/null &
