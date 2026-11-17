@@ -1,0 +1,38 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard"
+  ],
+  "timezone": "Europe/Paris",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "packageRules": [
+    {
+      "description": "One weekly PR for all non-major updates; majors stay in their own PRs.",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "groupName": "weekly non-major updates"
+    },
+    {
+      "description": "Postgres majors need a dump and restore: open the PR as a warning, never merge it as is.",
+      "matchPackageNames": [
+        "postgres"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "addLabels": [
+        "manual-migration"
+      ],
+      "prBodyNotes": [
+        "⚠️ **Postgres major version: do not merge as is.** The data directory of a major version cannot be read by the next one. Plan a dump and restore (or `pg_upgrade`) first."
+      ]
+    }
+  ]
+}
