@@ -49,7 +49,6 @@ services:
       - "traefik.http.services.fontus.loadbalancer.healthcheck.interval=1s"
       - "traefik.http.services.fontus.loadbalancer.healthcheck.timeout=1s"
       - "traefik.docker.network=traefik"
-      - 'com.datadoghq.ad.logs=[{"source":"nextjs","service":"fontus"}]'
     networks:
       - traefik
       - internal

@@ -6,6 +6,8 @@ const scriptSrc =
     : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
 
 const nextConfig: NextConfig = {
+  // No "X-Powered-By: Next.js": it only tells scanners what to try.
+  poweredByHeader: false,
   output: "standalone",
   typescript: {
     ignoreBuildErrors: process.env.DOCKER_BUILD === "1",
