@@ -21,9 +21,11 @@ export function createObservability(deps: {
   now?: () => Date;
   environment?: string;
   pretty?: boolean;
+  service?: string;
 }): ObservabilitySink {
   const now = deps.now ?? (() => new Date());
   const environment = deps.environment ?? "development";
+  const service = deps.service ?? "fontus";
 
   return {
     report(event) {
@@ -39,12 +41,15 @@ export function createObservability(deps: {
       const payload = {
         ts: createdAt.toISOString(),
         level: event.level,
+        service,
         scope: event.scope,
         event: event.event,
         code,
         message,
+        // The stack stays inside the JSON string (escaped newlines): one log line per event,
+        // readable in Grafana with `| json`.
         cause: cause
-          ? { name: cause.name, message: cause.message, chain: cause.chain }
+          ? { name: cause.name, message: cause.message, chain: cause.chain, stack: cause.stack ?? null }
           : null,
         context,
         environment,

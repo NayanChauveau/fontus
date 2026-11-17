@@ -116,4 +116,23 @@ describe("createObservability", () => {
       context: null,
     });
   });
+
+  it("keeps the stack trace and the service name in production JSON", () => {
+    const lines: string[] = [];
+    const json = createObservability({
+      write: (line) => lines.push(line),
+      environment: "production",
+    });
+    json.report({
+      level: "error",
+      scope: "http",
+      event: "request_failed",
+      cause: new Error("boom"),
+    });
+    const parsed = JSON.parse(lines[0] ?? "{}");
+    expect(parsed.service).toBe("fontus");
+    expect(parsed.cause.stack).toContain("Error: boom");
+    expect(parsed.cause.stack).toContain("createObservability.test.ts");
+    expect(lines[0]).not.toContain("\n    at ");
+  });
 });
