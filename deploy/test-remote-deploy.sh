@@ -18,7 +18,17 @@ setup() {
   printf 'POSTGRES_PASSWORD=%s\nDATABASE_URL=%s\nWEB_IMAGE=old\n' "$PW" "$URL" > "$D/.env"
   printf 'Host github.com\n  IdentityFile ~/.ssh/infra_traefik_deploy\n  IdentityFile ~/.ssh/jojo_portfolio_deploy\n  IdentitiesOnly yes\n' > "$T/ssh/config"
   for k in eau_robinet_deploy jojo_portfolio_deploy; do echo k > "$T/ssh/$k"; echo p > "$T/ssh/$k.pub"; done
-  printf '#!/bin/sh\necho "compose $* config=${DOCKER_CONFIG:-none}" >> "%s/calls.log"\n' "$T" > "$T/compose"
+  # Compose stub: "ps" answers from $T/running and $T/all; "--scale" adds container "new1" and
+  # fails when $T/unhealthy exists.
+  cat > "$T/compose" <<STUB
+#!/bin/sh
+echo "compose \$* config=\${DOCKER_CONFIG:-none}" >> "$T/calls.log"
+case "\$*" in
+  *"ps -q --status running"*) cat "$T/running" 2>/dev/null; true ;;
+  *"ps -aq"*) cat "$T/all" 2>/dev/null; true ;;
+  *--scale*) echo new1 >> "$T/all"; [ ! -e "$T/unhealthy" ] ;;
+esac
+STUB
   printf '#!/bin/sh\ncat > /dev/null; echo "docker $* config=$DOCKER_CONFIG" >> "%s/calls.log"\n' "$T" > "$T/docker"
   printf '#!/bin/sh\necho "migrations $PWD" >> "%s/calls.log"\n' "$T" > "$T/migrate"
   chmod +x "$T/compose" "$T/docker" "$T/migrate"
@@ -36,7 +46,7 @@ incoming() {
 full() { tar -czf "$T/payload.tgz" -C "$T/payload" docker-compose.prod.yml scripts supabase incoming.env "$@"; }
 
 run() {
-  env TARGET_DIR="$D" BACKUP_DIR="$T/backups" SSH_DIR="$T/ssh" COMPOSE="$T/compose" DOCKER="$T/docker" \
+  env ROLLOUT_SETTLE_SECONDS=0 ROLLOUT_DRAIN_SECONDS=0 TARGET_DIR="$D" BACKUP_DIR="$T/backups" SSH_DIR="$T/ssh" COMPOSE="$T/compose" DOCKER="$T/docker" \
     MIGRATIONS_CMD="$T/migrate" HOME="$T" bash -c "$(cat "$SCRIPT")" < "$T/payload.tgz" > "$T/out.log" 2>&1
 }
 
@@ -64,9 +74,9 @@ case_env() {
 setup; full; check "env rewritten 600 from payload, without GHCR credentials" case_env
 
 case_order() {
-  run && [ "$(cut -d' ' -f1-3 "$T/calls.log" | tr '\n' '|')" = "docker login ghcr.io|compose -f docker-compose.prod.yml|docker logout ghcr.io|compose -f docker-compose.prod.yml|migrations $D|compose -f docker-compose.prod.yml|" ] \
+  run && [ "$(cut -d' ' -f1-3 "$T/calls.log" | tr '\n' '|')" = "docker login ghcr.io|compose -f docker-compose.prod.yml|docker logout ghcr.io|compose -f docker-compose.prod.yml|migrations $D|compose -f docker-compose.prod.yml|compose -f docker-compose.prod.yml|compose -f docker-compose.prod.yml|" ] \
     && grep -q "pull web" "$T/calls.log" && grep -q "up -d --remove-orphans postgres" "$T/calls.log" \
-    && grep -q "up -d --no-deps --force-recreate web" "$T/calls.log"
+    && grep -q "up -d --no-deps --wait --wait-timeout 180 web" "$T/calls.log"
 }
 setup; full; check "deploys in the same order as before" case_order
 
@@ -159,5 +169,23 @@ case_docker_scope() {
     && grep "pull web" "$T/calls.log" | grep -qv "config=none"
 }
 setup; full; check "throwaway Docker config only for registry calls" case_docker_scope
+
+case_rollout() {
+  printf 'old1\n' > "$T/running"; printf 'old1\nstale1\n' > "$T/all"
+  run && grep -q "docker rm -f stale1" "$T/calls.log" \
+    && grep -q "up -d --no-deps --no-recreate --wait --wait-timeout 180 --scale web=2 web" "$T/calls.log" \
+    && [ "$(grep -n "docker exec old1 touch /tmp/draining" "$T/calls.log" | cut -d: -f1)" -gt "$(grep -n -- "--scale" "$T/calls.log" | cut -d: -f1)" ] \
+    && [ "$(grep -n "docker stop -t 30 old1" "$T/calls.log" | cut -d: -f1)" -gt "$(grep -n "docker exec old1" "$T/calls.log" | cut -d: -f1)" ] \
+    && grep -q "docker rm old1" "$T/calls.log" && ! grep -q "docker rm -f new1" "$T/calls.log" \
+    && grep -q "without downtime" "$T/out.log"
+}
+setup; full; check "swaps web: new container first, old one drained then stopped, stale one dropped" case_rollout
+
+case_rollout_unhealthy() {
+  printf 'old1\n' > "$T/running"; printf 'old1\n' > "$T/all"; touch "$T/unhealthy"
+  ! run && grep -q "docker rm -f new1" "$T/calls.log" && ! grep -q "docker stop" "$T/calls.log" \
+    && grep -q "previous one keeps serving" "$T/out.log"
+}
+setup; full; check "unhealthy new container is removed, old one untouched" case_rollout_unhealthy
 
 if [ "$failures" -eq 0 ]; then echo "all cases passed"; else echo "$failures case(s) failed"; exit 1; fi

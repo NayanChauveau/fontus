@@ -26,6 +26,41 @@ SYNCED_DIRS=(scripts supabase)
 KEEP=("$COMPOSE_FILE" scripts supabase .env)
 
 die() { echo "deploy: $*" >&2; exit 1; }
+# Swap the web container without downtime: start a new one next to the running one, wait until
+# it is healthy (Traefik only routes to healthy containers), take the old one out of Traefik
+# (drain flag read by /api/ready), then stop it (Next.js finishes its requests on SIGTERM; the
+# router's retry middleware covers any straggler). If the new container never gets healthy, it is removed and the old one
+# keeps serving. Changing the Traefik labels makes the two containers disagree for a few seconds
+# (404s during the swap): expect a short blip on such a deploy.
+rollout_web() {
+  local old id
+  old="$("${COMPOSE[@]}" -f "$COMPOSE_FILE" ps -q --status running web)"
+  # A stopped web container left by an interrupted deploy would be restarted with the old image.
+  for id in $("${COMPOSE[@]}" -f "$COMPOSE_FILE" ps -aq web); do
+    grep -qx "$id" <<< "$old" || "${DOCKER[@]}" rm -f "$id" >/dev/null
+  done
+  if [ -z "$old" ]; then
+    "${COMPOSE[@]}" -f "$COMPOSE_FILE" up -d --no-deps --wait --wait-timeout 180 web
+    return
+  fi
+  if ! "${COMPOSE[@]}" -f "$COMPOSE_FILE" up -d --no-deps --no-recreate --wait --wait-timeout 180 \
+      --scale web="$(($(wc -l <<< "$old") + 1))" web; then
+    for id in $("${COMPOSE[@]}" -f "$COMPOSE_FILE" ps -aq web); do
+      grep -qx "$id" <<< "$old" || "${DOCKER[@]}" rm -f "$id" >/dev/null
+    done
+    die "the new web container never became healthy; the previous one keeps serving"
+  fi
+  sleep "${ROLLOUT_SETTLE_SECONDS:-5}"  # Traefik picks up the new container
+  # Drain: /api/ready answers 503 in the old container, Traefik's health check (every second)
+  # takes it out of rotation, then it stops with nothing in flight.
+  for id in $old; do "${DOCKER[@]}" exec "$id" touch /tmp/draining || true; done
+  sleep "${ROLLOUT_DRAIN_SECONDS:-4}"
+  # shellcheck disable=SC2086
+  "${DOCKER[@]}" stop -t 30 $old >/dev/null
+  # shellcheck disable=SC2086
+  "${DOCKER[@]}" rm $old >/dev/null
+  echo "deploy: web swapped without downtime"
+}
 in_list() { local x="$1"; shift; local e; for e in "$@"; do [ "$e" = "$x" ] && return 0; done; return 1; }
 # Value of $1 in env file $2 (everything after the first "="), empty if absent.
 env_value() { sed -n "s/^$1=//p" "$2" | tail -n 1; }
@@ -112,7 +147,7 @@ DOCKER_CONFIG="$REGISTRY_CONFIG" "${COMPOSE[@]}" -f "$COMPOSE_FILE" pull web
 DOCKER_CONFIG="$REGISTRY_CONFIG" "${DOCKER[@]}" logout ghcr.io >/dev/null || true
 "${COMPOSE[@]}" -f "$COMPOSE_FILE" up -d --remove-orphans postgres
 eval "$MIGRATIONS_CMD"
-"${COMPOSE[@]}" -f "$COMPOSE_FILE" up -d --no-deps --force-recreate web
+rollout_web
 
 # 5. First push deploy only: archive the old git checkout, keep only the runtime files.
 if [ -d "$TARGET_DIR/.git" ]; then

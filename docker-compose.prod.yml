@@ -29,6 +29,11 @@ services:
       - "traefik.http.routers.fontus.rule=Host(`${TRAEFIK_HOST}`)"
       - "traefik.http.routers.fontus.entrypoints=websecure"
       - "traefik.http.routers.fontus.tls.certresolver=le"
+      # Deploys swap containers without downtime (deploy/remote-deploy.sh): a request that reaches
+      # the old container as it closes is retried on the new one.
+      - "traefik.http.routers.fontus.middlewares=fontus-retry"
+      - "traefik.http.middlewares.fontus-retry.retry.attempts=3"
+      - "traefik.http.middlewares.fontus-retry.retry.initialinterval=100ms"
       - "traefik.http.routers.fontus-www.rule=Host(`www.${TRAEFIK_HOST}`)"
       - "traefik.http.routers.fontus-www.entrypoints=websecure"
       - "traefik.http.routers.fontus-www.tls.certresolver=le"
@@ -38,6 +43,11 @@ services:
       - "traefik.http.middlewares.fontus-www-redirect.redirectregex.replacement=https://$${1}"
       - "traefik.http.middlewares.fontus-www-redirect.redirectregex.permanent=true"
       - "traefik.http.services.fontus.loadbalancer.server.port=3100"
+      # Traefik polls /api/ready (no database call) every second; the deploy makes it answer 503 in
+      # the old container just before stopping it, so traffic leaves it first.
+      - "traefik.http.services.fontus.loadbalancer.healthcheck.path=/api/ready"
+      - "traefik.http.services.fontus.loadbalancer.healthcheck.interval=1s"
+      - "traefik.http.services.fontus.loadbalancer.healthcheck.timeout=1s"
       - "traefik.docker.network=traefik"
       - 'com.datadoghq.ad.logs=[{"source":"nextjs","service":"fontus"}]'
     networks:
@@ -45,6 +55,14 @@ services:
       - internal
     depends_on:
       - postgres
+    # Traefik only routes to a healthy container; the deploy waits on it before retiring the old one.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3100/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 8s
+      retries: 4
+      start_period: 120s
+      start_interval: 2s
     restart: unless-stopped
 
   postgres:
