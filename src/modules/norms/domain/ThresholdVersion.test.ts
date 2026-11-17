@@ -23,13 +23,21 @@ describe("findActiveThreshold", () => {
     expect(lead2036?.value).toBe(5);
   });
 
-  it("has no PFAS-20 limit before 12 January 2026", () => {
+  it("has no PFAS-20 limit before 1 January 2023 (FR) and 12 January 2026 (EU)", () => {
     expect(
       findActiveThreshold(
         FR_EU_THRESHOLDS,
         "pfas20",
         "fr",
-        new Date("2025-12-31T00:00:00.000Z"),
+        new Date("2022-12-31T00:00:00.000Z"),
+      ),
+    ).toBeNull();
+    expect(
+      findActiveThreshold(
+        FR_EU_THRESHOLDS,
+        "pfas20",
+        "eu",
+        new Date("2026-01-11T00:00:00.000Z"),
       ),
     ).toBeNull();
     expect(
@@ -93,13 +101,13 @@ describe("CH / US versions", () => {
       SEEDED_THRESHOLDS,
       "lead",
       "ch",
-      new Date("2026-08-01T00:00:00.000Z"),
+      new Date("2036-02-01T00:00:00.000Z"),
     );
     const pfoaUs = findActiveThreshold(
       SEEDED_THRESHOLDS,
       "pfoa",
       "us",
-      new Date("2026-05-18T00:00:00.000Z"),
+      new Date("2029-05-18T00:00:00.000Z"),
     );
     const leadUs = findActiveThreshold(
       SEEDED_THRESHOLDS,

@@ -9,25 +9,25 @@ export type CatalogReview = {
 export const CATALOG_REVIEWS: readonly CatalogReview[] = [
   {
     id: "fr-eu",
-    reviewedAt: "2026-09-05",
+    reviewedAt: "2026-11-17",
     sourceUrl:
       "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000046879740",
   },
   {
     id: "ch",
-    reviewedAt: "2026-09-05",
-    sourceUrl: "https://www.fedlex.admin.ch/eli/cc/2017/163/fr",
+    reviewedAt: "2026-11-17",
+    sourceUrl: "https://www.fedlex.admin.ch/eli/cc/2017/153/fr",
   },
   {
     id: "us",
-    reviewedAt: "2026-09-05",
+    reviewedAt: "2026-11-17",
     sourceUrl:
       "https://www.epa.gov/ground-water-and-drinking-water/national-primary-drinking-water-regulations",
   },
   {
     id: "who",
-    reviewedAt: "2026-09-05",
-    sourceUrl: "https://www.who.int/publications/i/item/9789240045064",
+    reviewedAt: "2026-11-17",
+    sourceUrl: "https://www.who.int/publications/i/item/9789240121225",
   },
 ];
 

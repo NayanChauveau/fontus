@@ -34,7 +34,9 @@ describe("createNormCatalog", () => {
     const at = new Date("2026-05-18T00:00:00.000Z");
     expect(catalog.findActive("pfoa", "fr", at)).toBeNull();
     expect(catalog.findActive("pfoa", "ch", at)?.value).toBe(0.5);
-    expect(catalog.findActive("pfoa", "us", at)?.value).toBe(0.004);
+    // EPA PFAS MCLs apply from 26 April 2029 only.
+    expect(catalog.findActive("pfoa", "us", at)).toBeNull();
+    expect(catalog.findActive("pfoa", "us", new Date("2029-04-26T00:00:00.000Z"))?.value).toBe(0.004);
     expect(catalog.findActive("nitrates", "us", at)?.value).toBe(44.3);
     expect(catalog.findActive("nitrates", "who", at)?.value).toBe(50);
     expect(catalog.findActive("nitrates", "who", at)?.kind).toBe(

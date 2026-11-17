@@ -17,8 +17,15 @@ const NITRITE_CITATION =
 
 const US_FROM = utc("1992-07-30");
 const ARSENIC_FROM = utc("2006-01-23");
-const PFAS_FROM = utc("2024-06-25");
-const RTCR_FROM = utc("2013-04-01");
+// 40 CFR 141.60: the PFAS MCLs of 141.61(c)(2) apply from 26 April 2029 (rule published 2024).
+const PFAS_FROM = utc("2029-04-26");
+// Lead and Copper Rule Improvements: action level 10 µg/L from the compliance date.
+const LCRI_FROM = utc("2027-11-01");
+// 40 CFR 141.63(c): E. coli MCL "beginning April 1, 2016" (Revised Total Coliform Rule).
+const RTCR_FROM = utc("2016-04-01");
+const URANIUM_FROM = utc("2003-12-08"); // 40 CFR 141.66(f)
+const ANTIMONY_FROM = utc("1994-01-17"); // 40 CFR 141.60
+const FLUORIDE_FROM = utc("1987-10-02"); // 40 CFR 141.60
 
 function utc(isoDate: string): Date {
   return new Date(`${isoDate}T00:00:00.000Z`);
@@ -32,6 +39,7 @@ function us(
     kind?: ThresholdVersion["kind"];
     binding?: boolean;
     validFrom?: Date;
+    validTo?: Date | null;
     suffix?: string;
     citation?: string;
     sourceUrl?: string;
@@ -49,7 +57,7 @@ function us(
     kind,
     binding: options.binding ?? kind === "legal_limit",
     validFrom: options.validFrom ?? US_FROM,
-    validTo: null,
+    validTo: options.validTo ?? null,
     citation: options.citation ?? NPDWR_CITATION,
     sourceUrl: options.sourceUrl ?? NPDWR_URL,
   };
@@ -86,7 +94,15 @@ export const US_THRESHOLDS: ThresholdVersion[] = [
   us("lead", "µg/L", 15, {
     kind: "quality_reference",
     binding: false,
+    validTo: LCRI_FROM,
     citation: LCR_CITATION,
+  }),
+  us("lead", "µg/L", 10, {
+    kind: "quality_reference",
+    binding: false,
+    validFrom: LCRI_FROM,
+    suffix: ":10",
+    citation: `${LCR_CITATION} (Lead and Copper Rule Improvements, à partir du 1er novembre 2027)`,
   }),
   us("arsenic", "µg/L", 10, { validFrom: ARSENIC_FROM }),
   us("cadmium", "µg/L", 5),
@@ -97,12 +113,15 @@ export const US_THRESHOLDS: ThresholdVersion[] = [
     citation: LCR_CITATION,
   }),
   us("mercury", "µg/L", 2),
-  us("ecoli", "n/(100mL)", 0, { validFrom: RTCR_FROM }),
+  us("ecoli", "n/(100mL)", 0, {
+    validFrom: RTCR_FROM,
+    citation: `${NPDWR_CITATION} : MCL E. coli fondé sur la présence dans une série d’échantillons, approximé ici par 0`,
+  }),
   us("atrazine", "µg/L", 3),
-  us("antimony", "µg/L", 6),
+  us("antimony", "µg/L", 6, { validFrom: ANTIMONY_FROM }),
   us("selenium", "µg/L", 50),
-  us("fluoride", "mg/L", 4),
-  us("uranium", "µg/L", 30),
+  us("fluoride", "mg/L", 4, { validFrom: FLUORIDE_FROM }),
+  us("uranium", "µg/L", 30, { validFrom: URANIUM_FROM }),
   us("barium", "mg/L", 2),
   us("manganese", "µg/L", 50, { kind: "quality_reference", binding: false }),
   us("chloride", "mg/L", 250, { kind: "quality_reference", binding: false }),

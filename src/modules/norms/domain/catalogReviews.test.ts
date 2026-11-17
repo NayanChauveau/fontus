@@ -8,12 +8,12 @@ import {
 describe("listStaleCatalogReviews", () => {
   it("keeps a review that is at most a month old", () => {
     expect(
-      listStaleCatalogReviews(new Date("2026-10-05T12:00:00.000Z")),
+      listStaleCatalogReviews(new Date("2026-12-17T12:00:00.000Z")),
     ).toEqual([]);
   });
 
   it("flags a catalog reviewed more than a month ago", () => {
-    const stale = listStaleCatalogReviews(new Date("2026-10-06T00:00:00.000Z"));
+    const stale = listStaleCatalogReviews(new Date("2026-12-18T00:00:00.000Z"));
     expect(stale.map((item) => item.id).sort()).toEqual([
       "ch",
       "fr-eu",

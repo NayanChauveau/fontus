@@ -31,8 +31,9 @@ describe("presentFrenchLegalLimits", () => {
     expect(nitrates?.upcoming).toBeNull();
     expect(pfas?.upcoming).toBeNull();
     expect(lead?.upcoming?.valueLabel).toBe("5 µg/L");
+    // French arrêté: 10 µg/L "jusqu'au 31 décembre 2035" (the EU date is 12 January 2036).
     expect(lead?.upcoming?.validFrom.toISOString()).toBe(
-      "2036-01-12T00:00:00.000Z",
+      "2036-01-01T00:00:00.000Z",
     );
     expect(nitrates?.current.citation).toBe(seedNitrates?.citation);
     expect(nitrates?.current.sourceUrl).toBe(seedNitrates?.sourceUrl);

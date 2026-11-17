@@ -53,15 +53,15 @@ describe("CompareMeasurements", () => {
     expect(first[1]?.comparisons.eu?.status).toBe("no_threshold");
     expect(first[1]?.comparisons.ch?.status).toBe("compliant");
     expect(first[1]?.comparisons.ch?.thresholdLabel).toBe("0,001 / 0,5 µg/L");
-    expect(first[1]?.comparisons.us?.status).toBe("compliant");
+    // EPA PFAS MCLs apply from 26 April 2029: no US limit for a 2026 sample.
+    expect(first[1]?.comparisons.us?.status).toBe("no_threshold");
     expect(first[1]?.comparisons.who?.status).toBe("no_threshold");
-    expect(first[1]?.comparisons.us?.thresholdLabel).toBe("0,001 / 0,004 µg/L");
-    expect(first[1]?.comparisons.us?.kind).toBe("legal_limit");
     expect(first[1]?.comparisons.strict?.status).toBe("compliant");
     expect(first[1]?.comparisons.strict?.kind).toBe("site_metric");
     expect(first[1]?.comparisons.strict?.binding).toBe(false);
+    // Strictest limit in force in May 2026 is the Swiss 0.5 µg/L (US PFAS MCLs start in 2029).
     expect(first[1]?.comparisons.strict?.thresholdLabel).toBe(
-      "0,001 / 0,004 µg/L",
+      "0,001 / 0,5 µg/L",
     );
     expect(first[1]?.comparisons.strict?.citation).toBe(STRICT_REFERENCE_CITATION);
     expect(first[1]?.comparisons.strict?.sourceUrl).toBeNull();
@@ -280,12 +280,13 @@ describe("CompareMeasurements", () => {
     expect(result[0]?.comparisons.us?.kind).toBe("quality_reference");
     expect(result[0]?.comparisons.us?.binding).toBe(false);
     expect(result[0]?.comparisons.us?.thresholdLabel).toBe("8 / 15 µg/L");
-    expect(result[0]?.comparisons.ch?.thresholdLabel).toBe("8 / 5 µg/L");
-    expect(result[0]?.comparisons.ch?.status).toBe("exceedance");
-    expect(result[0]?.comparisons.strict?.thresholdLabel).toBe("8 / 5 µg/L");
+    // Swiss 10 µg/L stays enforceable until 31 January 2036 (OPBD art. 16a al. 2).
+    expect(result[0]?.comparisons.ch?.thresholdLabel).toBe("8 / 10 µg/L");
+    expect(result[0]?.comparisons.ch?.status).toBe("compliant");
+    expect(result[0]?.comparisons.strict?.thresholdLabel).toBe("8 / 10 µg/L");
     expect(result[0]?.comparisons.strict?.kind).toBe("site_metric");
     expect(result[0]?.comparisons.strict?.binding).toBe(false);
-    expect(result[0]?.comparisons.strict?.status).toBe("exceedance");
+    expect(result[0]?.comparisons.strict?.status).toBe("compliant");
   });
 
   it("compares a strict pick across units and labels in the threshold unit", async () => {

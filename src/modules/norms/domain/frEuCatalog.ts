@@ -12,7 +12,13 @@ const EU_FROM = utc("1998-12-25");
 const FR_FROM = utc("2007-01-11");
 const PFAS_FROM = utc("2026-01-12");
 const LEAD_10_FROM = utc("2013-12-25");
+// EU: 12 January 2036 (directive 2020/2184, annex I part B). France: the arrêté keeps
+// 10 µg/L (lead) and 50 µg/L (chromium) "jusqu'au 31 décembre 2035".
 const TIGHTEN_2036 = utc("2036-01-12");
+const TIGHTEN_2036_FR = utc("2036-01-01");
+// France: the 20-PFAS limit is in force since 1 January 2023 (art. 2 of the 30 Dec 2022 arrêté);
+// 2026 is the EU date and the start of French PFAS monitoring.
+const PFAS_FROM_FR = utc("2023-01-01");
 
 function utc(isoDate: string): Date {
   return new Date(`${isoDate}T00:00:00.000Z`);
@@ -30,6 +36,8 @@ function pair(
     validFromEu?: Date;
     validFromFr?: Date;
     validTo?: Date | null;
+    validToFr?: Date | null;
+    validToEu?: Date | null;
     suffix?: string;
   } = {},
 ): ThresholdVersion[] {
@@ -52,7 +60,7 @@ function pair(
       kind,
       binding,
       validFrom: options.validFromFr ?? FR_FROM,
-      validTo,
+      validTo: options.validToFr !== undefined ? options.validToFr : validTo,
       citation: FR_CITATION,
       sourceUrl: FR_URL,
     },
@@ -67,7 +75,7 @@ function pair(
       kind,
       binding,
       validFrom: options.validFromEu ?? EU_FROM,
-      validTo,
+      validTo: options.validToEu !== undefined ? options.validToEu : validTo,
       citation: EU_CITATION,
       sourceUrl: EU_URL,
     },
@@ -77,7 +85,7 @@ function pair(
 /** Seuils FR / UE I5. Pas de PFAS individuels ni de TH : pas de limite officielle. */
 export const FR_EU_THRESHOLDS: ThresholdVersion[] = [
   ...pair("pfas20", "µg/L", 0.1, {
-    validFromFr: PFAS_FROM,
+    validFromFr: PFAS_FROM_FR,
     validFromEu: PFAS_FROM,
     suffix: ":2026",
   }),
@@ -86,22 +94,24 @@ export const FR_EU_THRESHOLDS: ThresholdVersion[] = [
   ...pair("lead", "µg/L", 10, {
     validFromFr: LEAD_10_FROM,
     validFromEu: LEAD_10_FROM,
-    validTo: TIGHTEN_2036,
+    validToFr: TIGHTEN_2036_FR,
+    validToEu: TIGHTEN_2036,
     suffix: ":10",
   }),
   ...pair("lead", "µg/L", 5, {
-    validFromFr: TIGHTEN_2036,
+    validFromFr: TIGHTEN_2036_FR,
     validFromEu: TIGHTEN_2036,
     suffix: ":5",
   }),
   ...pair("arsenic", "µg/L", 10),
   ...pair("cadmium", "µg/L", 5),
   ...pair("chromium", "µg/L", 50, {
-    validTo: TIGHTEN_2036,
+    validToFr: TIGHTEN_2036_FR,
+    validToEu: TIGHTEN_2036,
     suffix: ":50",
   }),
   ...pair("chromium", "µg/L", 25, {
-    validFromFr: TIGHTEN_2036,
+    validFromFr: TIGHTEN_2036_FR,
     validFromEu: TIGHTEN_2036,
     suffix: ":25",
   }),

@@ -20,7 +20,7 @@ describe("lead page", () => {
     ).toBeTruthy();
     expect(screen.getByText(/10 µg\/L/)).toBeTruthy();
     expect(screen.getByText(/5 µg\/L/)).toBeTruthy();
-    expect(screen.getByText(/12 janvier 2036/)).toBeTruthy();
+    expect(screen.getByText(/1(er)? janvier 2036/)).toBeTruthy();
     await expect(page.generateMetadata()).resolves.toMatchObject({
       alternates: { canonical: "/parametres/plomb" },
     });

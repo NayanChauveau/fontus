@@ -2,8 +2,12 @@ import type { ThresholdVersion } from "./ThresholdVersion";
 
 const WHO_CITATION =
   "OMS, Guidelines for drinking-water quality, 4e éd. incorporant les 1er, 2e et 3e addenda";
-const WHO_URL = "https://www.who.int/publications/i/item/9789240045064";
+// 4th edition incorporating the 1st, 2nd and 3rd addenda (June 2026), which supersedes the 2022 edition.
+const WHO_URL = "https://www.who.int/publications/i/item/9789240121225";
 const WHO_FROM = utc("2011-07-01");
+// Dated to the year of the edition that introduced the value (exact day not tracked).
+const WHO_1ST_ADDENDUM = utc("2017-01-01"); // barium 1.3 mg/L (was 0.7 mg/L)
+const WHO_2ND_ADDENDUM = utc("2022-01-01"); // manganese 80 µg/L (no guideline value before)
 
 function utc(isoDate: string): Date {
   return new Date(`${isoDate}T00:00:00.000Z`);
@@ -15,10 +19,13 @@ function who(
   value: number,
   options: {
     citation?: string;
+    validFrom?: Date;
+    validTo?: Date | null;
+    suffix?: string;
   } = {},
 ): ThresholdVersion {
   return {
-    id: `${parameterId}:who`,
+    id: `${parameterId}:who${options.suffix ?? ""}`,
     parameterId,
     jurisdiction: "who",
     unit,
@@ -27,8 +34,8 @@ function who(
     operator: "lte",
     kind: "quality_reference",
     binding: false,
-    validFrom: WHO_FROM,
-    validTo: null,
+    validFrom: options.validFrom ?? WHO_FROM,
+    validTo: options.validTo ?? null,
     citation: options.citation ?? WHO_CITATION,
     sourceUrl: WHO_URL,
   };
@@ -76,7 +83,16 @@ export const WHO_THRESHOLDS: ThresholdVersion[] = [
     citation: `${WHO_CITATION} : uranium chimique, valeur provisoire`,
   }),
   who("manganese", "µg/L", 80, {
-    citation: `${WHO_CITATION} : manganèse total, valeur provisoire (3e addenda)`,
+    citation: `${WHO_CITATION} : manganèse total, valeur provisoire (introduite avec le 2e addendum, 2022)`,
+    validFrom: WHO_2ND_ADDENDUM,
   }),
-  who("barium", "mg/L", 1.3),
+  who("barium", "mg/L", 0.7, {
+    validTo: WHO_1ST_ADDENDUM,
+    suffix: ":0.7",
+    citation: "OMS, Guidelines for drinking-water quality, 4e éd. (2011) : baryum 0,7 mg/L",
+  }),
+  who("barium", "mg/L", 1.3, {
+    validFrom: WHO_1ST_ADDENDUM,
+    citation: `${WHO_CITATION} : baryum, 1,3 mg/L depuis le 1er addendum (2017)`,
+  }),
 ];
