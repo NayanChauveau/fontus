@@ -25,6 +25,28 @@ Le deploy applique `supabase/migrations/` via `psql` dans Postgres (`scripts/app
 
 Health : `https://$TRAEFIK_HOST/api/health`
 
+## Passage à Postgres 18 (novembre 2026)
+
+La base passe de Postgres 16 à 18 par le workflow manuel **Postgres 18 upgrade** (`.github/workflows/postgres-18-upgrade.yml`, script `scripts/postgres-18-upgrade.sh`). Le compose de prod utilise déjà Postgres 18 sur le volume externe `eau-robinet_pgdata18` : tant que la bascule n’est pas faite, un déploiement habituel échoue (« external volume not found ») au lieu de démarrer une base vide, et les conteneurs en cours ne sont pas touchés.
+
+1. **Répétition** (sans risque, le site reste en ligne) : lancer le workflow avec `mode = rehearsal`. Il copie la prod dans un Postgres 18 jetable, compare le nombre de lignes de chaque table, applique les migrations sur la copie, puis supprime la copie.
+2. **Snapshot Hostinger** du VPS depuis hPanel, juste avant la bascule.
+3. **Bascule** : `mode = cutover`, cocher `snapshot_done`. Le script tourne détaché sur le VPS (une coupure SSH ou l’annulation du job ne l’interrompt pas) ; son journal est dans `/srv/backups/eau-robinet/*-cutover.log`. Coupure du site d’environ 1 à 2 minutes : arrêt de `web`, export dans `/srv/backups/eau-robinet/`, import dans `eau-robinet_pgdata18`, comparaison des lignes, puis Compose redémarre `postgres` en 18, applique les migrations et relance `web`, et `/api/health` doit répondre 200.
+   - Toute erreur, interruption ou coupure **avant** la bascule relance `web` sur Postgres 16 et supprime le volume 18 en cours de création.
+   - Toute erreur **après** la bascule remet automatiquement Postgres 16 sur son ancien volume (avec le compose 16 sauvegardé dans `/srv/backups/eau-robinet/compose-postgres16.yml`) et garde le volume 18 pour analyse. Avant de relancer une bascule, ce volume 18 doit être supprimé (`docker volume rm eau-robinet_pgdata18`, sur décision explicite).
+   - Le script refuse de démarrer si le mot de passe de `DATABASE_URL` (`.env`) diffère de celui de Postgres : l’appli ne pourrait pas se connecter à la nouvelle base.
+4. **Vérifier** : `https://fontus.fr` répond, `/api/health` indique `postgres: ok`.
+
+**Retour arrière plus tard** (problème découvert après coup) : relancer le workflow avec `mode = rollback`. Postgres 16 redémarre sur l’ancien volume `eau-robinet_pgdata`, intact, avec le compose 16 sauvegardé ; `web` est relancé. Les données écrites sur Postgres 18 depuis la bascule ne sont pas reprises (elles se réimportent depuis Hub’Eau / data.gouv). Ensuite, `git revert` du commit qui a passé le compose en Postgres 18, pour que le prochain déploiement reste en 16. En dernier recours : l’export dans `/srv/backups/eau-robinet/`, puis le snapshot Hostinger.
+
+Ne supprimer `eau-robinet_pgdata` et les exports qu’après plusieurs jours sans problème, sur décision explicite.
+
+Tester le script en local (Docker uniquement, ne touche jamais la prod) :
+
+```bash
+bash scripts/test-postgres-18-upgrade.sh
+```
+
 ## Sentry
 
 Les erreurs API / UI partent vers Sentry si `SENTRY_DSN` est dans le `.env` du VPS (secret GitHub du même nom). Le plan Developer gratuit envoie un mail sur chaque nouvelle issue.
