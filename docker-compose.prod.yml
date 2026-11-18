@@ -1,7 +1,13 @@
 networks:
   traefik:
     external: true
+  # Being retired (step 1 of 2): Postgres stays on it so that the container being replaced keeps
+  # its database during the rollout. Step 2 removes it from Postgres and here.
   internal: {}
+  # Postgres and the web container only, without Internet access: a compromised database cannot
+  # reach out. The web container keeps its outbound access through the traefik network.
+  db:
+    internal: true
 
 volumes:
   # Postgres 18, created by the cutover (scripts/postgres-18-upgrade.sh). External on purpose:
@@ -51,7 +57,7 @@ services:
       - "traefik.docker.network=traefik"
     networks:
       - traefik
-      - internal
+      - db
     depends_on:
       - postgres
     # Traefik only routes to a healthy container; the deploy waits on it before retiring the old one.
@@ -63,6 +69,13 @@ services:
       start_period: 120s
       start_interval: 2s
     restart: unless-stopped
+    mem_limit: 768m
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   postgres:
     image: postgres:18.7-alpine@sha256:b6972e1115a4ff8eba5d7f7d19184926d1e16d7d1136ae1e1a7ebf286da0f015
@@ -74,6 +87,7 @@ services:
       - pgdata:/var/lib/postgresql
     networks:
       - internal
+      - db
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d fontus"]
       interval: 2s
@@ -81,3 +95,10 @@ services:
       retries: 10
       start_period: 5s
     restart: unless-stopped
+    mem_limit: 512m
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

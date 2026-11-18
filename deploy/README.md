@@ -27,7 +27,7 @@ Health : `https://$TRAEFIK_HOST/api/health`
 
 ## Passage à Postgres 18 (novembre 2026)
 
-La base passe de Postgres 16 à 18 par le workflow manuel **Postgres 18 upgrade** (`.github/workflows/postgres-18-upgrade.yml`, script `scripts/postgres-18-upgrade.sh`). Le compose de prod utilise déjà Postgres 18 sur le volume externe `eau-robinet_pgdata18` : tant que la bascule n’est pas faite, un déploiement habituel échoue (« external volume not found ») au lieu de démarrer une base vide, et les conteneurs en cours ne sont pas touchés.
+La base est passée de Postgres 16 à 18 par le workflow manuel **Postgres 18 upgrade** (script `scripts/postgres-18-upgrade.sh`). Ce workflow a été supprimé le 2026-11-18 une fois la bascule faite : il confiait la clé SSH root à une action tierce. Le script et son banc de test restent pour mémoire. Le compose de prod utilise déjà Postgres 18 sur le volume externe `eau-robinet_pgdata18` : tant que la bascule n’est pas faite, un déploiement habituel échoue (« external volume not found ») au lieu de démarrer une base vide, et les conteneurs en cours ne sont pas touchés.
 
 1. **Répétition** (sans risque, le site reste en ligne) : lancer le workflow avec `mode = rehearsal`. Il copie la prod dans un Postgres 18 jetable, compare le nombre de lignes de chaque table, applique les migrations sur la copie, puis supprime la copie.
 2. **Snapshot Hostinger** du VPS depuis hPanel, juste avant la bascule.
