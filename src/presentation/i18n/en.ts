@@ -243,7 +243,7 @@ export const en = {
     privacyCache:
       "The browser may keep a local copy (localStorage) of networks and analyses already viewed, so they are not fetched again on every visit. This is not an address, and it is not sent anywhere else.",
     privacyLogs:
-      "Technical errors may be sent to Sentry (message, URL, no water-quality payload). Container logs may go to Datadog if that agent runs on the VPS.",
+      "The server keeps a technical log of requests (IP address, requested page, browser, date) for security and troubleshooting. This log is sent to Grafana Cloud (Grafana Labs, servers in Germany, European Union) and kept there for about 14 days. CrowdSec (a French company) analyses it on the server to block attacks: only the IP address of a request detected as malicious, with the rule it triggered and the time, is shared with CrowdSec for its community blocklist. Technical errors may be sent to Sentry (servers in Germany): message and URL, no water-quality payload. Grafana Labs and Sentry are US companies: any transfer outside the European Union is covered by GDPR safeguards.",
     privacyContact:
       "To ask for deletion of server-side data that might concern you, contact the site publisher.",
   },
