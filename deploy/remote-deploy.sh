@@ -61,6 +61,36 @@ rollout_web() {
   "${DOCKER[@]}" rm $old >/dev/null
   echo "deploy: web swapped without downtime"
 }
+# Image retention, after a healthy swap: of the web image's repository keep the current tag, every
+# tag a container (running or not) uses, and the 2 newest other tags by creation date; remove the
+# rest by tag (never -f, so Docker itself refuses anything still in use), then drop dangling layers.
+# Other repositories are never touched. Nothing here may fail a healthy deploy; logs tags only.
+prune_images() {
+  local current="$1" repo r t rows inuse keep kept=0 removed=0
+  local -a tags=()
+  case "${current##*/}" in *:*) ;; *) return 0 ;; esac
+  repo="${current%:*}"
+  # Not mapfile: the bench also runs on bash 3.2 (macOS).
+  rows="$("${DOCKER[@]}" images --format '{{.CreatedAt}}|{{.Repository}}|{{.Tag}}' </dev/null 2>/dev/null | sort -r)" || rows=
+  inuse="$("${DOCKER[@]}" ps -a --format '{{.Image}}' </dev/null 2>/dev/null)" || inuse=
+  while IFS='|' read -r _ r t; do
+    if [ "$r" = "$repo" ] && [ -n "$t" ] && [ "$t" != "<none>" ]; then tags+=("$t"); fi
+  done <<< "$rows"
+  for t in ${tags[@]+"${tags[@]}"}; do
+    keep=
+    [ "$repo:$t" = "$current" ] && keep=1
+    grep -qxF -- "$repo:$t" <<< "$inuse" && keep=1
+    if [ -z "$keep" ] && [ "$kept" -lt 2 ]; then keep=1; kept=$((kept + 1)); fi
+    [ -n "$keep" ] && continue
+    if "${DOCKER[@]}" rmi "$repo:$t" </dev/null >/dev/null 2>&1; then
+      removed=$((removed + 1)); echo "deploy: removed old image tag $t"
+    else
+      echo "deploy: could not remove old image tag $t (kept)"
+    fi
+  done
+  "${DOCKER[@]}" image prune -f </dev/null >/dev/null 2>&1 || echo "deploy: dangling image prune failed (ignored)"
+  echo "deploy: image retention done ($removed removed)"
+}
 in_list() { local x="$1"; shift; local e; for e in "$@"; do [ "$e" = "$x" ] && return 0; done; return 1; }
 # Value of $1 in env file $2 (everything after the first "="), empty if absent.
 env_value() { sed -n "s/^$1=//p" "$2" | tail -n 1; }
@@ -148,6 +178,8 @@ DOCKER_CONFIG="$REGISTRY_CONFIG" "${DOCKER[@]}" logout ghcr.io >/dev/null || tru
 "${COMPOSE[@]}" -f "$COMPOSE_FILE" up -d --remove-orphans postgres
 eval "$MIGRATIONS_CMD"
 rollout_web
+# A pruning problem never fails a deploy that is already healthy.
+prune_images "$(env_value WEB_IMAGE "$STAGE/x/incoming.env")" || echo "deploy: image retention skipped"
 
 # 5. First push deploy only: archive the old git checkout, keep only the runtime files.
 if [ -d "$TARGET_DIR/.git" ]; then

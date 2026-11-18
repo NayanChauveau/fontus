@@ -29,7 +29,18 @@ case "\$*" in
   *--scale*) echo new1 >> "$T/all"; [ ! -e "$T/unhealthy" ] ;;
 esac
 STUB
-  printf '#!/bin/sh\ncat > /dev/null; echo "docker $* config=$DOCKER_CONFIG" >> "%s/calls.log"\n' "$T" > "$T/docker"
+  # Docker stub: logs every call; "images"/"ps" answer from $T/images and $T/inuse; "rmi" fails for
+  # the references listed in $T/rmi_fail.
+  cat > "$T/docker" <<STUB
+#!/bin/sh
+cat > /dev/null
+echo "docker \$* config=\$DOCKER_CONFIG" >> "$T/calls.log"
+case "\$1" in
+  images) cat "$T/images" 2>/dev/null; true ;;
+  ps) cat "$T/inuse" 2>/dev/null; true ;;
+  rmi) ! grep -qx -- "\$2" "$T/rmi_fail" 2>/dev/null ;;
+esac
+STUB
   printf '#!/bin/sh\necho "migrations $PWD" >> "%s/calls.log"\n' "$T" > "$T/migrate"
   chmod +x "$T/compose" "$T/docker" "$T/migrate"
   echo new > "$T/payload/docker-compose.prod.yml"
@@ -74,7 +85,7 @@ case_env() {
 setup; full; check "env rewritten 600 from payload, without GHCR credentials" case_env
 
 case_order() {
-  run && [ "$(cut -d' ' -f1-3 "$T/calls.log" | tr '\n' '|')" = "docker login ghcr.io|compose -f docker-compose.prod.yml|docker logout ghcr.io|compose -f docker-compose.prod.yml|migrations $D|compose -f docker-compose.prod.yml|compose -f docker-compose.prod.yml|compose -f docker-compose.prod.yml|" ] \
+  run && [ "$(cut -d' ' -f1-3 "$T/calls.log" | tr '\n' '|')" = "docker login ghcr.io|compose -f docker-compose.prod.yml|docker logout ghcr.io|compose -f docker-compose.prod.yml|migrations $D|compose -f docker-compose.prod.yml|compose -f docker-compose.prod.yml|compose -f docker-compose.prod.yml|docker images --format|docker ps -a|docker image prune|" ] \
     && grep -q "pull web" "$T/calls.log" && grep -q "up -d --remove-orphans postgres" "$T/calls.log" \
     && grep -q "up -d --no-deps --wait --wait-timeout 180 web" "$T/calls.log"
 }
@@ -187,5 +198,56 @@ case_rollout_unhealthy() {
     && grep -q "previous one keeps serving" "$T/out.log"
 }
 setup; full; check "unhealthy new container is removed, old one untouched" case_rollout_unhealthy
+
+# Retention fixtures: WEB_IMAGE is ghcr.io/x/fontus:abc. Dates deliberately not in listing order.
+retention_listing() {
+  cat > "$T/images" <<LIST
+2026-11-10 10:00:00 +0000 UTC|ghcr.io/x/fontus|t3
+2026-11-18 10:00:00 +0000 UTC|ghcr.io/x/fontus|abc
+2026-11-08 10:00:00 +0000 UTC|ghcr.io/x/fontus|t2
+2026-11-01 10:00:00 +0000 UTC|ghcr.io/x/fontus|t0
+2026-11-12 10:00:00 +0000 UTC|ghcr.io/x/fontus|t4
+2026-10-20 10:00:00 +0000 UTC|ghcr.io/x/fontus|t1
+2026-11-17 10:00:00 +0000 UTC|ghcr.io/x/other|new
+2026-09-01 10:00:00 +0000 UTC|ghcr.io/x/other|old
+2026-11-19 10:00:00 +0000 UTC|ghcr.io/x/fontus|<none>
+LIST
+}
+removed_tags() { grep "^docker rmi " "$T/calls.log" | sed 's/^docker rmi \([^ ]*\) .*/\1/' | sort | tr '\n' ' '; }
+
+case_retention() {
+  retention_listing
+  run && [ "$(removed_tags)" = "ghcr.io/x/fontus:t0 ghcr.io/x/fontus:t1 ghcr.io/x/fontus:t2 " ] \
+    && ! grep -q "rmi -f" "$T/calls.log" && grep -q "docker image prune -f" "$T/calls.log" \
+    && [ "$(grep -n "docker rmi" "$T/calls.log" | head -1 | cut -d: -f1)" -gt "$(grep -n -- "up -d --no-deps" "$T/calls.log" | tail -1 | cut -d: -f1)" ]
+}
+setup; full; check "retention keeps current + 2 newest other tags, removes older, ignores other repos" case_retention
+
+case_retention_inuse() {
+  retention_listing; printf 'ghcr.io/x/fontus:t1\nghcr.io/x/other:old\npostgres:18\n' > "$T/inuse"
+  run && [ "$(removed_tags)" = "ghcr.io/x/fontus:t0 ghcr.io/x/fontus:t2 " ]
+}
+setup; full; check "retention keeps an image used by a (stopped) container" case_retention_inuse
+
+case_retention_fail() {
+  retention_listing; printf 'ghcr.io/x/fontus:t1\n' > "$T/rmi_fail"
+  run && grep -q "docker rmi ghcr.io/x/fontus:t0" "$T/calls.log" && grep -q "docker rmi ghcr.io/x/fontus:t2" "$T/calls.log" \
+    && grep -q "could not remove old image tag t1" "$T/out.log" && grep -q "deploy: done" "$T/out.log" \
+    && ! grep -q "ghcr.io/x/fontus" "$T/out.log" && ! grep -q "$TOKEN" "$T/out.log"
+}
+setup; full; check "failed rmi is logged (tag only) and does not fail the deploy" case_retention_fail
+
+case_retention_nodocker_list() {
+  # shellcheck disable=SC2016
+  printf '#!/bin/sh\ncat > /dev/null; case "$1" in images|ps|image) exit 1 ;; esac\n' > "$T/docker"
+  run && grep -q "deploy: done" "$T/out.log"
+}
+setup; full; check "failing image listing does not fail the deploy" case_retention_nodocker_list
+
+case_retention_after_failure() {
+  retention_listing; printf 'old1\n' > "$T/running"; printf 'old1\n' > "$T/all"; touch "$T/unhealthy"
+  ! run && ! grep -q "docker rmi" "$T/calls.log"
+}
+setup; full; check "no pruning when the rollout fails" case_retention_after_failure
 
 if [ "$failures" -eq 0 ]; then echo "all cases passed"; else echo "$failures case(s) failed"; exit 1; fi

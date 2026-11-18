@@ -59,6 +59,8 @@ Le type-check Next est sauté dans l’image (`DOCKER_BUILD=1`) : le job CI le f
 
 Pas de coupure au déploiement : un nouveau conteneur `web` démarre à côté de l’ancien, Traefik ne l’utilise qu’une fois son healthcheck vert (`/api/health`), puis l’ancien est retiré de Traefik (le script crée `/tmp/draining`, `/api/ready` répond 503 et le healthcheck de Traefik, chaque seconde, l’écarte) et s’arrête proprement (Next.js termine ses requêtes ; le middleware `fontus-retry` rejoue une éventuelle retardataire). Si le nouveau n’est jamais sain, il est supprimé et l’ancien continue de servir. Exception : un changement des étiquettes Traefik fait diverger les deux conteneurs quelques secondes (404 pendant la bascule). Les migrations passent avant la bascule : l’ancien code tourne quelques secondes sur le nouveau schéma, donc une colonne ne se supprime ou ne se renomme qu’au déploiement suivant celui qui cesse de l’utiliser.
 
+Rétention des images : une fois la bascule saine, `prune_images` (dans `remote-deploy.sh`) ne garde, pour le dépôt de l’image web (`ghcr.io/<owner>/fontus`), que l’image de la release courante, toute image utilisée par un conteneur (démarré ou arrêté) et les 2 autres tags les plus récents (date de création). Le reste est supprimé par tag (`docker rmi`, jamais `-f`), puis `docker image prune -f` retire les couches orphelines. Les images des autres dépôts ne sont jamais touchées ; un échec de suppression est journalisé (tag seul) et ne fait jamais échouer un déploiement déjà sain. Rien n’est élagué si la bascule échoue.
+
 Secours sur le VPS, sans GitHub :
 
 ```bash
