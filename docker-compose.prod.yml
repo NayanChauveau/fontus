@@ -1,9 +1,6 @@
 networks:
   traefik:
     external: true
-  # Being retired (step 1 of 2): Postgres stays on it so that the container being replaced keeps
-  # its database during the rollout. Step 2 removes it from Postgres and here.
-  internal: {}
   # Postgres and the web container only, without Internet access: a compromised database cannot
   # reach out. The web container keeps its outbound access through the traefik network.
   db:
@@ -86,7 +83,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql
     networks:
-      - internal
       - db
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d fontus"]
