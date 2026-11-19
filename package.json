@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "next build && node scripts/e2e.mjs",
+    "test:e2e": "next build && node scripts/e2e.mjs --project=chromium",
+    "test:performance": "next build && node scripts/e2e.mjs --project=performance",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status"
@@ -43,6 +44,7 @@
     "eslint-plugin-boundaries": "^7.4.4",
     "happy-dom": "^21.0.4",
     "knip": "^6.45.1",
+    "lighthouse": "13.6.0",
     "supabase": "^2.122.1",
     "tailwindcss": "^4",
     "typescript": "^5",

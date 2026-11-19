@@ -34,6 +34,11 @@ Socle de sécurité commun aux sites (déploiement, conteneur, CSP, journaux) : 
 pnpm type-check && pnpm lint && pnpm test
 ```
 
+Tests navigateur sur le build de production (Chromium de Playwright, `pnpm exec playwright install chromium` une fois) :
+
+- `pnpm test:e2e` : CSP, pages et parcours (`tests/e2e/csp.spec.ts`).
+- `pnpm test:performance` : budget de performance Lighthouse (`lighthouse`, version exacte dans `package.json`) de `/`, `/eau-robinet/paris` et `/faq`, émulation mobile par défaut, médiane de 3 mesures par page (environ 1 min après le build). Budget (`tests/performance/budget.ts`) : performance ≥ 90, accessibilité et bonnes pratiques ≥ 95, SEO ≥ 90, LCP ≤ 2,5 s, CLS ≤ 0,1, poids ≤ 1 500 ko. Les appels de données sont servis par les fixtures enregistrées (`tests/e2e/fixtures`), comme pour la CSP. Une page hors budget fait échouer la commande et le job CI `performance` ; la table des médianes s’affiche dans le terminal et dans le résumé du job. La page ville a des plafonds d’exception motivés (règle P10a : liste des réseaux chargée après hydratation, CLS 0,217) à retirer une fois corrigée. `PERFORMANCE_RUNS=1` accélère une mesure exploratoire.
+
 Quand Hub’Eau dépasse 20 000 lignes même sur 6 mois, on lit un extrait DIS local (`DIS_IMPORT_DIR` : fichiers `UDI_COM`, `PLV`, `RESULT` dézippés depuis [data.gouv](https://www.data.gouv.fr/datasets/resultats-du-controle-sanitaire-de-leau-distribuee-commune-par-commune)) et on écrit le même cache Postgres.
 
 Architecture : [`docs/architecture.md`](docs/architecture.md).

@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Started by scripts/e2e.mjs (`pnpm test:e2e`), which builds the app and picks a free port.
+// Started by scripts/e2e.mjs (`pnpm test:e2e`, `pnpm test:performance`), which builds the app and
+// picks a free port.
 const port = process.env.E2E_PORT;
 if (!port) {
   throw new Error("E2E_PORT est requis : lancer les tests navigateur avec `pnpm test:e2e`.");
@@ -25,7 +26,15 @@ export default defineConfig({
     screenshot: "off",
     video: "off",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      testIgnore: /performance\.spec\.ts$/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+    // Lighthouse budget (tests/e2e/performance.spec.ts): launches its own Chromium for Lighthouse.
+    { name: "performance", testMatch: /performance\.spec\.ts$/ },
+  ],
   // The production server as the image runs it (standalone output, NODE_ENV=production), without
   // a database: pages render without one, and the suite answers the data API calls itself.
   webServer: {

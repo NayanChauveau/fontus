@@ -54,6 +54,25 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:e2e
 
+  performance:
+    # Lighthouse budget (tests/performance/budget.ts) of the key pages on the production build, in
+    # mobile emulation: a page under budget fails the job; the medians go to the job summary.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    name: performance
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6
+        with:
+          version: 11.22.0
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:performance
+
   container:
     # Both production images, run read-only against a disposable Postgres (deploy/smoke.py):
     # migrations twice, web health, the pages of site.config.json, backup and persistence.

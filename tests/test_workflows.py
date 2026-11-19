@@ -92,6 +92,14 @@ class WorkflowsTest(unittest.TestCase):
         self.assertIn('pnpm exec playwright install --with-deps chromium', browser)
         self.assertIn('run: pnpm test:e2e', browser)
 
+    def test_ci_runs_the_performance_budget_on_the_production_build(self):
+        performance = job(workflow('ci.yml'), 'performance')
+        self.assertIn('pnpm exec playwright install --with-deps chromium', performance)
+        self.assertIn('pnpm test:performance', performance)
+        scripts = (ROOT / 'package.json').read_text(encoding='utf-8')
+        self.assertIn('"test:performance": "next build && node scripts/e2e.mjs --project=performance"', scripts)
+        self.assertIn('"test:e2e": "next build && node scripts/e2e.mjs --project=chromium"', scripts)
+
     def test_the_artifact_backup_is_gone(self):
         # Off-site backups live in infra-traefik (restic to B2); every deploy still dumps the database.
         self.assertFalse((ROOT / '.github' / 'workflows' / 'backup.yml').exists())

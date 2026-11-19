@@ -1,6 +1,5 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { expect, test as base, type Page } from "@playwright/test";
+import { answerDataApis, NETWORK_CODE } from "./data-fixtures";
 
 /**
  * The production build in a real browser under its Content Security Policy (src/proxy.ts,
@@ -11,11 +10,6 @@ import { expect, test as base, type Page } from "@playwright/test";
  * from tests/e2e/fixtures, recorded from the real endpoints: the suite needs neither the network
  * nor a database, and the browser still enforces the policy on those requests.
  */
-// Playwright loads this file as CommonJS (the package is not "type": "module").
-const fixture = (name: string) => readFileSync(join(__dirname, "fixtures", name), "utf8");
-
-const NETWORK_CODE = "075000221";
-
 type Problems = { violations: string[]; consoleErrors: string[] };
 
 async function watch(page: Page): Promise<Problems> {
@@ -39,15 +33,7 @@ async function watch(page: Page): Promise<Problems> {
   page.on("pageerror", (error) => {
     problems.consoleErrors.push(`${page.url()}: ${error.message}`);
   });
-  await page.route("**/api/networks?*", (route) =>
-    route.fulfill({ contentType: "application/json", body: fixture("networks-paris.json") }),
-  );
-  await page.route(`**/api/udi/${NETWORK_CODE}/quality*`, (route) =>
-    route.fulfill({ contentType: "application/json", body: fixture("udi-quality.json") }),
-  );
-  await page.route("**/api/addresses/suggest?*", (route) =>
-    route.fulfill({ contentType: "application/json", body: fixture("address-suggestions.json") }),
-  );
+  await answerDataApis(page);
   return problems;
 }
 
