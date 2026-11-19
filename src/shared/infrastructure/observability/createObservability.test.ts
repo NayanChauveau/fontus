@@ -18,16 +18,29 @@ describe("createObservability", () => {
       context: { networkCode: "013000577", unused: undefined },
     });
 
-    expect(JSON.parse(lines[0] ?? "{}")).toMatchObject({
-      ts: "2026-09-02T10:00:00.000Z",
+    const line = JSON.parse(lines[0] ?? "{}");
+    expect(line).toMatchObject({
       level: "error",
+      time: "2026-09-02T10:00:00.000Z",
+      service: "fontus",
+      msg: "analyses.quality_unavailable",
+      err: { type: "Error", message: "timeout" },
       scope: "analyses",
       event: "quality_unavailable",
       code: "ANALYSES_UNAVAILABLE",
       environment: "production",
       context: { networkCode: "013000577" },
-      cause: { message: "timeout" },
     });
+    // Same keys as manon-karsenti's pino logger; the legacy Fontus keys are gone.
+    expect(Object.keys(line).slice(0, 4)).toEqual([
+      "level",
+      "time",
+      "service",
+      "msg",
+    ]);
+    for (const legacy of ["ts", "message", "cause"]) {
+      expect(line).not.toHaveProperty(legacy);
+    }
 
     const pretty = createObservability({
       write: (line) => lines.push(line),
@@ -77,8 +90,8 @@ describe("createObservability", () => {
     });
     expect(JSON.parse(jsonLines[0] ?? "{}")).toMatchObject({
       code: "schema_missing",
-      message:
-        "Table udis is missing. Postgres answers but migrations were not applied.",
+      msg: "Table udis is missing. Postgres answers but migrations were not applied.",
+      err: { message: 'relation "udis" does not exist' },
     });
 
     const wrappedLines: string[] = [];
@@ -98,8 +111,14 @@ describe("createObservability", () => {
     });
     expect(JSON.parse(wrappedLines[0] ?? "{}")).toMatchObject({
       code: "schema_missing",
-      message:
-        "Table sync_jobs is missing. Postgres answers but migrations were not applied.",
+      msg: "Table sync_jobs is missing. Postgres answers but migrations were not applied.",
+      err: {
+        message: 'Failed query: select "scope" from "sync_jobs"',
+        chain: [
+          'Failed query: select "scope" from "sync_jobs"',
+          'relation "sync_jobs" does not exist',
+        ],
+      },
     });
   });
 
@@ -111,9 +130,27 @@ describe("createObservability", () => {
       event: "cache_hit",
       context: { skip: undefined },
     });
-    expect(JSON.parse(lines[0] ?? "{}")).toMatchObject({
-      message: "cache_hit",
+    const line = JSON.parse(lines[0] ?? "{}");
+    expect(line).toMatchObject({
+      level: "info",
+      msg: "analyses.cache_hit",
       context: null,
+    });
+    expect(line).not.toHaveProperty("err");
+  });
+
+  it("describes a cause that is not an Error", () => {
+    const lines: string[] = [];
+    createObservability({ write: (line) => lines.push(line) }).report({
+      level: "warn",
+      scope: "ui",
+      event: "client_error",
+      cause: "boom",
+    });
+    expect(JSON.parse(lines[0] ?? "{}")).toMatchObject({
+      level: "warn",
+      msg: "ui.client_error",
+      err: { type: "string", message: "boom", stack: null },
     });
   });
 
@@ -131,8 +168,9 @@ describe("createObservability", () => {
     });
     const parsed = JSON.parse(lines[0] ?? "{}");
     expect(parsed.service).toBe("fontus");
-    expect(parsed.cause.stack).toContain("Error: boom");
-    expect(parsed.cause.stack).toContain("createObservability.test.ts");
+    expect(parsed.err.type).toBe("Error");
+    expect(parsed.err.stack).toContain("Error: boom");
+    expect(parsed.err.stack).toContain("createObservability.test.ts");
     expect(lines[0]).not.toContain("\n    at ");
   });
 });

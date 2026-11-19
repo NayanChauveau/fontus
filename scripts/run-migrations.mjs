@@ -2,6 +2,35 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import postgres from "postgres";
 
+// Shared server log format (same keys as src/shared/infrastructure/observability and as
+// manon-karsenti's pino logger): one JSON object per line, read by Alloy and Grafana.
+function log(level, msg, fields = {}) {
+  const line = JSON.stringify({
+    level,
+    time: new Date().toISOString(),
+    service: "fontus",
+    msg,
+    ...fields,
+    scope: "migrations",
+  });
+  if (level === "error") {
+    console.error(line);
+  } else {
+    console.log(line);
+  }
+}
+
+function serializeError(error) {
+  if (error instanceof Error) {
+    return {
+      type: error.name,
+      message: error.message,
+      stack: error.stack ?? null,
+    };
+  }
+  return { type: typeof error, message: String(error), stack: null };
+}
+
 function listSqlMigrationFileNames(names) {
   return names.filter((name) => name.endsWith(".sql")).sort();
 }
@@ -47,7 +76,9 @@ async function connectWithRetry(connect, attempts = 15, delayMs = 2000) {
 
 const url = process.env.DATABASE_URL;
 if (!url) {
-  console.error("migrations_failed", "DATABASE_URL is not set");
+  log("error", "migrations_failed", {
+    err: serializeError(new Error("DATABASE_URL is not set")),
+  });
   process.exitCode = 1;
 } else {
   try {
@@ -59,6 +90,10 @@ if (!url) {
       const client = postgres(url, {
         max: 1,
         ssl: shouldRequireDatabaseSsl(url) ? "require" : undefined,
+        // Idempotent migrations re-run on every release: Postgres notices ("already exists,
+        // skipping") become one shared-format line each instead of multi-line objects.
+        onnotice: (notice) =>
+          log("info", "migration_notice", { notice: notice.message }),
       });
       await client`select 1`;
       return client;
@@ -67,14 +102,14 @@ if (!url) {
     try {
       for (const name of names) {
         await sql.unsafe(await readFile(join(dir, name), "utf8"));
-        console.log(`applied ${name}`);
+        log("info", "migration_applied", { file: name });
       }
-      console.log("migrations_ok");
+      log("info", "migrations_ok", { count: names.length });
     } finally {
       await sql.end({ timeout: 5 });
     }
   } catch (error) {
-    console.error("migrations_failed", error);
+    log("error", "migrations_failed", { err: serializeError(error) });
     process.exitCode = 1;
   }
 }

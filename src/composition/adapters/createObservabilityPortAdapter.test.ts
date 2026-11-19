@@ -71,4 +71,37 @@ describe("createObservabilityPortAdapter", () => {
     );
     logged.mockRestore();
   });
+
+  it("prints one shared-format JSON line in production and still reports to Sentry", async () => {
+    process.env.SENTRY_DSN = "https://key@example.test/1";
+    vi.stubEnv("NODE_ENV", "production");
+    vi.resetModules();
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { createObservabilityPortAdapter } = await import(
+      "./createObservabilityPortAdapter"
+    );
+    const cause = new TypeError("fetch failed");
+    createObservabilityPortAdapter().report({
+      level: "error",
+      scope: "http",
+      event: "request_failed",
+      cause,
+    });
+    const line = String(logged.mock.calls[0]?.[0]);
+    expect(line).not.toContain("\n");
+    expect(JSON.parse(line)).toMatchObject({
+      level: "error",
+      time: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T.*Z$/),
+      service: "fontus",
+      msg: "http.request_failed",
+      err: {
+        type: "TypeError",
+        message: "fetch failed",
+        stack: expect.stringContaining("TypeError: fetch failed"),
+      },
+    });
+    expect(captureException).toHaveBeenCalledWith(cause, expect.anything());
+    logged.mockRestore();
+    vi.unstubAllEnvs();
+  });
 });

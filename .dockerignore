@@ -18,3 +18,5 @@ data
 vitest.config.mts
 AGENTS.md
 CLAUDE.md
+tests
+**/__pycache__
