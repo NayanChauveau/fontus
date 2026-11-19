@@ -47,3 +47,7 @@ next-env.d.ts
 
 # pnpm content-addressable store (local cache, never committed)
 .pnpm-store/
+
+# playwright (pnpm test:e2e)
+/test-results/
+/playwright-report/

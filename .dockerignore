@@ -20,3 +20,6 @@ AGENTS.md
 CLAUDE.md
 tests
 **/__pycache__
+playwright.config.ts
+test-results
+playwright-report

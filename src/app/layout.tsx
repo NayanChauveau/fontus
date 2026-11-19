@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { LOCALE_BOOTSTRAP_SCRIPT } from "@/presentation/i18n/locale";
 import { getMessages, intlLocale } from "@/presentation/i18n/messages";
 import { requestLocale } from "@/presentation/i18n/requestLocale";
+import { requestNonce } from "@/presentation/security/requestNonce";
 import { siteJsonLd } from "@/presentation/seo/siteJsonLd";
 import { SITE_NAME, SITE_ORIGIN } from "@/presentation/site";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/presentation/theme/theme";
@@ -60,6 +61,9 @@ export default async function RootLayout({
 }) {
   const locale = await requestLocale();
   const messages = getMessages(locale);
+  // The theme and language must apply before the first paint: an inline script, allowed by the
+  // Content Security Policy through this request's nonce (src/proxy.ts).
+  const nonce = await requestNonce();
   return (
     <html
       lang={locale}
@@ -68,6 +72,7 @@ export default async function RootLayout({
     >
       <head>
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `${THEME_BOOTSTRAP_SCRIPT}${LOCALE_BOOTSTRAP_SCRIPT}`,
           }}

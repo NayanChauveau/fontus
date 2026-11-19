@@ -1,6 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "entry": ["scripts/*.mjs"],
+  "entry": ["scripts/*.mjs", "playwright.config.ts", "tests/e2e/**/*.spec.ts"],
+  "playwright": false,
   "ignoreExportsUsedInFile": {
     "type": true,
     "interface": true

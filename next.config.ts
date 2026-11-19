@@ -1,10 +1,5 @@
 import type { NextConfig } from "next";
 
-const scriptSrc =
-  process.env.NODE_ENV === "production"
-    ? "script-src 'self' 'unsafe-inline'"
-    : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
-
 const nextConfig: NextConfig = {
   // No "X-Powered-By: Next.js": it only tells scanners what to try.
   poweredByHeader: false,
@@ -29,6 +24,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: process.env.DOCKER_BUILD === "1",
   },
+  // The Content Security Policy (frame-ancestors included) is set per request by src/proxy.ts,
+  // with a fresh nonce for pages and a sandbox for /api.
   async headers() {
     return [
       {
@@ -43,20 +40,6 @@ const nextConfig: NextConfig = {
           {
             key: "Strict-Transport-Security",
             value: "max-age=31536000; includeSubDomains",
-          },
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              scriptSrc,
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data:",
-              "font-src 'self'",
-              "connect-src 'self'",
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-            ].join("; "),
           },
         ],
       },

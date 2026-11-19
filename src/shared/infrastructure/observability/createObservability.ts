@@ -7,6 +7,10 @@ type ObservabilityEvent = {
   level: ObservabilityLevel;
   scope: string;
   event: string;
+  /** Overrides the generated msg when the line must match another site's (shared Grafana panel). */
+  msg?: string;
+  /** Top-level keys (after msg) when the line must match another site's; reserved keys are dropped. */
+  fields?: Record<string, string>;
   code?: string;
   cause?: unknown;
   context?: Record<string, string | number | boolean | null | undefined>;
@@ -41,7 +45,8 @@ export function createObservability(deps: {
         level: event.level,
         time: now().toISOString(),
         service,
-        msg: described?.detail ?? `${event.scope}.${event.event}`,
+        msg: event.msg ?? described?.detail ?? `${event.scope}.${event.event}`,
+        ...topLevelFields(event.fields),
         ...(cause
           ? {
               // The stack stays inside the JSON string (escaped newlines): one line per event.
@@ -65,6 +70,27 @@ export function createObservability(deps: {
       );
     },
   };
+}
+
+const RESERVED_KEYS = new Set([
+  "level",
+  "time",
+  "service",
+  "msg",
+  "err",
+  "scope",
+  "event",
+  "code",
+  "context",
+  "environment",
+]);
+
+function topLevelFields(
+  fields: ObservabilityEvent["fields"],
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(fields ?? {}).filter(([key]) => !RESERVED_KEYS.has(key)),
+  );
 }
 
 function compactContext(

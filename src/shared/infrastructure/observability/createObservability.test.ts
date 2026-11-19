@@ -139,6 +139,37 @@ describe("createObservability", () => {
     expect(line).not.toHaveProperty("err");
   });
 
+  it("writes an explicit msg and top-level fields shared with other sites (Grafana reads them)", () => {
+    const lines: string[] = [];
+    createObservability({ write: (line) => lines.push(line) }).report({
+      level: "warn",
+      scope: "csp",
+      event: "violation",
+      msg: "csp violation",
+      fields: {
+        directive: "script-src-elem",
+        blocked: "inline",
+        page: "/faq",
+        level: "info",
+        msg: "spoofed",
+        service: "other",
+      },
+    });
+    const line = JSON.parse(lines[0] ?? "{}");
+    expect(line).toMatchObject({
+      level: "warn",
+      service: "fontus",
+      msg: "csp violation",
+      directive: "script-src-elem",
+      blocked: "inline",
+      page: "/faq",
+      scope: "csp",
+      event: "violation",
+      context: null,
+    });
+    expect(Object.keys(line).slice(0, 4)).toEqual(["level", "time", "service", "msg"]);
+  });
+
   it("describes a cause that is not an Error", () => {
     const lines: string[] = [];
     createObservability({ write: (line) => lines.push(line) }).report({

@@ -1,9 +1,11 @@
 /** @vitest-environment happy-dom */
 
 import { render, screen } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 const cookieValue = { current: undefined as string | undefined };
+const nonceValue = { current: null as string | null };
 
 vi.mock("next/font/google", () => ({
   Geist: () => ({ variable: "geist" }),
@@ -15,9 +17,25 @@ vi.mock("next/headers", () => ({
     get: () =>
       cookieValue.current ? { value: cookieValue.current } : undefined,
   }),
+  headers: async () =>
+    new Headers(nonceValue.current ? { "x-nonce": nonceValue.current } : {}),
 }));
 
 describe("RootLayout", () => {
+  it("gives the theme and language bootstrap script the request's CSP nonce", async () => {
+    cookieValue.current = undefined;
+    nonceValue.current = "bm9uY2UtZm9yLXRlc3Q=";
+    vi.resetModules();
+    const { default: RootLayout } = await import("./layout");
+    const markup = renderToStaticMarkup(
+      await RootLayout({ children: <div>child</div> }),
+    );
+    nonceValue.current = null;
+    expect(markup).toContain('<script nonce="bm9uY2UtZm9yLXRlc3Q=">');
+    // JSON-LD is a data block: the browser never runs it, so it needs no nonce.
+    expect(markup).toContain('<script type="application/ld+json">');
+  });
+
   it("wraps children in a french document by default", async () => {
     cookieValue.current = undefined;
     const { default: RootLayout, generateMetadata, viewport } = await import(

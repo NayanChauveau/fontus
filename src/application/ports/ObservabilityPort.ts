@@ -9,6 +9,8 @@ export type ObservabilityEvent = {
   level: ObservabilityLevel;
   scope: string;
   event: string;
+  msg?: string;
+  fields?: Record<string, string>;
   code?: string;
   cause?: unknown;
   context?: ObservabilityContext;

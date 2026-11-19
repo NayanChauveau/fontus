@@ -88,6 +88,12 @@ class WorkflowsTest(unittest.TestCase):
         self.assertIn('SMOKE_OPS_IMAGE: app:ci-ops', container)
         self.assertIn('run: python3 deploy/smoke.py', container)
 
+    def test_ci_runs_the_browser_suite_on_the_production_build(self):
+        browser = job(workflow('ci.yml'), 'browser')
+        self.assertIn('pnpm install --frozen-lockfile', browser)
+        self.assertIn('pnpm exec playwright install --with-deps chromium', browser)
+        self.assertIn('run: pnpm test:e2e', browser)
+
     def test_monitor_reads_this_site_health_shape(self):
         monitor = workflow('monitor.yml')
         self.assertIn('python3 deploy/site_config.py host', monitor)
