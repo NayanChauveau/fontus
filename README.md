@@ -26,6 +26,8 @@ App sur **http://localhost:3100** (pas 3000).
 - `/api/udi/:code/quality` : dernier prélèvement, comparaison FR/UE/CH/US + stricte, et historique nitrates / PFAS-20 / plomb (min / médiane / max, tendance)
 - `/api/health` : `{ status, postgres, schema, detail, checkedAt }`
 
+Socle de sécurité commun aux sites (déploiement, conteneur, CSP, journaux) : `docs/security-baseline.md` du dépôt `infra-traefik`.
+
 ## Quality gate
 
 ```bash
