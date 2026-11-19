@@ -225,7 +225,7 @@ export const en = {
       "Publisher, Hub’Eau / SISE-Eaux sources and hosting of Fontus, a tap-water analysis comparison site.",
     privacyTitle: "Privacy policy",
     privacyDescription:
-      "Data processed by Fontus: BAN address lookup, short IP quota, language cookie. No user accounts.",
+      "Data processed by Fontus: BAN address lookup, short IP quota, language cookie, cookieless visit statistics (Umami). No user accounts.",
     publisher:
       "Fontus is published on a personal basis. It is not an official ARS or ministry service.",
     sources:
@@ -244,6 +244,8 @@ export const en = {
       "The browser may keep a local copy (localStorage) of networks and analyses already viewed, so they are not fetched again on every visit. This is not an address, and it is not sent anywhere else.",
     privacyLogs:
       "The server keeps a technical log of requests (IP address, requested page, browser, date) for security and troubleshooting. This log is sent to Grafana Cloud (Grafana Labs, servers in Germany, European Union) and kept there for about 14 days. CrowdSec (a French company) analyses it on the server to block attacks: only the IP address of a request detected as malicious, with the rule it triggered and the time, is shared with CrowdSec for its community blocklist. Technical errors may be sent to Sentry (servers in Germany): message and URL, no water-quality payload. Grafana Labs and Sentry are US companies: any transfer outside the European Union is covered by GDPR safeguards.",
+    privacyAnalytics:
+      "To measure visits, we use Umami, installed on our own server, without cookies. It only produces overall statistics: pages viewed, referring site, campaign (utm parameters of the link followed), country and region, device type, browser, operating system, language and screen size. The IP address is only used to infer the country and is not stored; a visitor is only represented by a technical identifier that changes every month. The address you search for is never sent: only the utm parameters of the page address are kept. The browser’s “Do Not Track” setting is respected. These statistics are kept for 25 months, then deleted automatically.",
     privacyContact:
       "To ask for deletion of server-side data that might concern you, contact the site publisher.",
   },

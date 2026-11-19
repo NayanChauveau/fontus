@@ -6,7 +6,10 @@
  * script from another site) is refused, and the browser reports it to CSP_REPORT_PATH.
  *
  * The browser only talks to this site: 'strict-dynamic' trusts only what the nonced scripts load,
- * and connect-src stays 'self' (Hub'Eau and the address API are called by the server).
+ * and connect-src stays 'self' (Hub'Eau and the address API are called by the server). The one
+ * exception is the audience measurement, when configured (src/presentation/analytics): its origin
+ * is added to script-src (for browsers without 'strict-dynamic'; the tag carries the nonce) and
+ * to connect-src (the tracker posts the visits).
  * JSON-LD blocks are data, never run, so they need no nonce.
  */
 export const CSP_REPORT_PATH = "/api/csp-report";
@@ -14,13 +17,15 @@ export const CSP_REPORT_PATH = "/api/csp-report";
 /** Route handlers return JSON only: nothing may load or run if one is opened as a document. */
 export const API_POLICY = "default-src 'none'; frame-ancestors 'none'; sandbox";
 
-export function contentSecurityPolicy({
-  nonce,
-  dev,
-}: {
+type PolicyOptions = {
   nonce: string;
   dev: boolean;
-}): string {
+  /** Origin of the audience measurement, if any. */
+  analytics?: string | null;
+};
+
+export function contentSecurityPolicy({ nonce, dev, analytics = null }: PolicyOptions): string {
+  const measurement = analytics ? [analytics] : [];
   // React rebuilds server error stacks with eval in development only.
   const evalInDev = dev ? ["'unsafe-eval'"] : [];
   // Production pages need no inline style (tests/e2e/csp.spec.ts): stylesheets are files and
@@ -29,11 +34,11 @@ export function contentSecurityPolicy({
   const inlineStyles = dev ? "'unsafe-inline'" : `'nonce-${nonce}'`;
   return [
     "default-src 'self'",
-    `script-src ${["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", ...evalInDev].join(" ")}`,
+    `script-src ${["'self'", `'nonce-${nonce}'`, "'strict-dynamic'", ...measurement, ...evalInDev].join(" ")}`,
     `style-src 'self' ${inlineStyles}`,
     "img-src 'self' data:",
     "font-src 'self'",
-    "connect-src 'self'",
+    `connect-src ${["'self'", ...measurement].join(" ")}`,
     "object-src 'none'",
     "base-uri 'none'",
     "form-action 'self'",
@@ -43,10 +48,7 @@ export function contentSecurityPolicy({
   ].join("; ");
 }
 
-export function policyForPath(
-  pathname: string,
-  options: { nonce: string; dev: boolean },
-): string {
+export function policyForPath(pathname: string, options: PolicyOptions): string {
   return pathname === "/api" || pathname.startsWith("/api/")
     ? API_POLICY
     : contentSecurityPolicy(options);

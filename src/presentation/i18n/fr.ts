@@ -229,7 +229,7 @@ export const fr = {
       "Éditeur, sources Hub’Eau / SISE-Eaux et hébergement de Fontus, comparateur d’analyses de l’eau du robinet.",
     privacyTitle: "Politique de confidentialité",
     privacyDescription:
-      "Données traitées par Fontus : adresse BAN, quota IP, cookie de langue. Pas de compte utilisateur.",
+      "Données traitées par Fontus : adresse BAN, quota IP, cookie de langue, statistiques de visite sans cookie (Umami). Pas de compte utilisateur.",
     publisher:
       "Fontus est édité à titre personnel. Ce n’est pas un service officiel de l’ARS ni du ministère.",
     sources:
@@ -248,6 +248,8 @@ export const fr = {
       "Le navigateur peut garder une copie locale (localStorage) des réseaux et analyses déjà consultés, pour ne pas les recharger à chaque visite. Ce n’est pas une adresse, et ce n’est envoyé nulle part.",
     privacyLogs:
       "Le serveur tient un journal technique des requêtes (adresse IP, page demandée, navigateur, date) pour la sécurité et le diagnostic. Ce journal est envoyé à Grafana Cloud (Grafana Labs, serveurs en Allemagne, Union européenne) et y est conservé environ 14 jours. CrowdSec (société française) l’analyse sur le serveur pour bloquer les attaques : seule l’adresse IP d’une requête détectée comme malveillante, avec la règle déclenchée et l’heure, est partagée avec CrowdSec pour sa liste de blocage communautaire. Les erreurs techniques peuvent être envoyées à Sentry (serveurs en Allemagne) : message et URL, pas le détail des analyses. Grafana Labs et Sentry sont des sociétés américaines : les transferts éventuels hors de l’Union européenne sont encadrés par les garanties prévues par le RGPD.",
+    privacyAnalytics:
+      "Pour mesurer la fréquentation, nous utilisons Umami, installé sur notre propre serveur, sans cookie. Il ne produit que des statistiques globales : pages vues, site d’origine, campagne (paramètres utm du lien suivi), pays et région, type d’appareil, navigateur, système, langue et taille d’écran. L’adresse IP sert seulement à déduire le pays et n’est pas conservée ; un visiteur n’est représenté que par un identifiant technique qui change chaque mois. L’adresse recherchée n’est jamais transmise : seuls les paramètres utm de l’adresse de la page sont gardés. Le réglage « Ne pas suivre » (Do Not Track) du navigateur est respecté. Ces statistiques sont conservées 25 mois, puis supprimées automatiquement.",
     privacyContact:
       "Pour une demande d’effacement de données côté serveur qui vous concerneraient, contactez l’éditeur du site.",
   },

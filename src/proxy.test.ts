@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ANALYTICS } from "@/presentation/analytics/analytics";
 import { config, proxy } from "./proxy";
 
 function forwardedHeader(response: Response, name: string): string | null {
@@ -47,6 +48,23 @@ describe("proxy", () => {
       "content-security-policy",
     );
     expect(policy).toContain("'unsafe-eval'");
+  });
+
+  it("allows the configured analytics on the pages of a production build only", () => {
+    const policy = () =>
+      proxy(new NextRequest("https://fontus.fr/eau-robinet/paris")).headers.get(
+        "content-security-policy",
+      ) ?? "";
+    const host = ANALYTICS?.host;
+    vi.stubEnv("NODE_ENV", "production");
+    if (host) {
+      expect(policy()).toContain(`connect-src 'self' ${host}`);
+      expect(policy()).toContain(`'strict-dynamic' ${host}`);
+    } else {
+      expect(policy()).toContain("connect-src 'self';");
+    }
+    vi.stubEnv("NODE_ENV", "test");
+    expect(policy()).toContain("connect-src 'self';");
   });
 
   it("sends the API a sandbox policy without nonce or report endpoint", () => {

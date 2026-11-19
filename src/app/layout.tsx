@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { LOCALE_BOOTSTRAP_SCRIPT } from "@/presentation/i18n/locale";
 import { getMessages, intlLocale } from "@/presentation/i18n/messages";
 import { requestLocale } from "@/presentation/i18n/requestLocale";
+import { ANALYTICS, activeAnalytics, analyticsScripts } from "@/presentation/analytics/analytics";
 import { requestNonce } from "@/presentation/security/requestNonce";
 import { siteJsonLd } from "@/presentation/seo/siteJsonLd";
 import { SITE_NAME, SITE_ORIGIN } from "@/presentation/site";
@@ -64,6 +65,12 @@ export default async function RootLayout({
   // The theme and language must apply before the first paint: an inline script, allowed by the
   // Content Security Policy through this request's nonce (src/proxy.ts).
   const nonce = await requestNonce();
+  // Audience measurement (site.config.json analytics), production builds only; never on the API.
+  const analytics = analyticsScripts({
+    analytics: activeAnalytics(ANALYTICS, process.env.NODE_ENV),
+    nonce,
+    domain: new URL(SITE_ORIGIN).hostname,
+  });
   return (
     <html
       lang={locale}
@@ -88,6 +95,12 @@ export default async function RootLayout({
             ),
           }}
         />
+        {analytics && (
+          <>
+            <script {...analytics[0]} />
+            <script {...analytics[1]} />
+          </>
+        )}
       </head>
       <body suppressHydrationWarning className="flex min-h-dvh flex-col">
         <a

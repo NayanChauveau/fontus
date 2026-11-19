@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { ANALYTICS, activeAnalytics } from "@/presentation/analytics/analytics";
 import { NONCE_HEADER } from "@/presentation/security/requestNonce";
 import {
   CSP_REPORT_PATH,
@@ -17,6 +18,7 @@ export function proxy(request: NextRequest) {
   const policy = policyForPath(pathname, {
     nonce,
     dev: process.env.NODE_ENV === "development",
+    analytics: activeAnalytics(ANALYTICS, process.env.NODE_ENV)?.host ?? null,
   });
   const headers = new Headers(request.headers);
   // Always overwritten: a client-sent x-nonce never reaches the render.

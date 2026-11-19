@@ -1,4 +1,5 @@
 import { expect, test as base, type Page } from "@playwright/test";
+import { ANALYTICS, answerAnalytics, type SentVisit } from "./analytics-stub";
 import { answerDataApis, NETWORK_CODE } from "./data-fixtures";
 
 /**
@@ -7,13 +8,14 @@ import { answerDataApis, NETWORK_CODE } from "./data-fixtures";
  * a single `securitypolicyviolation` event, CSP console message or console error.
  *
  * The data API calls (Hub'Eau and the address API behind them, cached in Postgres) are answered
- * from tests/e2e/fixtures, recorded from the real endpoints: the suite needs neither the network
- * nor a database, and the browser still enforces the policy on those requests.
+ * from tests/e2e/fixtures, recorded from the real endpoints, and the audience measurement host by a
+ * stub tracker: the suite needs neither the network nor a database, and the browser still enforces
+ * the policy on those requests.
  */
-type Problems = { violations: string[]; consoleErrors: string[] };
+type Problems = { violations: string[]; consoleErrors: string[]; visits: SentVisit[] };
 
 async function watch(page: Page): Promise<Problems> {
-  const problems: Problems = { violations: [], consoleErrors: [] };
+  const problems: Problems = { violations: [], consoleErrors: [], visits: [] };
   await page.exposeFunction("__reportCspViolation", (line: string) => {
     problems.violations.push(line);
   });
@@ -34,6 +36,8 @@ async function watch(page: Page): Promise<Problems> {
     problems.consoleErrors.push(`${page.url()}: ${error.message}`);
   });
   await answerDataApis(page);
+  // The audience measurement host is answered by a stub (tests/e2e/analytics-stub.ts).
+  problems.visits = (await answerAnalytics(page)).sent;
   return problems;
 }
 
@@ -135,6 +139,30 @@ test.describe("negative control", () => {
     });
     expect(report.status()).toBe(204);
   });
+});
+
+test("audience measurement: nonced tag, visit posted under the CSP, the address never sent", async ({
+  page,
+  problems,
+  request,
+}) => {
+  test.skip(!ANALYTICS, "analytics is off in site.config.json");
+  const host = ANALYTICS?.host ?? "";
+  const response = await request.get("/faq");
+  const policy = response.headers()["content-security-policy"] ?? "";
+  expect(policy).toContain(`'strict-dynamic' ${host}`);
+  expect(policy).toContain(`connect-src 'self' ${host};`);
+  const tracker = /<script\b[^>]*src="([^"]+\/script\.js)"[^>]*>/.exec(await response.text())?.[0] ?? "";
+  expect(tracker).toContain(`src="${host}/script.js"`);
+  expect(tracker).toContain(`data-website-id="${ANALYTICS?.websiteId ?? ""}"`);
+  expect(tracker).toContain('data-do-not-track="true"');
+  expect(tracker).not.toContain("data-exclude-search");
+  expect((await request.get("/api/ready")).headers()["content-security-policy"]).not.toContain(host);
+
+  await open(page, "/eau-robinet/paris?adresse=10+rue+de+rivoli&utm_source=lettre#top");
+  await expect.poll(() => problems.visits.length).toBeGreaterThan(0);
+  expect(problems.visits[0]?.payload.url).toMatch(/\/eau-robinet\/paris\?utm_source=lettre$/);
+  expect(JSON.stringify(problems.visits)).not.toContain("rivoli");
 });
 
 test("home page", async ({ page }) => {

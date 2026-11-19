@@ -13,12 +13,14 @@ import {
   type LighthouseResult,
   type Measure,
 } from "../performance/budget";
+import { answerAnalytics } from "./analytics-stub";
 import { answerDataApis } from "./data-fixtures";
 
 /**
  * Performance budget (`pnpm test:performance`): Lighthouse, default mobile emulation and simulated
  * throttling, on the production build served by scripts/e2e.mjs, in Playwright's Chromium. The data
- * API calls are answered from the recorded fixtures, as in the CSP suite. Each page is measured
+ * API calls are answered from the recorded fixtures, and the audience measurement host by its stub,
+ * as in the CSP suite. Each page is measured
  * several times and the median checked against tests/performance/budget.ts.
  */
 const runs = Number(process.env.PERFORMANCE_RUNS || 3);
@@ -50,6 +52,8 @@ test("Lighthouse budget of the key pages", async ({ baseURL }) => {
   const audits: string[] = [];
   try {
     await answerDataApis(context);
+    // Measured with the audience measurement tag, its host answered by the stub (no network).
+    await answerAnalytics(context);
     // ESM-only package, loaded at run time from this CommonJS-compiled file.
     const { default: lighthouse } = await import("lighthouse");
     for (const page of pages) {

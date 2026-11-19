@@ -33,10 +33,11 @@ describe("legal pages", () => {
       }),
     ).toBeTruthy();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByText(/nous utilisons Umami/)).toBeTruthy();
     await expect(privacy.generateMetadata()).resolves.toMatchObject({
       title: "Politique de confidentialité",
       description:
-        "Données traitées par Fontus : adresse BAN, quota IP, cookie de langue. Pas de compte utilisateur.",
+        "Données traitées par Fontus : adresse BAN, quota IP, cookie de langue, statistiques de visite sans cookie (Umami). Pas de compte utilisateur.",
       alternates: { canonical: "/confidentialite" },
     });
   });

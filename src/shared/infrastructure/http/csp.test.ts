@@ -43,6 +43,31 @@ describe("contentSecurityPolicy", () => {
   });
 });
 
+describe("contentSecurityPolicy with audience measurement", () => {
+  const host = "https://stats.example.test";
+
+  it("adds the analytics origin to script-src and connect-src, nothing else", () => {
+    const policy = contentSecurityPolicy({ nonce: NONCE, dev: false, analytics: host });
+    expect(policy).toBe(
+      contentSecurityPolicy({ nonce: NONCE, dev: false })
+        .replace("'strict-dynamic'", `'strict-dynamic' ${host}`)
+        .replace("connect-src 'self'", `connect-src 'self' ${host}`),
+    );
+    expect(contentSecurityPolicy({ nonce: NONCE, dev: false, analytics: null })).toBe(
+      contentSecurityPolicy({ nonce: NONCE, dev: false }),
+    );
+  });
+
+  it("never gives it to the API sandbox", () => {
+    expect(policyForPath("/api/health", { nonce: NONCE, dev: false, analytics: host })).toBe(
+      API_POLICY,
+    );
+    expect(policyForPath("/faq", { nonce: NONCE, dev: false, analytics: host })).toContain(
+      `connect-src 'self' ${host}`,
+    );
+  });
+});
+
 describe("policyForPath", () => {
   it("gives pages the nonce policy and the API a sandbox that loads nothing", () => {
     expect(policyForPath("/", { nonce: NONCE, dev: false })).toBe(

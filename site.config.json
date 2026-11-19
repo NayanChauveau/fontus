@@ -26,6 +26,10 @@
     "wwwRedirect": true,
     "timings": { "healthTimeoutSeconds": 180 }
   },
+  "analytics": {
+    "host": "https://stats.fontus.fr",
+    "websiteId": "f613672f-1ebe-48d8-a035-fe14a93a35e7"
+  },
   "smoke": {
     "pages": [
       { "path": "/", "contains": "Qualité de l’eau du robinet" },
