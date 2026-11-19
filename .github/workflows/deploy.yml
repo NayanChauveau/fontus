@@ -1,116 +1,96 @@
-name: Deploy
-
+name: Deploy production
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 concurrency:
-  group: deploy-main
+  group: ${{ github.repository }}-production
   cancel-in-progress: false
-
 permissions:
   contents: read
-
 jobs:
   ci:
     uses: ./.github/workflows/ci.yml
-
   image:
-    needs: ci
+    # Built while the tests run: the SHA-tagged image is only ever deployed once `ci` has passed.
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
-    timeout-minutes: 30
     outputs:
-      web_image: ${{ steps.meta.outputs.web_image }}
+      image: ${{ steps.tag.outputs.image }}
+      ops: ${{ steps.tag.outputs.ops }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
       - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
-
-      - id: meta
+      # Immutable tags only (one per commit): no mutable tag that a later push could move.
+      - id: tag
         run: |
-          image="ghcr.io/$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
-          echo "web_image=${image}:${GITHUB_SHA}" >> "${GITHUB_OUTPUT}"
-          echo "tags=${image}:${GITHUB_SHA},${image}:main" >> "${GITHUB_OUTPUT}"
-
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "ops=ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}-ops" >> "$GITHUB_OUTPUT"
+      # Web image: Next.js standalone server only.
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
-          file: ./Dockerfile
           target: production
           push: true
           provenance: false
-          tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
+          tags: ${{ steps.tag.outputs.image }}
+          # One cache scope per target: a shared scope would keep only the last build's manifest.
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+      # Ops image for the release's one-off job (SQL migrations).
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          target: ops
+          push: true
+          provenance: false
+          tags: ${{ steps.tag.outputs.ops }}
+          cache-from: |
+            type=gha,scope=ops
+            type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=ops
   deploy:
-    if: github.ref == 'refs/heads/main'
-    needs: image
+    # Explicit opt-in repository variable: off until the production cutover has created the
+    # labelled database volume and runtime.json (a first release before it would start an empty
+    # database next to the running site).
+    if: github.ref == 'refs/heads/main' && vars.PRODUCTION_DEPLOY_ENABLED == 'true'
+    needs: [ci, image]
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
     # The GHCR token travels to the VPS: read-only, so a compromised server cannot push an image.
     permissions:
       contents: read
       packages: read
-    timeout-minutes: 20
+    env:
+      WEB_IMAGE: ${{ needs.image.outputs.image }}
+      OPS_IMAGE: ${{ needs.image.outputs.ops }}
+      TRAEFIK_HOST: ${{ vars.PRODUCTION_HOST }}
+      TRAEFIK_ALIASES: ${{ vars.PRODUCTION_ALIASES }}
+      # Unused by this site (it sends its own robots rules); the kit validates it.
+      PUBLIC_INDEXING: ${{ vars.PUBLIC_INDEXING || 'true' }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
+      SSH_KEY: ${{ secrets.SSH_KEY }}
+      SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
+      SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+      SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+      GHCR_USER: ${{ github.actor }}
+      GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
-
-      # Push deploy: CI sends only the runtime files and the secrets (one archive on stdin);
-      # deploy/remote-deploy.sh installs them in /srv/eau-robinet. No git or GitHub key on the VPS.
-      - name: Deploy over SSH
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PORT: ${{ secrets.SSH_PORT }}
-          SSH_KEY: ${{ secrets.SSH_KEY }}
-          SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
-          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          TRAEFIK_HOST: ${{ secrets.TRAEFIK_HOST }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          WEB_IMAGE: ${{ needs.image.outputs.web_image }}
-          GHCR_USER: ${{ github.actor }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          for name in POSTGRES_PASSWORD DATABASE_URL TRAEFIK_HOST WEB_IMAGE; do
-            [ -n "${!name}" ] || { echo "::error::$name is empty"; exit 1; }
-          done
-          for name in POSTGRES_PASSWORD DATABASE_URL TRAEFIK_HOST WEB_IMAGE SENTRY_DSN GHCR_USER GHCR_TOKEN; do
-            case "${!name}" in *$'\n'*|*$'\r'*) echo "::error::$name contains a line break"; exit 1 ;; esac
-          done
-          # Pin the server's host keys (secret SSH_KNOWN_HOSTS, from ssh-keyscan checked against the
-          # server's own key files); "*" so the pin does not depend on how SSH_HOST is written.
-          [ -n "$SSH_KNOWN_HOSTS" ] || { echo "::error::SSH_KNOWN_HOSTS secret is missing"; exit 1; }
-          printf '%s\n' "$SSH_KNOWN_HOSTS" | awk 'NF >= 3 { $1 = "*"; print }' > "$RUNNER_TEMP/known_hosts"
-          key="$RUNNER_TEMP/vps_key"
-          payload="$RUNNER_TEMP/payload"
-          trap 'rm -rf "$key" "$payload" "$payload.tgz"' EXIT
-          (umask 077; printf '%s\n' "$SSH_KEY" > "$key")
-          if [ -n "$SSH_PASSPHRASE" ]; then
-            ssh-keygen -p -q -P "$SSH_PASSPHRASE" -N "" -f "$key" >/dev/null
-          fi
-          (umask 077; mkdir "$payload" && printf '%s\n' \
-            "POSTGRES_PASSWORD=$POSTGRES_PASSWORD" "SENTRY_DSN=$SENTRY_DSN" "TRAEFIK_HOST=$TRAEFIK_HOST" \
-            "DATABASE_URL=$DATABASE_URL" "DATABASE_POOL_MAX=5" "DATABASE_SSL=0" "NODE_ENV=production" \
-            "WEB_IMAGE=$WEB_IMAGE" "GHCR_USER=$GHCR_USER" "GHCR_TOKEN=$GHCR_TOKEN" > "$payload/incoming.env")
-          mkdir -p "$payload/scripts" "$payload/supabase/migrations"
-          cp docker-compose.prod.yml "$payload/"
-          cp scripts/apply-prod-migrations.sh scripts/postgres-18-upgrade.sh "$payload/scripts/"
-          cp supabase/migrations/*.sql "$payload/supabase/migrations/"
-          tar -czf "$payload.tgz" -C "$payload" docker-compose.prod.yml scripts supabase incoming.env
-          timeout 900 ssh -i "$key" -p "${SSH_PORT:-22}" -o BatchMode=yes -o ConnectTimeout=20 \
-            -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o LogLevel=ERROR \
-            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" "$SSH_USER@$SSH_HOST" \
-            "$(cat deploy/remote-deploy.sh)" < "$payload.tgz"
+      - name: Validate settings before any production write
+        run: python3 deploy/preflight.py
+      - name: Deploy exact release through SSH
+        run: python3 deploy/dispatch.py

@@ -1,0 +1,52 @@
+{
+  "slug": "fontus",
+  "app": {
+    "port": 3100,
+    "logService": "fontus"
+  },
+  "deploy": {
+    "directory": "/srv/fontus",
+    "composeProject": "fontus-prod",
+    "imageRepository": "ghcr.io/nayanchauveau/fontus",
+    "volumeOwnerLabel": "fontus.owner",
+    "volumes": {
+      "database": "fontus-prod-pgdata18",
+      "media": null,
+      "legacyDatabase": null
+    },
+    "database": { "name": "fontus", "user": "postgres" },
+    "traefikName": "fontus",
+    "defaultHost": "fontus.fr",
+    "protectedHosts": ["manonkarsenti.com"],
+    "protectedHealthUrl": "https://manonkarsenti.com/api/health",
+    "opsJobs": ["migrate"],
+    "requiredSecrets": ["POSTGRES_PASSWORD"],
+    "optionalSecrets": ["SENTRY_DSN"],
+    "quietWindow": false,
+    "wwwRedirect": true,
+    "timings": { "healthTimeoutSeconds": 180 }
+  },
+  "smoke": {
+    "pages": [
+      { "path": "/", "contains": "Qualité de l’eau du robinet" },
+      { "path": "/faq", "contains": "FAQ" },
+      { "path": "/robots.txt", "contains": "Sitemap:" },
+      { "path": "/sitemap.xml", "contains": "<urlset" },
+      { "path": "/opengraph-image", "contains": "PNG" }
+    ]
+  },
+  "github": {
+    "secrets": [
+      "BACKUP_ENCRYPTION_KEY",
+      "POSTGRES_PASSWORD",
+      "SENTRY_DSN",
+      "SSH_HOST",
+      "SSH_KEY",
+      "SSH_KNOWN_HOSTS",
+      "SSH_PASSPHRASE",
+      "SSH_PORT",
+      "SSH_USER"
+    ],
+    "variables": ["PRODUCTION_ALIASES", "PRODUCTION_DEPLOY_ENABLED", "PRODUCTION_HOST"]
+  }
+}

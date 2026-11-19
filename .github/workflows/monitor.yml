@@ -1,0 +1,26 @@
+name: Monitor production
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  monitor:
+    if: vars.PRODUCTION_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - name: Check database health and public pages
+        env:
+          PRODUCTION_HOST: ${{ vars.PRODUCTION_HOST }}
+        run: |
+          set -euo pipefail
+          # PRODUCTION_HOST, or defaultHost from site.config.json when the variable is unset.
+          PRODUCTION_HOST="$(python3 deploy/site_config.py host)"
+          curl --fail --silent --show-error --retry 2 --max-time 20 "https://${PRODUCTION_HOST}/api/health" | jq -e '.status == "ok" and .postgres == true and .schema == true'
+          # The home page and a city page (Hub'Eau data through the site's cache).
+          for path in "" "eau-robinet/paris"; do
+            curl --fail --silent --show-error --retry 2 --max-time 20 "https://${PRODUCTION_HOST}/${path}" -o /dev/null
+          done

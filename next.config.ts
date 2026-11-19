@@ -9,6 +9,23 @@ const nextConfig: NextConfig = {
   // No "X-Powered-By: Next.js": it only tells scanners what to try.
   poweredByHeader: false,
   output: "standalone",
+  // createFileDisImport reads a directory chosen at run time (DIS_IMPORT_DIR, local imports
+  // only), so the build's file tracing copied the whole project into the standalone server:
+  // TypeScript sources, deploy scripts, migrations, docs. The server needs none of them
+  // (deploy/smoke.py checks that /app/src is absent from the web image).
+  outputFileTracingExcludes: {
+    "**": [
+      "./src/**/*",
+      "./deploy/**/*",
+      "./docs/**/*",
+      "./scripts/**/*",
+      "./supabase/**/*",
+      "./tests/**/*",
+      "./*.{md,ts,mjs,yaml,yml,toml,tsbuildinfo}",
+      "./{knip,renovate,tsconfig,site.config}.json",
+      "./Dockerfile",
+    ],
+  },
   typescript: {
     ignoreBuildErrors: process.env.DOCKER_BUILD === "1",
   },

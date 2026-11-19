@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 
-// Created in the old container by deploy/remote-deploy.sh just before it stops: Traefik's health
+// Created in the old container by deploy/release.py just before it stops: Traefik's health
 // check on /api/ready then takes it out of rotation, so no request reaches it as it closes.
 const DRAIN_FLAG = "/tmp/draining";
 

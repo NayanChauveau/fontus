@@ -1,31 +1,45 @@
 # Prod (VPS Hostinger + Traefik)
 
-Même recette que `jojo_portfolio` : réseau Docker `traefik` (repo `infra-traefik` dans `/srv/traefik`), Compose à la racine, deploy SSH vers `/srv/eau-robinet`.
+Fontus se déploie avec le kit commun aux sites du VPS (le même que manon-karsenti) : `deploy/{release,site_config,dispatch,preflight,ssh_connection,smoke,backup}.py`, identiques octet pour octet dans chaque site (`deploy/KIT.sha256`, vérifié par `tests/test_kit_parity.py`). Ce qui est propre à Fontus vit dans `site.config.json`, `docker-compose.prod.yml` et le `Dockerfile`. Le réseau Docker `traefik` vient du repo `infra-traefik` (`/srv/traefik`).
 
-## Une fois sur le VPS
+Noms standard : projet compose `fontus-prod`, dossier `/srv/fontus`, volume de base `fontus-prod-pgdata18` (étiquette `fontus.owner=fontus-prod`), images `ghcr.io/nayanchauveau/fontus:<sha>` (web) et `:<sha>-ops` (migrations).
+
+**Déploiement désactivé jusqu’à la bascule** (phase 2, tâche 6) : le job `deploy` ne tourne que si la variable de dépôt `PRODUCTION_DEPLOY_ENABLED` vaut `true`. Tant que la bascule n’a pas créé le volume étiqueté et `/srv/fontus/runtime.json`, une première release du kit démarrerait une base vide à côté du site en ligne (`/srv/eau-robinet`, projet `eau-robinet`, qui continue de servir). Les sauvegardes et la surveillance CI suivent la même variable.
+
+## Déploiement (kit)
+
+Un push sur `main` lance `Deploy production` : les tests (`ci.yml`), la construction des deux images (tags immuables, pas de `:main`), puis `deploy/preflight.py` (paramètres et secrets validés, aucune écriture) et `deploy/dispatch.py`, qui envoie par SSH une archive (liste blanche : compose, `release.py`, `site_config.py`, `site.config.json`, entrée de déploiement) et lance `release.py` sur le VPS. La release :
+
+- refuse un volume existant sans l’étiquette `fontus.owner`, un volume manquant quand `runtime.json` existe, un secret qui change (`POSTGRES_PASSWORD` : la rotation se fait par une procédure dédiée), un secret avec un saut de ligne ;
+- sauvegarde la base (`pg_dump -Fc` dans `/srv/fontus/backups/`), lance le job `migrate` (image ops, migrations SQL idempotentes) puis remplace le conteneur web sans coupure : le nouveau démarre à côté de l’ancien, Traefik ne l’utilise qu’une fois sain (`/api/health`), l’ancien reçoit `/tmp/draining` (`/api/ready` répond 503, Traefik l’écarte), puis s’arrête ; le middleware `fontus-retry` rejoue une requête retardataire. Si le nouveau n’est jamais sain (180 s, `deploy.timings`), il est supprimé et l’ancien continue de servir ;
+- ajoute la redirection 301 `www.<hôte>` → `<hôte>` (routeur `fontus-www`, `deploy.wwwRedirect`) et, si `PRODUCTION_ALIASES` est défini, les redirections des alias ;
+- vérifie ensuite le site en HTTPS et le site voisin (`https://manonkarsenti.com/api/health`), puis garde 5 sauvegardes locales, 5 releases et les images des 2 releases précédentes.
+
+Les étiquettes Traefik du compose sont exactement celles des conteneurs déployés avant le kit (`tests/test_compose.py`) : pendant la bascule, l’ancien et le nouveau conteneur servent sous les mêmes noms de routeur et de service.
+
+Paramètres GitHub (noms seulement, la liste complète est dans `site.config.json` → `github`) : secrets `POSTGRES_PASSWORD`, `SENTRY_DSN` (facultatif), `SSH_HOST`, `SSH_PORT`, `SSH_USER`, `SSH_KEY`, `SSH_PASSPHRASE`, `SSH_KNOWN_HOSTS` (lignes `ssh-keyscan` dont le premier champ correspond à `SSH_HOST`), `BACKUP_ENCRYPTION_KEY` (64 caractères hexadécimaux) ; variables `PRODUCTION_HOST` (`fontus.fr`), `PRODUCTION_DEPLOY_ENABLED`, `PRODUCTION_ALIASES` (facultatif). Les secrets `DATABASE_URL` et `TRAEFIK_HOST` ne servent plus (le kit calcule l’URL de la base ; l’hôte est une variable).
+
+Tester les images en local (Docker seulement, ressources jetables `fontus-ci-*`) :
 
 ```bash
-docker network ls | grep traefik
-# si absent : cd /srv/traefik && docker compose up -d
+docker build --target production -t fontus:ci . && docker build --target ops -t fontus:ci-ops .
+python3 deploy/smoke.py
+python3 -m unittest discover -s tests -p 'test_*.py'
 ```
 
-Déploiement par envoi depuis la CI (novembre 2026) : la CI envoie seulement `docker-compose.prod.yml`, `scripts/apply-prod-migrations.sh`, `scripts/postgres-18-upgrade.sh`, `supabase/migrations/*.sql` et les secrets, dans une archive par SSH. `deploy/remote-deploy.sh` les installe dans `/srv/eau-robinet` et réécrit `.env` (600) depuis les secrets GitHub. Le VPS n'a plus de copie git ni de clé GitHub pour ce repo. Garde-fou : si `POSTGRES_PASSWORD` ou `DATABASE_URL` diffère du `.env` en place, le déploiement s'arrête sans rien changer (une rotation de mot de passe se fait volontairement, pas par un déploiement). Tester le script en local : `bash deploy/test-remote-deploy.sh`.
+Le smoke (aussi lancé par le job CI `container`) démarre Postgres, lance `migrate` deux fois, démarre le web en lecture seule, vérifie l’UID 1001 et l’absence d’outils de build, les pages de `site.config.json` → `smoke.pages` (accueil, FAQ, robots, sitemap, image OG), un `pg_dump`, puis la persistance après recréation des conteneurs.
 
-Secrets GitHub (comme jojo) : `SSH_HOST`, `SSH_PORT`, `SSH_USER`, `SSH_KEY`, `SSH_PASSPHRASE`, plus `POSTGRES_PASSWORD`, `TRAEFIK_HOST=fontus.fr`, `SENTRY_DSN`, `DATABASE_URL` :
+## Sauvegarde et surveillance
 
-```
-postgresql://postgres:MOTDEPASSE@postgres:5432/fontus
-```
-
-DNS : `fontus.fr` (et `www` en CNAME) vers l’IP du VPS. Traefik + Let’s Encrypt s’occupent du certificat (apex et www). `https://www.$TRAEFIK_HOST` redirige en 301 vers `https://$TRAEFIK_HOST` (chemin et query conservés).
+`Backup production` (chaque nuit) exporte la base par SSH, la chiffre (GnuPG, `BACKUP_ENCRYPTION_KEY`) et la garde 30 jours comme artefact GitHub. `Monitor production` (chaque heure) vérifie `/api/health` (`status`, `postgres`, `schema`), l’accueil et une page ville.
 
 ## Migrations
 
-Le deploy applique `supabase/migrations/` via `psql` dans Postgres (`scripts/apply-prod-migrations.sh`). Le conteneur `web` les réapplique au démarrage si le package `postgres` est dans l’image (`create table if not exists`). `/api/health` dit si le schéma est là.
+`supabase/migrations/*.sql` (idempotentes, `create table if not exists`) sont appliquées par le job `migrate` de chaque release, avant le nouveau conteneur web ; le web ne migre jamais au démarrage. Une colonne ne se supprime ou ne se renomme qu’au déploiement suivant celui qui cesse de l’utiliser (l’ancien code tourne quelques secondes sur le nouveau schéma). `/api/health` dit si le schéma est là.
 
-Health : `https://$TRAEFIK_HOST/api/health`
+## Historique : passage à Postgres 18 (novembre 2026)
 
-## Passage à Postgres 18 (novembre 2026)
+Avant le kit, sous le projet `eau-robinet` (`/srv/eau-robinet`, volume `eau-robinet_pgdata18`, conservé avec `eau-robinet_pgdata`).
 
 La base est passée de Postgres 16 à 18 par le workflow manuel **Postgres 18 upgrade** (script `scripts/postgres-18-upgrade.sh`). Ce workflow a été supprimé le 2026-11-18 une fois la bascule faite : il confiait la clé SSH root à une action tierce. Le script et son banc de test restent pour mémoire. Le compose de prod utilise déjà Postgres 18 sur le volume externe `eau-robinet_pgdata18` : tant que la bascule n’est pas faite, un déploiement habituel échoue (« external volume not found ») au lieu de démarrer une base vide, et les conteneurs en cours ne sont pas touchés.
 
@@ -49,26 +63,7 @@ bash scripts/test-postgres-18-upgrade.sh
 
 ## Sentry
 
-Les erreurs API / UI partent vers Sentry si `SENTRY_DSN` est dans le `.env` du VPS (secret GitHub du même nom). Le plan Developer gratuit envoie un mail sur chaque nouvelle issue.
-
-Le `.env` n’est créé qu’une fois : le deploy met ensuite à jour `SENTRY_DSN`. Pas de Session Replay : on n’envoie que le message et des tags (scope, event).
-
-Le workflow **Deploy** compile l’image sur GitHub Actions (réseau npm + cache `gha`), la pousse vers `ghcr.io/<owner>/<repo>:<sha>` (et `:main`), puis le VPS fait `docker login` + `pull` + `up web`. Pas de nouveau secret : `GITHUB_TOKEN` suffit (`permissions.packages: write`).
-
-Le type-check Next est sauté dans l’image (`DOCKER_BUILD=1`) : le job CI le fait déjà. Postgres n’est pas recréé à chaque fois.
-
-Pas de coupure au déploiement : un nouveau conteneur `web` démarre à côté de l’ancien, Traefik ne l’utilise qu’une fois son healthcheck vert (`/api/health`), puis l’ancien est retiré de Traefik (le script crée `/tmp/draining`, `/api/ready` répond 503 et le healthcheck de Traefik, chaque seconde, l’écarte) et s’arrête proprement (Next.js termine ses requêtes ; le middleware `fontus-retry` rejoue une éventuelle retardataire). Si le nouveau n’est jamais sain, il est supprimé et l’ancien continue de servir. Exception : un changement des étiquettes Traefik fait diverger les deux conteneurs quelques secondes (404 pendant la bascule). Les migrations passent avant la bascule : l’ancien code tourne quelques secondes sur le nouveau schéma, donc une colonne ne se supprime ou ne se renomme qu’au déploiement suivant celui qui cesse de l’utiliser.
-
-Rétention des images : une fois la bascule saine, `prune_images` (dans `remote-deploy.sh`) ne garde, pour le dépôt de l’image web (`ghcr.io/<owner>/fontus`), que l’image de la release courante, toute image utilisée par un conteneur (démarré ou arrêté) et les 2 autres tags les plus récents (date de création). Le reste est supprimé par tag (`docker rmi`, jamais `-f`), puis `docker image prune -f` retire les couches orphelines. Les images des autres dépôts ne sont jamais touchées ; un échec de suppression est journalisé (tag seul) et ne fait jamais échouer un déploiement déjà sain. Rien n’est élagué si la bascule échoue.
-
-Secours sur le VPS, sans GitHub :
-
-```bash
-cd /srv/eau-robinet
-export WEB_IMAGE=fontus-web:local
-docker compose -f docker-compose.prod.yml build web
-docker compose -f docker-compose.prod.yml up -d --no-deps --force-recreate web
-```
+Les erreurs API / UI partent vers Sentry si le secret GitHub `SENTRY_DSN` est défini (facultatif : `deploy.optionalSecrets`). Le plan Developer gratuit envoie un mail sur chaque nouvelle issue. Pas de Session Replay : on n’envoie que le message et des tags (scope, event).
 
 ## Chauffe des pages ville
 
@@ -85,7 +80,3 @@ node scripts/warm-city-pages.mjs --origin https://fontus.fr --quality --pause 20
 Le script lit le hub, suit les 50 villes, puis éventuellement les liens UDI. Pause par défaut 1,5 s.
 
 Dans Google Search Console (propriété `fontus.fr`), soumettre `https://fontus.fr/sitemap.xml` après le premier deploy des pages ville. La chauffe n’indexe rien toute seule : elle évite seulement un premier hit à froid.
-
-## Nouveau site plus tard
-
-Copier `docker-compose.prod.yml`, changer le `Host`, le nom du router, et le dossier `/srv/…`.
