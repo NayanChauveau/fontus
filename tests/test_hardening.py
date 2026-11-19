@@ -109,7 +109,7 @@ class ComposeHardeningTest(unittest.TestCase):
             self.assertIn('${' + variable, COMPOSE, variable)
 
     def test_every_compose_call_of_the_kit_names_its_project(self):
-        for script in ['release.py', 'backup.py', 'smoke.py']:
+        for script in ['release.py', 'smoke.py']:
             text = (ROOT / 'deploy' / script).read_text(encoding='utf-8')
             self.assertRegex(text, r"'(?:--project-name|-p)'", script)
 

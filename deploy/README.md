@@ -1,6 +1,6 @@
 # Prod (VPS Hostinger + Traefik)
 
-Fontus se déploie avec le kit commun aux sites du VPS (le même que manon-karsenti) : `deploy/{release,site_config,dispatch,preflight,ssh_connection,smoke,backup}.py`, identiques octet pour octet dans chaque site (`deploy/KIT.sha256`, vérifié par `tests/test_kit_parity.py`). Ce qui est propre à Fontus vit dans `site.config.json`, `docker-compose.prod.yml` et le `Dockerfile`. Le réseau Docker `traefik` vient du repo `infra-traefik` (`/srv/traefik`).
+Fontus se déploie avec le kit commun aux sites du VPS (le même que manon-karsenti) : `deploy/{release,site_config,dispatch,preflight,ssh_connection,smoke}.py`, identiques octet pour octet dans chaque site (`deploy/KIT.sha256`, vérifié par `tests/test_kit_parity.py`). Ce qui est propre à Fontus vit dans `site.config.json`, `docker-compose.prod.yml` et le `Dockerfile`. Le réseau Docker `traefik` vient du repo `infra-traefik` (`/srv/traefik`).
 
 Noms standard : projet compose `fontus-prod`, dossier `/srv/fontus`, volume de base `fontus-prod-pgdata18` (étiquette `fontus.owner=fontus-prod`), images `ghcr.io/nayanchauveau/fontus:<sha>` (web) et `:<sha>-ops` (migrations).
 
@@ -17,7 +17,7 @@ Un push sur `main` lance `Deploy production` : les tests (`ci.yml`), la construc
 
 Les étiquettes Traefik du compose sont exactement celles des conteneurs déployés avant le kit (`tests/test_compose.py`) : pendant la bascule, l’ancien et le nouveau conteneur servent sous les mêmes noms de routeur et de service.
 
-Paramètres GitHub (noms seulement, la liste complète est dans `site.config.json` → `github`) : secrets `POSTGRES_PASSWORD`, `SENTRY_DSN` (facultatif), `SSH_HOST`, `SSH_PORT`, `SSH_USER`, `SSH_KEY`, `SSH_PASSPHRASE`, `SSH_KNOWN_HOSTS` (lignes `ssh-keyscan` dont le premier champ correspond à `SSH_HOST`), `BACKUP_ENCRYPTION_KEY` (64 caractères hexadécimaux) ; variables `PRODUCTION_HOST` (`fontus.fr`), `PRODUCTION_DEPLOY_ENABLED`, `PRODUCTION_ALIASES` (facultatif). Les secrets `DATABASE_URL` et `TRAEFIK_HOST` ne servent plus (le kit calcule l’URL de la base ; l’hôte est une variable).
+Paramètres GitHub (noms seulement, la liste complète est dans `site.config.json` → `github`) : secrets `POSTGRES_PASSWORD`, `SENTRY_DSN` (facultatif), `SSH_HOST`, `SSH_PORT`, `SSH_USER`, `SSH_KEY`, `SSH_PASSPHRASE`, `SSH_KNOWN_HOSTS` (lignes `ssh-keyscan` dont le premier champ correspond à `SSH_HOST`) ; variables `PRODUCTION_HOST` (`fontus.fr`), `PRODUCTION_DEPLOY_ENABLED`, `PRODUCTION_ALIASES` (facultatif). Les secrets `DATABASE_URL` et `TRAEFIK_HOST` ne servent plus (le kit calcule l’URL de la base ; l’hôte est une variable).
 
 Tester les images en local (Docker seulement, ressources jetables `fontus-ci-*`) :
 
@@ -31,7 +31,7 @@ Le smoke (aussi lancé par le job CI `container`) démarre Postgres, lance `migr
 
 ## Sauvegarde et surveillance
 
-`Backup production` (chaque nuit) exporte la base par SSH, la chiffre (GnuPG, `BACKUP_ENCRYPTION_KEY`) et la garde 30 jours comme artefact GitHub. `Monitor production` (chaque heure) vérifie `/api/health` (`status`, `postgres`, `schema`), l’accueil et une page ville.
+Sauvegardes : la copie hors site de la base (chaque nuit, restic chiffré vers Backblaze, avec test de restauration hebdomadaire) est faite par le dépôt infra-traefik, qui décrit sa restauration dans `docs/restauration.md` ; chaque déploiement exporte aussi la base avant de migrer (ci-dessus). L’ancien workflow `Backup production` (archive GnuPG gardée 30 jours comme artefact GitHub) a été retiré le 19 novembre 2026. `Monitor production` (chaque heure) vérifie `/api/health` (`status`, `postgres`, `schema`), l’accueil et une page ville.
 
 ## Migrations
 

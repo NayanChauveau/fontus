@@ -31,7 +31,7 @@ BOOTSTRAP_INPUTS = ('BOOTSTRAP_ADMIN_EMAIL', 'BOOTSTRAP_ADMIN_NAME', 'BOOTSTRAP_
 # Services the release manages itself: never an ops job.
 RESERVED_SERVICES = ('web', 'postgres', 'data-check', 'media-init', 'media-backup')
 # The kit's own files (deploy/KIT.sha256): byte-identical in every site, never a smoke extension.
-KIT_FILES = ('backup.py', 'dispatch.py', 'preflight.py', 'release.py', 'site_config.py', 'smoke.py', 'ssh_connection.py')
+KIT_FILES = ('dispatch.py', 'preflight.py', 'release.py', 'site_config.py', 'smoke.py', 'ssh_connection.py')
 # A site's own smoke checks (deploy/smoke.py loads it): a module of this repository's deploy/ folder.
 SMOKE_EXTENSION = re.compile(r'deploy/[a-z][a-z0-9_]*\.py')
 

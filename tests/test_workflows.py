@@ -60,8 +60,6 @@ class WorkflowsTest(unittest.TestCase):
         deploy = job(workflow('deploy.yml'), 'deploy')
         self.assertIn("    if: github.ref == 'refs/heads/main' && vars.PRODUCTION_DEPLOY_ENABLED == 'true'\n", deploy)
         self.assertIn('    environment: production\n', deploy)
-        self.assertIn("    if: github.ref == 'refs/heads/main' && vars.PRODUCTION_DEPLOY_ENABLED == 'true'\n",
-                      job(workflow('backup.yml'), 'backup'))
         self.assertIn("    if: vars.PRODUCTION_DEPLOY_ENABLED == 'true'\n", job(workflow('monitor.yml'), 'monitor'))
 
     def test_the_image_job_pushes_immutable_web_and_ops_tags_only(self):
@@ -93,6 +91,17 @@ class WorkflowsTest(unittest.TestCase):
         self.assertIn('pnpm install --frozen-lockfile', browser)
         self.assertIn('pnpm exec playwright install --with-deps chromium', browser)
         self.assertIn('run: pnpm test:e2e', browser)
+
+    def test_the_artifact_backup_is_gone(self):
+        # Off-site backups live in infra-traefik (restic to B2); every deploy still dumps the database.
+        self.assertFalse((ROOT / '.github' / 'workflows' / 'backup.yml').exists())
+        self.assertFalse((ROOT / 'deploy' / 'backup.py').exists())
+        self.assertNotIn('backup.py', module('site_config').KIT_FILES)
+        self.assertNotIn('BACKUP_ENCRYPTION_KEY', (ROOT / 'site.config.json').read_text(encoding='utf-8'))
+        for path in WORKFLOWS:
+            text = path.read_text(encoding='utf-8')
+            self.assertNotIn('BACKUP_ENCRYPTION_KEY', text, path.name)
+            self.assertNotIn('upload-artifact', text, path.name)
 
     def test_monitor_reads_this_site_health_shape(self):
         monitor = workflow('monitor.yml')

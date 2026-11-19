@@ -37,7 +37,6 @@
   },
   "github": {
     "secrets": [
-      "BACKUP_ENCRYPTION_KEY",
       "POSTGRES_PASSWORD",
       "SENTRY_DSN",
       "SSH_HOST",
